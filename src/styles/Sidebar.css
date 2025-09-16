@@ -1,0 +1,119 @@
+.sidebar {
+  width: 250px;
+  min-width: 250px;
+  height: 100vh;
+  background-color: #ffffff;
+  transition: width 0.3s ease;
+  overflow: hidden !important;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.05);
+  z-index: 10;
+}
+
+.sidebar.collapsed {
+  width: 80px;
+  min-width: 80px;
+}
+
+.sidebar-header {
+  position: relative;
+  padding: 0 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 70px;
+  box-sizing: border-box;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.logo-icon {
+  height: 30px;
+}
+
+.list-icon {
+  background: none;
+  outline: none;
+  border: none;
+  cursor: pointer;
+  z-index: 2;
+}
+
+.list-icon img {
+  height: 20px;
+}
+
+/* ✅ Overlap list icon when collapsed */
+.sidebar.collapsed .list-icon {
+  position: absolute;
+  top: 50%;
+  right: 16px;
+  transform: translateY(-50%);
+}
+
+/* Navigation Links */
+.sidebar-nav ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.sidebar-nav li {
+  padding: 3px 10px;
+  gap: 0rem;
+}
+
+.sidebar-nav a {
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+  color: #333;
+  transition: background 0.3s;
+}
+
+/* Remove hover background in collapsed mode */
+.sidebar.collapsed .sidebar-nav li:hover {
+  background-color: transparent;
+}
+
+/* Icon stays centered when collapsed */
+.sidebar.collapsed .sidebar-nav a {
+  justify-content: center;
+}
+
+.sidebar.collapsed .icon-img {
+  margin: 0 auto;
+}
+
+/* Icon image */
+.icon-img {
+  width: 15px;
+  height: 20px;
+}
+
+/* Label Text */
+.label-text {
+  margin-left: 16px;
+  font-size: 14px;
+  transition: opacity 0.3s ease;
+  white-space: nowrap;
+  opacity: 1;
+}
+
+.label-text.hide {
+  opacity: 0;
+  pointer-events: none;
+  display: none;
+}
+/* Logo image */
+.logo-icon {
+  height: 30px;
+  transition: opacity 0.3s ease;
+}
+
+/* ✅ Hide logo when sidebar is collapsed */
+.sidebar.collapsed .logo-icon {
+  visibility: hidden;
+  opacity: 0;
+  position: absolute;
+}

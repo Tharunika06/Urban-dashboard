@@ -1,0 +1,69 @@
+/* Wrapper with full height */
+.congrats-wrapper {
+  height: 100vh;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: white;
+  overflow: hidden;
+}
+
+/* Left Section Styling */
+.congrats-left {
+  padding: 2rem;
+}
+
+.congrats-icon {
+  width: 80px;
+  margin-bottom: 1.5rem;
+}
+
+.congrats-title {
+  font-size: 24px;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  color: #212529;
+}
+
+.congrats-subtext {
+  font-size: 14px;
+  color: #6c757d;
+  margin-bottom: 1.5rem;
+}
+
+.home-btn {
+  padding: 10px 24px;
+  font-size: 14px;
+  font-weight: 500;
+  border-radius: 8px;
+  background-color: black;
+  color: white;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.home-btn:hover {
+  background-color: #333333;
+}
+
+/* Right Section Image Styling */
+.congrats-right {
+  height: 100vh;
+  overflow: hidden;
+}
+
+.house-img {
+  object-fit: cover;
+  border-radius: 12px 0 0 12px;
+}
+
+/* Responsive overrides for smaller screens */
+@media (max-width: 768px) {
+  .congrats-right {
+    height: 40vh;
+  }
+
+  .house-img {
+    border-radius: 12px;
+    object-fit: cover;
+  }
+}

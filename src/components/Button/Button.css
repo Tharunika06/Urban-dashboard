@@ -1,0 +1,16 @@
+.common-button {
+  width: 100%;
+  padding: 12px 20px;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  background: linear-gradient(to right, #111, #444);
+  color: white;
+  cursor: pointer;
+  font-size: 15px;
+  transition: 0.3s ease;
+}
+
+.common-button:hover {
+  opacity: 0.9;
+}
