@@ -9,17 +9,16 @@
 }
 /* Profile photo preview */
 .preview-photo {
-  width: 60px;
-  height: 60px;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
   object-fit: cover;
-  margin-bottom: 8px;
 }
 
 /* ===== Section ===== */
-.section {
-  margin-bottom: 30px;
-}
+  .section {
+    margin-bottom: 30px;
+  }
 
 .section h3 {
   font-size: 16px;
@@ -118,11 +117,10 @@ font-weight:500;
   /* padding: 8px 18px; */
   border-radius: 6px;
   cursor: pointer;
-  font-size: 12px;
   transition: 0.2s;
   height: 40px;
-  width:70px;
-    font-family: 'Montserrat',sans-serif ;
+  width:80px;
+  font-family: 'Montserrat',sans-serif ;
 
 }
 /* .file-btn:hover {
@@ -145,6 +143,7 @@ font-weight:500;
   transition: 0.2s;
     font-family: 'Montserrat',sans-serif ;
 font-weight: 600;
+margin-top: 10px;
 }
 
 .save-btn:hover {

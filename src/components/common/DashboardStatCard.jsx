@@ -7,8 +7,7 @@ const DashboardStatCard = ({ title, value, change, period, isNegative, icon, ico
 
   return (
     <div className="card dashboard-stat-card h-100">
-      {/* THE FIX: This new inner container handles the flex layout INSIDE the padded card */}
-      <div className="dashboard-stat-card-content">
+  <div className="dashboard-stat-card-content">
         {/* Left Column: All text content */}
         <div className="stat-text-wrapper">
           <p className="stat-title">{title}</p>

@@ -1,4 +1,3 @@
-// client/src/pages/Login.jsx
 import React, { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import axios from "axios";
@@ -38,18 +37,18 @@ const Login = () => {
       });
 
       if (response.data.ok) {
-        // ✅ Save full user info + token
+        // Save full user info + token
         localStorage.setItem("user", JSON.stringify(response.data.user));
         localStorage.setItem("token", response.data.token);
 
-        // ✅ Remember Me logic
+        // Remember Me logic
         if (rememberMe) {
           localStorage.setItem("rememberMe", "true");
         } else {
           localStorage.removeItem("rememberMe");
         }
 
-        // ✅ Success message
+        // Success message
         setSuccess("Login successful! Redirecting...");
 
         // Delay navigation so user sees notification
@@ -68,15 +67,15 @@ const Login = () => {
   };
 
   return (
-    <div className="container-fluid p-0">
-      <div className="row g-0 min-vh-100">
+    <div className="container-fluid">
+      <div className="row g-0">
         {/* Form Column */}
-        <div className="col-lg-5 col-md-8 col-12 mx-auto d-flex align-items-center justify-content-center">
-          <div className="form-box w-100">
-            <img src={logo} alt="Urban Logo" className="logo mb-4 mx-auto d-block" />
-            <h2 className="title text-center mb-2">Welcome Back! 👋🏻</h2>
-            <p className="subtitle text-center mb-4">
-              Log in to access your account and explore our latest features.
+        <div className="col-lg-5 col-md-12 col-12">
+          <div className="form-box">
+            <img src={logo} alt="Urban Logo" className="logo mx-auto d-block" />
+            <h2 className="title">Welcome Back! 👋🏻</h2>
+            <p className="subtitle">
+              We're glad to see you again. Log in to access your account and explore our latest features.
             </p>
 
             <form onSubmit={handleLogin}>
@@ -84,8 +83,8 @@ const Login = () => {
                 <img src={userIcon} alt="User Icon" className="input-icon" />
                 <input
                   type="email"
-                  className="form-control input ps-5"
-                  placeholder="Email"
+                  className="form-control input"
+                  placeholder="User Name"
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
@@ -96,7 +95,7 @@ const Login = () => {
                 <img src={lockIcon} alt="Lock Icon" className="input-icon" />
                 <input
                   type={showPassword ? "text" : "password"}
-                  className="form-control input ps-5 pe-5"
+                  className="form-control input"
                   placeholder="Password"
                   required
                   value={password}
@@ -111,7 +110,7 @@ const Login = () => {
                 />
               </div>
 
-              {/* ✅ Show errors or success */}
+              {/* Show errors or success */}
               {error && <div className="alert alert-danger">{error}</div>}
               {success && <div className="alert alert-success">{success}</div>}
 
@@ -125,7 +124,7 @@ const Login = () => {
                     checked={rememberMe}
                     onChange={() => setRememberMe(!rememberMe)}
                   />
-                  <label className="form-check-label ms-2" htmlFor="rememberSwitch">
+                  <label className="form-check-label" htmlFor="rememberSwitch">
                     Remember Me
                   </label>
                 </div>
@@ -134,34 +133,34 @@ const Login = () => {
                 </p>
               </div>
 
-              <button type="submit" className="btn btn-dark w-100 mb-3 login-button">
+              <button type="submit" className="btn btn-dark w-100 mb-3">
                 Log In
               </button>
 
-              <div className="divider d-flex align-items-center my-3">
-                <hr className="flex-grow-1" />
-                <span className="mx-2 small text-muted">Or continue with</span>
-                <hr className="flex-grow-1" />
+              <div className="divider d-flex align-items-center">
+                <hr />
+                <span>Or continue with</span>
+                <hr />
               </div>
 
               <button type="button" className="btn google-button w-100 mb-3">
-                <img src={googleIcon} alt="Google" className="me-2" />
+                <img src={googleIcon} alt="Google" />
                 Continue With Google
               </button>
 
-              <p className="signup text-center small">
+              <p className="signup">
                 Don't have an account?{" "}
-                <Link to="/signup" className="fw-medium text-primary">
-                  Sign up
-                </Link>
+                <Link to="/signup">Sign up</Link>
               </p>
             </form>
           </div>
         </div>
 
         {/* Image Column */}
-        <div className="col-lg-7 d-none d-lg-flex align-items-center justify-content-center login-right-pane p-5">
-          <img src="/assets/login-bg.png" alt="Login Visual" className="img-fluid" />
+        <div className="col-lg-7 d-none d-lg-flex">
+          <div className="login-right-pane">
+            <img src="/assets/login-bg.png" alt="Login Visual" />
+          </div>
         </div>
       </div>
     </div>

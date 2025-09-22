@@ -35,8 +35,13 @@ const GeneralSettings = () => {
       photo: profilePhoto,
     };
     localStorage.setItem("adminProfile", JSON.stringify(profileData));
+    
+    // Dispatch custom event with updated profile data
+    window.dispatchEvent(new CustomEvent("profileUpdated", {
+      detail: profileData
+    }));
+    
     alert("Profile updated successfully!");
-    window.dispatchEvent(new Event("storage")); // 🔔 trigger header update
   };
 
   return (
@@ -69,7 +74,7 @@ const GeneralSettings = () => {
                   style={{ display: "none" }}
                   id="upload-photo"
                 />
-                <label htmlFor="upload-photo" className="ad-file-btn">
+                <label htmlFor="upload-photo" className="ad-file-btn" style={{fontSize:"11px",color:"white",alignItems:"center",justifyContent:"center",display:"flex",margin:"0px"}}>
                   Upload Photo
                 </label>
               </div>
@@ -144,7 +149,7 @@ const GeneralSettings = () => {
           </div>
         </div>
       </div>
-
+<br></br>
       {/* === Preferences Card === */}
       <div className="settings-card">
         <div className="section">

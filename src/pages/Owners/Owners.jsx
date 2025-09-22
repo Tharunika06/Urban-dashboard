@@ -33,8 +33,11 @@ const Owners = () => {
     try {
       setIsLoading(true);
       const res = await axios.get('http://192.168.0.152:5000/api/owners');
-      setOwners(res.data);
-      setFilteredOwners(res.data); 
+
+      // ✅ Your backend sends { owners: [...], count, includePhotos }
+      const ownersArray = Array.isArray(res.data.owners) ? res.data.owners : [];
+      setOwners(ownersArray);
+      setFilteredOwners(ownersArray);
     } catch (err) {
       setError(err.message);
       console.error('Failed to fetch owners:', err);
@@ -45,14 +48,13 @@ const Owners = () => {
 
   // Filter owners based on search term and selected month
   useEffect(() => {
-    let ownersToFilter = owners;
+    let ownersToFilter = Array.isArray(owners) ? owners : [];
 
     // Apply month filter ONLY if a specific month is selected
     if (selectedMonth && selectedMonth !== '') {
       const monthIndex = months.indexOf(selectedMonth);
       if (monthIndex > -1) {
         ownersToFilter = ownersToFilter.filter(owner => {
-          // Using doj (Date of Joining) field for month filtering
           const ownerDate = new Date(owner.doj || owner.createdAt);
           return ownerDate.getMonth() === monthIndex;
         });
@@ -79,11 +81,12 @@ const Owners = () => {
   };
 
   const handleSaveOwner = (savedOwner) => {
+    // ✅ Add new owner to both owners and filteredOwners
     setOwners((prev) => [...prev, savedOwner]);
+    setFilteredOwners((prev) => [...prev, savedOwner]);
   };
 
   const handleConfirmDelete = (ownerId) => {
-    console.log('Owner selected for deletion:', ownerId);
     setOwnerToDelete(ownerId);
     setShowDeletePopup(true);
   };
@@ -92,28 +95,19 @@ const Owners = () => {
     if (!ownerToDelete) return;
     
     try {
-      console.log('Attempting to delete owner with ownerId:', ownerToDelete);
-      console.log('Type of ownerId:', typeof ownerToDelete);
+      await axios.delete(`http://192.168.0.152:5000/api/owners/${ownerToDelete}`);
       
-      const response = await axios.delete(`http://192.168.0.152:5000/api/owners/${ownerToDelete}`);
-      console.log('Delete response:', response);
-      
-      // Filter using ownerId since that's what we're deleting by
+      // Remove owner from list
       setOwners((prev) => prev.filter((owner) => owner.ownerId !== ownerToDelete));
+      setFilteredOwners((prev) => prev.filter((owner) => owner.ownerId !== ownerToDelete));
+
       setShowDeletePopup(false);
       setOwnerToDelete(null);
-      console.log('Owner deleted successfully');
     } catch (err) {
       console.error('Failed to delete owner:', err);
-      console.error('Error details:', err.response?.data);
-      console.error('Status:', err.response?.status);
-      
-      // Close the popup even if deletion failed
+      alert('Failed to delete owner. Please try again.');
       setShowDeletePopup(false);
       setOwnerToDelete(null);
-      
-      // Show user-friendly error message
-      alert('Failed to delete owner. Please try again.');
     }
   };
 
@@ -135,7 +129,7 @@ const Owners = () => {
       </tr>
     );
 
-    if (filteredOwners.length === 0) return (
+    if (!Array.isArray(filteredOwners) || filteredOwners.length === 0) return (
       <tr>
         <td colSpan="8" style={{ textAlign: 'center', padding: '20px' }}>
           No owners found
@@ -144,18 +138,18 @@ const Owners = () => {
     );
 
     return filteredOwners.map((owner) => (
-      <tr key={owner._id}>
+      <tr key={owner._id || owner.ownerId}>
         <td>
           <div className="owner-info">
             <img
-              src={`http://192.168.0.152:5000${owner.photo}`}
-              alt={owner.name}
+              src={owner.photo ? `http://192.168.0.152:5000${owner.photo}` : '/assets/default-avatar.png'}
+              alt={owner.name || 'No Name'}
               className="owner-photo"
             />
             
             {owner?.name ? (
-             <Link to={`/owners/${owner.ownerId}`} className="owner-link">
-               {owner.name}
+              <Link to={`/owners/${owner.ownerId}`} className="owner-link">
+                {owner.name}
               </Link>
             ) : (
               'N/A'
@@ -165,7 +159,7 @@ const Owners = () => {
         <td>{owner.address || '-'}</td>
         <td>{owner.email || '-'}</td>
         <td>{owner.contact || '-'}</td>
-<td>{owner.properties ? owner.properties.length : 0}</td>
+        <td>{owner.properties ? owner.properties.length : 0}</td>
         <td>{owner.doj ? new Date(owner.doj).toLocaleDateString() : '-'}</td>
         <td>
           <span className={`status ${owner.status?.toLowerCase()}`}>
@@ -256,18 +250,10 @@ const Owners = () => {
             </div>
 
             <div className="pagination">
-              <a href="#" className="page-link">
-                « Back
-              </a>
-              <a href="#" className="page-link active">
-                1
-              </a>
-              <a href="#" className="page-link">
-                2
-              </a>
-              <a href="#" className="page-link">
-                Next »
-              </a>
+              <a href="#" className="page-link">« Back</a>
+              <a href="#" className="page-link active">1</a>
+              <a href="#" className="page-link">2</a>
+              <a href="#" className="page-link">Next »</a>
             </div>
           </section>
         </main>

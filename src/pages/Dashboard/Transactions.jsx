@@ -88,7 +88,9 @@ const TransactionsTable = () => {
   }
 
   return (
+    
     <div className="card">
+      
       <div className="card-header d-flex justify-content-between align-items-center">
         <h3 className="card-title">Latest Transactions</h3>
         <MonthDropdown onChange={handleMonthChange} />

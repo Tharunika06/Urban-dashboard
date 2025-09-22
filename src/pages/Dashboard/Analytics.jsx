@@ -35,8 +35,8 @@ const Analytics = () => {
   return (
     <>
       {/* First Row */}
-      <div className="row g-4">
-        <div className="col-md-6">
+      <div className="file" style={{gap:'10px', display:'flex', flexWrap:'wrap', marginBottom:'10px'}}>
+        <div className="fold" style={{ width: '49%' ,height:'20%'}}>
           <DashboardStatCard
             title="No. Of Properties"
             value={stats.properties.toLocaleString()}
@@ -47,7 +47,7 @@ const Analytics = () => {
             iconBg="#ebf3fe"
           />
         </div>
-        <div className="col-md-6">
+        <div className="col-md-6" style={{ width: '49%' ,height:'20%'}}>
           <DashboardStatCard
             title="Total Owners"
             value={stats.owners.toLocaleString()}
@@ -61,8 +61,8 @@ const Analytics = () => {
       </div>
 
       {/* Second Row */}
-      <div className="row g-4 mt-0">
-        <div className="col-md-6">
+      <div className="file" style={{gap:'10px', display:'flex', flexWrap:'wrap', marginBottom:'10px'}}>
+        <div className="col-md-6" style={{ width: '49%' ,height:'20%'}}>
           <DashboardStatCard
             title="Customers"
             value={stats.customers.toLocaleString()}
@@ -73,7 +73,7 @@ const Analytics = () => {
             iconBg="#fff5ec"
           />
         </div>
-        <div className="col-md-6">
+        <div className="col-md-6" style={{ width: '49%' ,height:'20%'}}>
           <DashboardStatCard
             title="Revenue"
             value={`$${(stats.revenue / 1000000).toFixed(1)}M`}

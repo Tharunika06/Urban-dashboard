@@ -3,6 +3,239 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 
+// Success Popup Component
+const SuccessPopup = ({ isOpen, onClose, title = "Owner Added Successfully" }) => {
+  if (!isOpen) return null;
+
+  return (
+    <div style={{
+      position: 'fixed',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      backgroundColor: 'rgba(0, 0, 0, 0.5)',
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      zIndex: 10000
+    }}>
+      <div style={{
+        backgroundColor: 'white',
+        borderRadius: '12px',
+        padding: '40px 60px',
+        textAlign: 'center',
+        boxShadow: '0 10px 40px rgba(0, 0, 0, 0.2)',
+        minWidth: '400px',
+        position: 'relative',
+        animation: 'slideIn 0.3s ease-out'
+      }}>
+        {/* Close button */}
+        <button
+          onClick={onClose}
+          style={{
+            position: 'absolute',
+            top: '15px',
+            right: '20px',
+            background: 'none',
+            border: 'none',
+            fontSize: '24px',
+            color: '#666',
+            cursor: 'pointer',
+            padding: '5px'
+          }}
+        >
+          ×
+        </button>
+
+        {/* Success Icon */}
+        <div style={{
+          width: '60px',
+          height: '60px',
+          borderRadius: '50%',
+          backgroundColor: '#4CAF50',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          margin: '0 auto 20px auto'
+        }}>
+          <span style={{
+            fontSize: '30px',
+            color: 'white'
+          }}>✓</span>
+        </div>
+
+        {/* Success message */}
+        <h2 style={{
+          fontSize: '28px',
+          fontWeight: '600',
+          color: '#333',
+          margin: '0 0 30px 0',
+          lineHeight: '1.2'
+        }}>
+          {title}
+        </h2>
+
+        {/* OK Button */}
+        <button
+          onClick={onClose}
+          style={{
+            backgroundColor: '#4285f4',
+            color: 'white',
+            border: 'none',
+            borderRadius: '8px',
+            padding: '12px 40px',
+            fontSize: '16px',
+            fontWeight: '500',
+            cursor: 'pointer',
+            minWidth: '120px',
+            transition: 'background-color 0.2s ease'
+          }}
+          onMouseOver={(e) => e.target.style.backgroundColor = '#3367d6'}
+          onMouseOut={(e) => e.target.style.backgroundColor = '#4285f4'}
+        >
+          OK
+        </button>
+
+        <style jsx>{`
+          @keyframes slideIn {
+            from {
+              opacity: 0;
+              transform: scale(0.9) translateY(-20px);
+            }
+            to {
+              opacity: 1;
+              transform: scale(1) translateY(0);
+            }
+          }
+        `}</style>
+      </div>
+    </div>
+  );
+};
+
+// Error Popup Component
+const ErrorPopup = ({ isOpen, onClose, title = "Error", message = "Something went wrong!" }) => {
+  if (!isOpen) return null;
+
+  return (
+    <div style={{
+      position: 'fixed',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      backgroundColor: 'rgba(0, 0, 0, 0.5)',
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      zIndex: 10000
+    }}>
+      <div style={{
+        backgroundColor: 'white',
+        borderRadius: '12px',
+        padding: '40px 60px',
+        textAlign: 'center',
+        boxShadow: '0 10px 40px rgba(0, 0, 0, 0.2)',
+        minWidth: '400px',
+        maxWidth: '500px',
+        position: 'relative',
+        animation: 'slideIn 0.3s ease-out'
+      }}>
+        {/* Close button */}
+        <button
+          onClick={onClose}
+          style={{
+            position: 'absolute',
+            top: '15px',
+            right: '20px',
+            background: 'none',
+            border: 'none',
+            fontSize: '24px',
+            color: '#666',
+            cursor: 'pointer',
+            padding: '5px'
+          }}
+        >
+          ×
+        </button>
+
+        {/* Error Icon */}
+        <div style={{
+          width: '60px',
+          height: '60px',
+          borderRadius: '50%',
+          backgroundColor: '#f44336',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          margin: '0 auto 20px auto'
+        }}>
+          <span style={{
+            fontSize: '30px',
+            color: 'white'
+          }}>✕</span>
+        </div>
+
+        {/* Error title */}
+        <h2 style={{
+          fontSize: '28px',
+          fontWeight: '600',
+          color: '#333',
+          margin: '0 0 15px 0',
+          lineHeight: '1.2'
+        }}>
+          {title}
+        </h2>
+
+        {/* Error message */}
+        <p style={{
+          fontSize: '16px',
+          color: '#666',
+          margin: '0 0 30px 0',
+          lineHeight: '1.4'
+        }}>
+          {message}
+        </p>
+
+        {/* OK Button */}
+        <button
+          onClick={onClose}
+          style={{
+            backgroundColor: '#f44336',
+            color: 'white',
+            border: 'none',
+            borderRadius: '8px',
+            padding: '12px 40px',
+            fontSize: '16px',
+            fontWeight: '500',
+            cursor: 'pointer',
+            minWidth: '120px',
+            transition: 'background-color 0.2s ease'
+          }}
+          onMouseOver={(e) => e.target.style.backgroundColor = '#d32f2f'}
+          onMouseOut={(e) => e.target.style.backgroundColor = '#f44336'}
+        >
+          OK
+        </button>
+
+        <style jsx>{`
+          @keyframes slideIn {
+            from {
+              opacity: 0;
+              transform: scale(0.9) translateY(-20px);
+            }
+            to {
+              opacity: 1;
+              transform: scale(1) translateY(0);
+            }
+          }
+        `}</style>
+      </div>
+    </div>
+  );
+};
+
 const AddOwnerModal = ({ isOpen, onClose, onSave }) => {
   const initialForm = {
     // Step 1
@@ -28,6 +261,9 @@ const AddOwnerModal = ({ isOpen, onClose, onSave }) => {
   const [ownerPhotoName, setOwnerPhotoName] = useState('No file chosen');
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
+  const [showSuccessPopup, setShowSuccessPopup] = useState(false);
+  const [showErrorPopup, setShowErrorPopup] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -64,17 +300,35 @@ const AddOwnerModal = ({ isOpen, onClose, onSave }) => {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
 
-      alert('Owner added successfully!');
+      setShowSuccessPopup(true);
       onSave(response.data);
-      onClose();
 
-      setForm(initialForm);
-      setOwnerPhoto(null);
-      setOwnerPhotoName('No file chosen');
-      setStep(1);
     } catch (error) {
       console.error('Error saving owner:', error.response ? error.response.data : error.message);
-      alert('Failed to save owner. Check console for details.');
+      
+      // Set error message based on the error response
+      let errorMsg = 'Failed to save owner. Please try again.';
+      
+      if (error.response) {
+        // Server responded with error status
+        if (error.response.data && error.response.data.message) {
+          errorMsg = error.response.data.message;
+        } else if (error.response.data && typeof error.response.data === 'string') {
+          errorMsg = error.response.data;
+        } else {
+          errorMsg = `Server Error: ${error.response.status}`;
+        }
+      } else if (error.request) {
+        // Network error
+        errorMsg = 'Network error. Please check your connection and try again.';
+      } else {
+        // Other error
+        errorMsg = error.message || 'An unexpected error occurred.';
+      }
+      
+      setErrorMessage(errorMsg);
+      setShowErrorPopup(true);
+      
     } finally {
       setLoading(false);
     }
@@ -204,6 +458,29 @@ const AddOwnerModal = ({ isOpen, onClose, onSave }) => {
             )}
           </div>
         </form>
+
+        {/* Success Popup */}
+        <SuccessPopup 
+          isOpen={showSuccessPopup}
+          onClose={() => {
+            setShowSuccessPopup(false);
+            // Reset form
+            setForm(initialForm);
+            setOwnerPhoto(null);
+            setOwnerPhotoName('No file chosen');
+            setStep(1);
+            onClose(); // Close the AddOwnerModal
+          }}
+          title="Owner Added Successfully"
+        />
+
+        {/* Error Popup */}
+        <ErrorPopup 
+          isOpen={showErrorPopup}
+          onClose={() => setShowErrorPopup(false)}
+          title="Failed to Save Owner"
+          message={errorMessage}
+        />
       </div>
     </div>
   );

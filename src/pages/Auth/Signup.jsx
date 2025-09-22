@@ -52,14 +52,14 @@ const Signup = () => {
   };
 
   return (
-    <div className="container-fluid p-0">
-      <div className="row g-0 min-vh-100">
+    <div className="container-fluid">
+      <div className="row g-0">
         {/* Form Column */}
-        <div className="col-lg-5 col-md-8 col-12 mx-auto d-flex align-items-center justify-content-center">
-          <div className="form-box w-100">
-            <img src={logo} alt="Urban Logo" className="logo mb-4 mx-auto d-block" />
-            <h2 className="title text-center mb-2">Create Your Account</h2>
-            <p className="subtitle text-center mb-4">
+        <div className="col-lg-5 col-md-12 col-12">
+          <div className="form-box">
+            <img src={logo} alt="Urban Logo" className="logo mx-auto d-block" />
+            <h2 className="title">Create Your Account</h2>
+            <p className="subtitle">
               Sign up now to gain access to member-only discounts and personalized recommendations.
             </p>
 
@@ -68,7 +68,7 @@ const Signup = () => {
                 <img src={userIcon} alt="Email Icon" className="input-icon" />
                 <input
                   type="email"
-                  className="form-control input ps-5"
+                  className="form-control input"
                   placeholder="Email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
@@ -80,7 +80,7 @@ const Signup = () => {
                 <img src={lockIcon} alt="Lock Icon" className="input-icon" />
                 <input
                   type={showPassword ? "text" : "password"}
-                  className="form-control input ps-5 pe-5"
+                  className="form-control input"
                   placeholder="Password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
@@ -97,7 +97,7 @@ const Signup = () => {
 
               {error && <div className="alert alert-danger">{error}</div>}
 
-              <div className="form-check mb-3">
+              <div className="form-check mb-4">
                 <input
                   type="checkbox"
                   className="form-check-input"
@@ -105,7 +105,7 @@ const Signup = () => {
                   checked={agreeTerms}
                   onChange={() => setAgreeTerms(!agreeTerms)}
                 />
-                <label htmlFor="agreeTerms" className="form-check-label ms-2">
+                <label htmlFor="agreeTerms" className="form-check-label">
                   By clicking the Register button, you agree to the public offer
                 </label>
               </div>
@@ -114,30 +114,30 @@ const Signup = () => {
                 Sign Up
               </button>
 
-              <div className="divider d-flex align-items-center my-3">
-                <hr className="flex-grow-1" />
-                <span className="mx-2 small text-muted">Or continue with</span>
-                <hr className="flex-grow-1" />
+              <div className="divider d-flex align-items-center">
+                <hr />
+                <span>Or continue with</span>
+                <hr />
               </div>
 
               <button type="button" className="btn google-button w-100 mb-3">
-                <img src={googleIcon} alt="Google" className="me-2" />
+                <img src={googleIcon} alt="Google" />
                 Continue With Google
               </button>
 
-              <p className="signup text-center small">
+              <p className="signup">
                 Already Have an Account?{" "}
-                <Link to="/login" className="fw-medium text-primary">
-                  Log In
-                </Link>
+                <Link to="/login">Log In</Link>
               </p>
             </form>
           </div>
         </div>
 
         {/* Image Column */}
-        <div className="col-lg-7 d-none d-lg-flex align-items-center justify-content-center signup-right-pane p-5">
-          <img src="/assets/signup-bg.png" alt="Signup Visual" className="img-fluid" />
+        <div className="col-lg-7 d-none d-lg-flex">
+          <div className="signup-right-pane">
+            <img src="/assets/signup-bg.png" alt="Signup Visual" />
+          </div>
         </div>
       </div>
     </div>

@@ -49,6 +49,7 @@ const Header = ({ title }) => {
     : getBreadcrumbsFromPath(location.pathname);
 
   useEffect(() => {
+    // Load initial profile data
     const loadProfile = () => {
       const savedProfile = localStorage.getItem("adminProfile");
       if (savedProfile) {
@@ -63,10 +64,27 @@ const Header = ({ title }) => {
       }
     };
 
+    // Initial load
     loadProfile();
-    window.addEventListener("storage", loadProfile); // 🔔 auto-update when profile saved
 
-    return () => window.removeEventListener("storage", loadProfile);
+    // Listen for profile updates from GeneralSettings
+    const handleProfileUpdate = (event) => {
+      const { name, photo } = event.detail;
+      setAdminName(name || "Guest");
+      setProfilePhoto(photo || "/assets/placeholder.png");
+    };
+
+    // Add event listeners
+    window.addEventListener("profileUpdated", handleProfileUpdate);
+    
+    // Keep the storage event listener as fallback for cross-tab updates
+    window.addEventListener("storage", loadProfile);
+
+    // Cleanup
+    return () => {
+      window.removeEventListener("profileUpdated", handleProfileUpdate);
+      window.removeEventListener("storage", loadProfile);
+    };
   }, []);
 
   const handleLogout = () => {
