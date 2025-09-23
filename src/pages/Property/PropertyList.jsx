@@ -83,6 +83,28 @@ const PropertyList = ({ properties, handleDelete }) => {
     }
   };
 
+  // NEW: Function to get the correct image source
+  const getImageSrc = (photo) => {
+    // If photo exists and is a base64 data URL, use it directly
+    if (photo && photo.startsWith('data:image/')) {
+      return photo;
+    }
+    
+    // If photo is a file path (for backward compatibility)
+    if (photo && photo.startsWith('/uploads/')) {
+      return `http://192.168.0.152:5000${photo}`;
+    }
+    
+    // Fallback to placeholder image
+    return '/assets/placeholder-property.png'; // Make sure you have this placeholder image
+  };
+
+  // NEW: Function to handle image loading errors
+  const handleImageError = (e) => {
+    e.target.src = '/assets/placeholder-property.png'; // Fallback image
+    console.warn('Failed to load property image');
+  };
+
   return (
     <>
       <div className="table-container">
@@ -118,9 +140,17 @@ const PropertyList = ({ properties, handleDelete }) => {
                   <Link to={`/property/${prop._id}`}>
                     <div className="prop-name-cell">
                       <img
-                        src={`http://192.168.0.152:5000${prop.photo}`}
-                        alt={prop.name}
+                        src={getImageSrc(prop.photo)}
+                        alt={prop.name || 'Property'}
                         className="prop-photo"
+                        onError={handleImageError}
+                        style={{
+                          width: '50px',
+                          height: '50px',
+                          objectFit: 'cover',
+                          borderRadius: '4px',
+                          marginRight: '10px'
+                        }}
                       />
                       <span>{prop.name}</span>
                     </div>
@@ -138,31 +168,30 @@ const PropertyList = ({ properties, handleDelete }) => {
                 </td>
 
                 <td>
-                  <Link to={`/property/${prop._id}`}>{prop.size}</Link>
+                  <Link to={`/property/${prop._id}`}>{prop.size || 'N/A'}</Link>
                 </td>
 
                 <td>
-                  <Link to={`/property/${prop._id}`}>{prop.type}</Link>
+                  <Link to={`/property/${prop._id}`}>{prop.type || 'N/A'}</Link>
                 </td>
 
                 <td>
                   <Link to={`/property/${prop._id}`}>
                     <span className={`status-badge ${getStatusClass(prop.status)}`}>
-                      {prop.status}
+                      {prop.status || 'N/A'}
                     </span>
                   </Link>
                 </td>
 
                 <td>
-                  <Link to={`/property/${prop._id}`}>{prop.bedrooms}</Link>
+                  <Link to={`/property/${prop._id}`}>{prop.bedrooms || 'N/A'}</Link>
                 </td>
 
                 <td>
-                  <Link to={`/property/${prop._id}`}>{prop.city || prop.address}</Link>
+                  <Link to={`/property/${prop._id}`}>{prop.city || prop.address || 'N/A'}</Link>
                 </td>
                 
                 <td>
-                  {/* The Link wrapper is kept, and the result of formatPrice (string or JSX) is rendered inside it */}
                   <Link to={`/property/${prop._id}`}>{formatPrice(prop)}</Link>
                 </td>
 
@@ -170,12 +199,12 @@ const PropertyList = ({ properties, handleDelete }) => {
                   <Link to={`/property/${prop._id}`}>
                     <img src="/assets/view-icon.png" alt="View" />
                   </Link>
-                 <img
-    src="/assets/delete-icon.png"
-    alt="Delete"
-    onClick={() => handleDelete(prop._id)}   // ✅ now uses parent modal flow
-    style={{ cursor: 'pointer' }}
-  />
+                  <img
+                    src="/assets/delete-icon.png"
+                    alt="Delete"
+                    onClick={() => handleDelete(prop._id)}
+                    style={{ cursor: 'pointer' }}
+                  />
                   <img src="/assets/edit-icon.png" alt="Edit" />
                 </td>
               </tr>
@@ -186,13 +215,14 @@ const PropertyList = ({ properties, handleDelete }) => {
 
       {/* Pagination */}
       <div className="pagination">
-<button
-            className="page-link"
-            onClick={() => handlePageChange(currentPage - 1)}
-            disabled={currentPage === 1}
-          >
-            « Back
-          </button>        {Array.from({ length: totalPages }, (_, index) => (
+        <button
+          className="page-link"
+          onClick={() => handlePageChange(currentPage - 1)}
+          disabled={currentPage === 1}
+        >
+          « Back
+        </button>
+        {Array.from({ length: totalPages }, (_, index) => (
           <button
             key={index + 1}
             className={`page-link ${currentPage === index + 1 ? 'active' : ''}`}
@@ -201,13 +231,14 @@ const PropertyList = ({ properties, handleDelete }) => {
             {index + 1}
           </button>
         ))}
-<button
-            className="page-link"
-            onClick={() => handlePageChange(currentPage + 1)}
-            disabled={currentPage === totalPages}
-          >
-            Next »
-          </button>      </div>
+        <button
+          className="page-link"
+          onClick={() => handlePageChange(currentPage + 1)}
+          disabled={currentPage === totalPages}
+        >
+          Next »
+        </button>
+      </div>
     </>
   );
 };

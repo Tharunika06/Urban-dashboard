@@ -1,8 +1,9 @@
 // src/pages/Property/PropertyGrid.jsx
 import React from 'react';
 import { Link } from 'react-router-dom';
-import '../../styles/Property.css'; // Adjust styles here
+import '../../styles/Property.css';
 
+// ✅ Status Badge
 const getStatusClass = (status) => {
   switch (status?.toLowerCase()) {
     case 'rent':
@@ -18,7 +19,7 @@ const getStatusClass = (status) => {
   }
 };
 
-// ✅ Moved from PropertyDetail - formats price for list/grid view
+// ✅ Price Formatter
 const formatPriceForGrid = (prop) => {
   if (!prop) return 'N/A';
   const status = prop.status?.toLowerCase();
@@ -27,10 +28,10 @@ const formatPriceForGrid = (prop) => {
     return (
       <div className="grid-price-dual">
         <span className="grid-price-rent">
-         Rent: ${Number(prop.rentPrice).toLocaleString()} /mo
-        </span><br></br>
+          Rent: ${Number(prop.rentPrice).toLocaleString()} /mo
+        </span><br />
         <span className="grid-price-sale">
-         Sale: ${Number(prop.salePrice).toLocaleString()}
+          Sale: ${Number(prop.salePrice).toLocaleString()}
         </span>
       </div>
     );
@@ -51,6 +52,23 @@ const formatPriceForGrid = (prop) => {
   return 'N/A';
 };
 
+// ✅ Handle Image Sources (same as PropertyList)
+const getImageSrc = (photo) => {
+  if (photo && photo.startsWith('data:image/')) {
+    return photo;
+  }
+  if (photo && photo.startsWith('/uploads/')) {
+    return `http://192.168.0.152:5000${photo}`;
+  }
+  return '/assets/placeholder-property.png';
+};
+
+// ✅ Fallback Image Handler
+const handleImageError = (e) => {
+  e.target.src = '/assets/placeholder-property.png';
+  console.warn('Failed to load property image');
+};
+
 const PropertyGrid = ({ properties }) => {
   return (
     <div className="property-grid">
@@ -59,9 +77,10 @@ const PropertyGrid = ({ properties }) => {
           {/* Image */}
           <div className="property-card-image">
             <img
-              src={`http://192.168.0.152:5000${prop.photo}`}
-              alt={prop.name}
+              src={getImageSrc(prop.photo)}
+              alt={prop.name || 'Property'}
               className="property-image"
+              onError={handleImageError}
             />
           </div>
 
@@ -76,7 +95,7 @@ const PropertyGrid = ({ properties }) => {
                 />
                 <div>
                   <h4 className="property-title">{prop.name}</h4>
-                  <p className="property-address">{prop.address}</p>
+                  <p className="property-address">{prop.address || 'N/A'}</p>
                 </div>
               </div>
               <span className={`badge ${getStatusClass(prop.status)}`}>
@@ -87,7 +106,6 @@ const PropertyGrid = ({ properties }) => {
                   : prop.status === 'both'
                   ? 'For Rent & Sale'
                   : prop.status || 'Unknown'}
-
               </span>
             </div>
 
@@ -95,15 +113,15 @@ const PropertyGrid = ({ properties }) => {
             <div className="property-stats">
               <div className="stat-item">
                 <img src="/assets/bed-icon.png" alt="bed" />
-                {prop.bedrooms} Bedroom
+                {prop.bedrooms || 0} Bedroom
               </div>
               <div className="stat-item">
                 <img src="/assets/bath-icon.png" alt="bath" />
-{prop.bath !== undefined ? prop.bath : 0} Bathroom
+                {prop.bath !== undefined ? prop.bath : 0} Bathroom
               </div>
               <div className="stat-item">
                 <img src="/assets/size-icon.png" alt="area" />
-                {prop.size}
+                {prop.size || 'N/A'}
               </div>
               <div className="stat-item">
                 <img src="/assets/floor-icon.png" alt="floor" />
