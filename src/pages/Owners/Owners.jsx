@@ -34,7 +34,7 @@ const Owners = () => {
       setIsLoading(true);
       const res = await axios.get('http://192.168.0.152:5000/api/owners');
 
-      // ✅ Your backend sends { owners: [...], count, includePhotos }
+      // Your backend sends { owners: [...], count, includePhotos }
       const ownersArray = Array.isArray(res.data.owners) ? res.data.owners : [];
       setOwners(ownersArray);
       setFilteredOwners(ownersArray);
@@ -44,6 +44,28 @@ const Owners = () => {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  // NEW: Function to get the correct owner photo source
+  const getOwnerPhotoSrc = (photo) => {
+    // If photo exists and is a base64 data URL, use it directly
+    if (photo && photo.startsWith('data:image/')) {
+      return photo;
+    }
+    
+    // If photo is a file path (for backward compatibility)
+    if (photo && photo.startsWith('/uploads/')) {
+      return `http://192.168.0.152:5000${photo}`;
+    }
+    
+    // Fallback to placeholder image
+    return '/assets/default-avatar.png';
+  };
+
+  // NEW: Function to handle image loading errors
+  const handleImageError = (e) => {
+    e.target.src = '/assets/default-avatar.png';
+    console.warn('Failed to load owner photo, using fallback');
   };
 
   // Filter owners based on search term and selected month
@@ -81,7 +103,7 @@ const Owners = () => {
   };
 
   const handleSaveOwner = (savedOwner) => {
-    // ✅ Add new owner to both owners and filteredOwners
+    // Add new owner to both owners and filteredOwners
     setOwners((prev) => [...prev, savedOwner]);
     setFilteredOwners((prev) => [...prev, savedOwner]);
   };
@@ -142,9 +164,18 @@ const Owners = () => {
         <td>
           <div className="owner-info">
             <img
-              src={owner.photo ? `http://192.168.0.152:5000${owner.photo}` : '/assets/default-avatar.png'}
+              src={getOwnerPhotoSrc(owner.photo)}
               alt={owner.name || 'No Name'}
               className="owner-photo"
+              onError={handleImageError}
+              style={{
+                width: '50px',
+                height: '50px',
+                objectFit: 'cover',
+                borderRadius: '50%',
+                marginRight: '12px',
+                border: '2px solid #e0e0e0'
+              }}
             />
             
             {owner?.name ? (
@@ -159,7 +190,7 @@ const Owners = () => {
         <td>{owner.address || '-'}</td>
         <td>{owner.email || '-'}</td>
         <td>{owner.contact || '-'}</td>
-        <td>{owner.properties ? owner.properties.length : 0}</td>
+        <td>{owner.properties ? owner.properties.length : (owner.propertyOwned || 0)}</td>
         <td>{owner.doj ? new Date(owner.doj).toLocaleDateString() : '-'}</td>
         <td>
           <span className={`status ${owner.status?.toLowerCase()}`}>

@@ -28,6 +28,38 @@ const PropertyDetail = () => {
     fetchProperty();
   }, [propertyId]);
 
+  // NEW: Function to get the correct image source
+  const getImageSrc = (photo) => {
+    // If photo exists and is a base64 data URL, use it directly
+    if (photo && photo.startsWith('data:image/')) {
+      return photo;
+    }
+    
+    // If photo is a file path (for backward compatibility)
+    if (photo && photo.startsWith('/uploads/')) {
+      return `http://192.168.0.152:5000${photo}`;
+    }
+    
+    // Fallback to placeholder image
+    return '/assets/default-house.jpg';
+  };
+
+  // NEW: Function to get owner photo source
+  const getOwnerPhotoSrc = (photo) => {
+    // If photo exists and is a base64 data URL, use it directly
+    if (photo && photo.startsWith('data:image/')) {
+      return photo;
+    }
+    
+    // If photo is a file path (for backward compatibility)
+    if (photo && photo.startsWith('/uploads/')) {
+      return `http://192.168.0.152:5000${photo}`;
+    }
+    
+    // Fallback to placeholder image
+    return '/assets/placeholder.png';
+  };
+
   // Helper function to format the price for the detail view
   const formatPriceForDetail = () => {
     if (!property) return 'N/A';
@@ -73,29 +105,30 @@ const PropertyDetail = () => {
     }
   }
 
-  // Helper function to get owner information
+  // UPDATED: Helper function to get owner information with base64 support
   const getOwnerInfo = () => {
     // First try to get from ownerDetails (populated by backend)
     if (property.ownerDetails) {
       return {
-        photo: property.ownerDetails.photo 
-          ? `http://192.168.0.152:5000${property.ownerDetails.photo}` 
-          : '/assets/placeholder.png',
+        photo: getOwnerPhotoSrc(property.ownerDetails.photo),
         name: property.ownerDetails.name || 'Owner Not Found',
-        // email: property.ownerDetails.email,
         phone: property.ownerDetails.phone
       };
     }
     
     // Fallback to property's stored owner data
     return {
-      photo: property.ownerPhoto 
-        ? `http://192.168.0.152:5000${property.ownerPhoto}` 
-        : '/assets/placeholder.png',
+      photo: getOwnerPhotoSrc(property.ownerPhoto),
       name: property.ownerName || 'Owner Not Found',
       email: null,
       phone: null
     };
+  };
+
+  // Function to handle image loading errors
+  const handleImageError = (e, fallbackSrc) => {
+    e.target.src = fallbackSrc;
+    console.warn('Failed to load image, using fallback');
   };
 
   if (loading) return <div className="loading-state">Loading...</div>;
@@ -120,15 +153,16 @@ const PropertyDetail = () => {
                   src={ownerInfo.photo}
                   alt={ownerInfo.name}
                   className="agent-avatar"
-                  onError={(e) => {
-                    e.target.src = '/assets/placeholder.png';
+                  onError={(e) => handleImageError(e, '/assets/placeholder.png')}
+                  style={{
+                    width: '80px',
+                    height: '80px',
+                    objectFit: 'cover',
+                    borderRadius: '50%'
                   }}
                 />
                 <h4>{ownerInfo.name}</h4>
                 <p className="agent-title">[Owner]</p>
-                {/* {ownerInfo.email && (
-                  <p className="owner-contact">📧 {ownerInfo.email}</p>
-                )} */}
                 {ownerInfo.phone && (
                   <p className="owner-contact">📞 {ownerInfo.phone}</p>
                 )}
@@ -160,11 +194,15 @@ const PropertyDetail = () => {
             <div className="detail-right-col">
               <div className="prop-card">
                 <img
-                  src={property.photo ? `http://192.168.0.152:5000${property.photo}` : '/assets/default-house.jpg'}
-                  alt={property.name}
+                  src={getImageSrc(property.photo)}
+                  alt={property.name || 'Property'}
                   className="detail-hero-img"
-                  onError={(e) => {
-                    e.target.src = '/assets/default-house.jpg';
+                  onError={(e) => handleImageError(e, '/assets/default-house.jpg')}
+                  style={{
+                    width: '100%',
+                    height: '300px',
+                    objectFit: 'cover',
+                    borderRadius: '8px'
                   }}
                 />
                 
@@ -192,17 +230,17 @@ const PropertyDetail = () => {
                  
                   <div className="stat-pill">
                     <img src="/assets/bed-icon.png" alt="Beds" />
-                    <span>{property.bedrooms} Beds</span>
+                    <span>{property.bedrooms || 0} Beds</span>
                   </div>
 
                   <div className="stat-pill">
                     <img src="/assets/bath-icon.png" alt="Bath" />
-                    <span>{property.bath} Bath</span>
+                    <span>{property.bath || 0} Bath</span>
                   </div>
 
                   <div className="stat-pill">
                     <img src="/assets/size-icon.png" alt="Size" />
-                    <span>{property.size || '-'}sq ft</span>
+                    <span>{property.size || '-'} sq ft</span>
                   </div>
 
                   <div className="stat-pill">

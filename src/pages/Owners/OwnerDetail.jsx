@@ -18,6 +18,44 @@ const OwnerDetail = () => {
   const [showPropertyModal, setShowPropertyModal] = useState(false);
   const [loadingProperties, setLoadingProperties] = useState(false);
 
+  // NEW: Function to get the correct owner photo source
+  const getOwnerPhotoSrc = (photo) => {
+    // If photo exists and is a base64 data URL, use it directly
+    if (photo && photo.startsWith('data:image/')) {
+      return photo;
+    }
+    
+    // If photo is a file path (for backward compatibility)
+    if (photo && photo.startsWith('/uploads/')) {
+      return `${API_BASE_URL}${photo}`;
+    }
+    
+    // Fallback to placeholder image
+    return '/assets/default-avatar.png';
+  };
+
+  // NEW: Function to get the correct property photo source
+  const getPropertyPhotoSrc = (photo) => {
+    // If photo exists and is a base64 data URL, use it directly
+    if (photo && photo.startsWith('data:image/')) {
+      return photo;
+    }
+    
+    // If photo is a file path (for backward compatibility)
+    if (photo && photo.startsWith('/uploads/')) {
+      return `${API_BASE_URL}${photo}`;
+    }
+    
+    // Fallback to placeholder image
+    return '/assets/default-property.png';
+  };
+
+  // NEW: Function to handle image loading errors
+  const handleImageError = (e, fallbackSrc) => {
+    e.target.src = fallbackSrc;
+    console.warn('Failed to load image, using fallback');
+  };
+
   // Fetch owner details + owner properties on mount
   useEffect(() => {
     const fetchOwnerDetails = async () => {
@@ -44,7 +82,7 @@ const OwnerDetail = () => {
         const res = await fetch(`${API_BASE_URL}/api/property/owner/${ownerId}`);
         if (!res.ok) throw new Error("Failed to fetch owner properties");
         const data = await res.json();
-        setSelectedProperties(data);   // ✅ load properties into carousel
+        setSelectedProperties(data);   // load properties into carousel
         setAvailableProperties(data);  // also store for modal
       } catch (err) {
         console.error("Error fetching owner properties:", err);
@@ -61,7 +99,7 @@ const OwnerDetail = () => {
   const fetchAvailableProperties = async () => {
     setLoadingProperties(true);
     try {
-      const response = await fetch(`${API_BASE_URL}/api/properties/owner/${ownerId}`);
+      const response = await fetch(`${API_BASE_URL}/api/property/owner/${ownerId}`);
       if (!response.ok) throw new Error('Failed to fetch properties');
       const properties = await response.json();
       setAvailableProperties(properties);
@@ -131,7 +169,18 @@ const OwnerDetail = () => {
               {/* LEFT CARD */}
               <div className="owner-main-info-card">
                 <div className="owner-header">
-                  <img src={owner.photo ? `${API_BASE_URL}${owner.photo}` : '/assets/default-avatar.png'} alt={owner.name} className="owner-photo-large" />
+                  <img 
+                    src={getOwnerPhotoSrc(owner.photo)} 
+                    alt={owner.name} 
+                    className="owner-photo-large"
+                    onError={(e) => handleImageError(e, '/assets/default-avatar.png')}
+                    style={{
+                      width: '100px',
+                      height: '100px',
+                      objectFit: 'cover',
+                      borderRadius: '50%'
+                    }}
+                  />
                   <div>
                     <h2>{owner.name}</h2>
                     <p className="email">{owner.email}</p>
@@ -213,7 +262,18 @@ const OwnerDetail = () => {
                 <div className="card owner-badge">
                   <div className="owner-badge-top">
                     <div className="owner-info">
-                      <img src={owner.photo ? `${API_BASE_URL}${owner.photo}` : '/assets/default-avatar.png'} alt={owner.name} className="owner-avatar"/>
+                      <img 
+                        src={getOwnerPhotoSrc(owner.photo)} 
+                        alt={owner.name} 
+                        className="owner-avatar"
+                        onError={(e) => handleImageError(e, '/assets/default-avatar.png')}
+                        style={{
+                          width: '60px',
+                          height: '60px',
+                          objectFit: 'cover',
+                          borderRadius: '50%'
+                        }}
+                      />
                       <div className="owner-name-rank">
                         <strong>{owner.name}</strong>
                         <span><br />#1 Medal</span>
@@ -227,7 +287,6 @@ const OwnerDetail = () => {
                 <div className="property-carousel-card">
                   <div className="carousel-header">
                     <h3>Property Photos</h3>
-                 
                   </div>
                   {selectedProperties.length > 0 ? (
                     <div className="carousel-wrapper">
@@ -235,17 +294,17 @@ const OwnerDetail = () => {
                       <div className="carousel-track" id="property-carousel">
                         {selectedProperties.map((prop) => (
                           <div key={prop._id} className="carousel-slide single-slide">
-                            {/* <button 
-                              className="remove-property-btn"
-                              onClick={() => handleRemoveProperty(prop._id)}
-                              title="Remove Property"
-                            >
-                              ×
-                            </button> */}
                             <img 
-                              src={prop.photo ? `${API_BASE_URL}${prop.photo}` : '/assets/default-property.png'} 
+                              src={getPropertyPhotoSrc(prop.photo)} 
                               alt={prop.name} 
-                              className="carousel-image" 
+                              className="carousel-image"
+                              onError={(e) => handleImageError(e, '/assets/default-property.png')}
+                              style={{
+                                width: '100%',
+                                height: '200px',
+                                objectFit: 'cover',
+                                borderRadius: '8px'
+                              }}
                             />
                             <div className="photo-caption-overlay">
                               <div className="icon-bg"><img src="/assets/home-icon.png" alt="icon" /></div>
@@ -302,9 +361,16 @@ const OwnerDetail = () => {
                       onClick={() => handlePropertySelect(property)}
                     >
                       <img 
-                        src={property.photo ? `${API_BASE_URL}${property.photo}` : '/assets/default-property.png'} 
+                        src={getPropertyPhotoSrc(property.photo)} 
                         alt={property.name}
                         className="property-thumbnail"
+                        onError={(e) => handleImageError(e, '/assets/default-property.png')}
+                        style={{
+                          width: '100%',
+                          height: '150px',
+                          objectFit: 'cover',
+                          borderRadius: '8px 8px 0 0'
+                        }}
                       />
                       <div className="property-info">
                         <h4>{property.name}</h4>
