@@ -24,7 +24,7 @@ const Customers = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Popup state management (similar to Owners component)
+  // Popup state management
   const [showDeletePopup, setShowDeletePopup] = useState(false);
   const [customerToDelete, setCustomerToDelete] = useState(null);
 
@@ -34,6 +34,7 @@ const Customers = () => {
         const response = await fetch('http://192.168.0.152:5000/api/payment/transactions');
         if (!response.ok) throw new Error('Network response was not ok');
         const data = await response.json();
+        console.log('Fetched transactions:', data);
         setAllTransactions(data);
       } catch (err) {
         setError(err.message);
@@ -59,34 +60,41 @@ const Customers = () => {
 
     const customerMap = new Map();
     transactionsToProcess.forEach(tx => {
-      customerMap.set(tx.customerPhone, {
-        id: tx.customerPhone, // use phone as id
-        name: tx.customerName || 'N/A',
-        phone: tx.customerPhone || 'N/A',
-        photo: tx.customerPhoto || '/assets/placeholder.png',
-        email: tx.customerEmail || 'N/A',
-        address: tx.customerAddress || 'N/A',
-        interestedProperties: tx.property?.name || 'N/A',
-        proptype: tx.property?.type || 'Apartment',
-        lastContacted: tx.createdAt || null,
-        status:'Active',
-        stats: {
-          viewProperty: tx.stats?.viewProperty || 0,
-          ownProperty: tx.stats?.ownProperty || 0,
-          investOnProperty: tx.stats?.investOnProperty || 0,
-        },
-      });
+      // Only set customer data if phone doesn't exist OR update with latest transaction
+      const existingCustomer = customerMap.get(tx.customerPhone);
+      
+      if (!existingCustomer || new Date(tx.createdAt) > new Date(existingCustomer.lastContacted)) {
+        customerMap.set(tx.customerPhone, {
+          id: tx.customerPhone,
+          name: tx.customerName || 'N/A',
+          phone: tx.customerPhone || 'N/A',
+          photo: tx.customerPhoto || '/assets/placeholder.png',
+          email: tx.customerEmail || 'N/A', // Fetch from transaction DB
+          address: tx.customerAddress || 'N/A',
+          interestedProperties: tx.property?.name || 'N/A',
+          proptype: tx.property?.type || 'Apartment',
+          lastContacted: tx.createdAt || null,
+          status: 'Active',
+          stats: {
+            viewProperty: tx.stats?.viewProperty || 0,
+            ownProperty: tx.stats?.ownProperty || 0,
+            investOnProperty: tx.stats?.investOnProperty || 0,
+          },
+        });
+      }
     });
 
     const uniqueCustomersFromData = Array.from(customerMap.values());
+    console.log('Processed customers:', uniqueCustomersFromData);
     setUniqueCustomers(uniqueCustomersFromData);
 
     let finalResults = uniqueCustomersFromData;
     if (searchTerm) {
       const term = searchTerm.toLowerCase();
       finalResults = uniqueCustomersFromData.filter(c =>
-        c.name.toLowerCase().includes(term) ||
-        c.phone.toLowerCase().includes(term)
+        (c.name && c.name.toLowerCase().includes(term)) ||
+        (c.phone && c.phone.toLowerCase().includes(term)) ||
+        (c.email && c.email.toLowerCase().includes(term))
       );
     }
     setFilteredCustomers(finalResults);
@@ -96,48 +104,55 @@ const Customers = () => {
     setSelectedMonth(month);
   };
 
-  // Show confirmation popup (similar to Owners component)
+  // Show confirmation popup
   const handleConfirmDelete = (customerPhone) => {
     console.log('Customer selected for deletion:', customerPhone);
     setCustomerToDelete(customerPhone);
     setShowDeletePopup(true);
   };
 
-  // Actual delete handler with popup confirmation
+  // Actual delete handler with API call
   const handleDelete = async () => {
     if (!customerToDelete) return;
     
     try {
       console.log('Attempting to delete customer with phone:', customerToDelete);
-      console.log('Type of customerPhone:', typeof customerToDelete);
       
-      // If you have an API endpoint for deleting customers, uncomment and modify this:
-      // const response = await axios.delete(`http://192.168.0.152:5000/api/customers/${customerToDelete}`);
-      // console.log('Delete response:', response);
+      const response = await fetch(
+        `http://192.168.0.152:5000/api/payment/customers/${encodeURIComponent(customerToDelete)}`,
+        {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
+      );
       
-      // For now, just filter from local state
-      const updatedCustomers = uniqueCustomers.filter(c => c.phone !== customerToDelete);
-      setUniqueCustomers(updatedCustomers);
-      setFilteredCustomers(updatedCustomers.filter(c => {
-        if (!searchTerm) return true;
-        const term = searchTerm.toLowerCase();
-        return c.name.toLowerCase().includes(term) || c.phone.toLowerCase().includes(term);
-      }));
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to delete customer');
+      }
+      
+      const result = await response.json();
+      console.log('Delete response:', result);
+      
+      // Remove all transactions for this customer from local state
+      const updatedTransactions = allTransactions.filter(tx => tx.customerPhone !== customerToDelete);
+      setAllTransactions(updatedTransactions);
       
       setShowDeletePopup(false);
       setCustomerToDelete(null);
       console.log('Customer deleted successfully');
+      
     } catch (err) {
       console.error('Failed to delete customer:', err);
-      console.error('Error details:', err.response?.data);
-      console.error('Status:', err.response?.status);
       
-      // Close the popup even if deletion failed
+      // Close the popup
       setShowDeletePopup(false);
       setCustomerToDelete(null);
       
       // Show user-friendly error message
-      alert('Failed to delete customer. Please try again.');
+      alert(`Failed to delete customer: ${err.message}`);
     }
   };
 
@@ -166,7 +181,7 @@ const Customers = () => {
               <img src="/assets/search-icon.png" alt="search" />
               <input
                 type="text"
-                placeholder="Search"
+                placeholder="Search by name, phone, or email"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
@@ -193,7 +208,7 @@ const Customers = () => {
 
           <div className="content-card">
             <div className="list-header">
-                <h2 className="page-title">All Customers List</h2>
+              <h2 className="page-title">All Customers List</h2>
               <MonthDropdown onChange={handleMonthChange} />
             </div>
             {renderContent()}

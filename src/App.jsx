@@ -15,14 +15,25 @@ import Congratulations from './pages/Congratulations';
 import Dashboard from "./pages/Dashboard/Dashboard";
 import Property from "./pages/Property/Property";
 import PropertyDetail from './pages/Property/PropertyDetail';
-import Owners from "./pages/Owners/Owners"; // ✅ NEW: Owners Page
-import OwnerDetail from "./pages/Owners/OwnerDetail"; // ✅ NEW: Owner Detail Page
+import Owners from "./pages/Owners/Owners";
+import OwnerDetail from "./pages/Owners/OwnerDetail";
 import Customers from "./pages/Customers/Customers";
 import CustomerDetail from "./pages/Customers/CustomerDetail";
 import Orders from "./pages/Orders/Orders";
 import Transaction from "./pages/Transaction/Transaction";
 import Reviews from "./pages/Reviews/Reviews";
 import Settings from "./pages/Settings/SettingsPage";
+
+// PrivateRoute component (checks if user is authenticated)
+const PrivateRoute = ({ children }) => {
+  const isLoggedIn = Boolean(localStorage.getItem("token"));  // Check for a token in localStorage
+
+  if (!isLoggedIn) {
+    return <Navigate to="/login" />;
+  }
+
+  return children;  // If logged in, render the children components
+};
 
 // Layout wrapper for pages with sidebar
 const Layout = ({ children }) => {
@@ -51,19 +62,17 @@ function App() {
       <Route path="/congratulations" element={<Congratulations />} />
 
       {/* Protected Routes Wrapped with Layout */}
-      <Route path="/dashboard" element={<Layout><Dashboard /></Layout>} />
-      <Route path="/property" element={<Layout><Property /></Layout>} />
-      <Route path="/property/:propertyId" element={<PropertyDetail />} />
-      {/* ✅ Updated from Agents to Owners */}
-      <Route path="/owners" element={<Layout><Owners /></Layout>} />
-      <Route path="/owners/:ownerId" element={<Layout><OwnerDetail /></Layout>} />
-
-      <Route path="/customers" element={<Layout><Customers /></Layout>} />
-      <Route path="/customers/:customerId" element={<Layout><CustomerDetail /></Layout>} />
-      <Route path="/orders" element={<Layout><Orders /></Layout>} />
-      <Route path="/transaction" element={<Layout><Transaction /></Layout>} />
-      <Route path="/reviews" element={<Layout><Reviews /></Layout>} />
-      <Route path="/settings" element={<Layout><Settings /></Layout>} />
+      <Route path="/dashboard" element={<PrivateRoute><Layout><Dashboard /></Layout></PrivateRoute>} />
+      <Route path="/property" element={<PrivateRoute><Layout><Property /></Layout></PrivateRoute>} />
+      <Route path="/property/:propertyId" element={<PrivateRoute><PropertyDetail /></PrivateRoute>} />
+      <Route path="/owners" element={<PrivateRoute><Layout><Owners /></Layout></PrivateRoute>} />
+      <Route path="/owners/:ownerId" element={<PrivateRoute><Layout><OwnerDetail /></Layout></PrivateRoute>} />
+      <Route path="/customers" element={<PrivateRoute><Layout><Customers /></Layout></PrivateRoute>} />
+      <Route path="/customers/:customerId" element={<PrivateRoute><Layout><CustomerDetail /></Layout></PrivateRoute>} />
+      <Route path="/orders" element={<PrivateRoute><Layout><Orders /></Layout></PrivateRoute>} />
+      <Route path="/transaction" element={<PrivateRoute><Layout><Transaction /></Layout></PrivateRoute>} />
+      <Route path="/reviews" element={<PrivateRoute><Layout><Reviews /></Layout></PrivateRoute>} />
+      <Route path="/settings" element={<PrivateRoute><Layout><Settings /></Layout></PrivateRoute>} />
     </Routes>
   );
 }

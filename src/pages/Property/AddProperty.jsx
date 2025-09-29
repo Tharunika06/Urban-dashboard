@@ -127,9 +127,9 @@ const FacilitiesSection = ({ facilities, onToggle, onAdd, onRemove, customFacili
 const convertToBase64 = (file) => {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
-    reader.readAsDataURL(file);
     reader.onload = () => resolve(reader.result);
     reader.onerror = error => reject(error);
+    reader.readAsDataURL(file);
   });
 };
 
@@ -225,15 +225,39 @@ const AddProperty = ({ isOpen, onClose }) => {
         ownerId: form.ownerId,
         ownerName: form.ownerName,
         about: form.about,
-        facility: form.facilities // Backend expects 'facility', not 'facilities'
+        facility: form.facilities
       };
 
       // Convert photo to base64 if present
       if (photoFile) {
         try {
+          // Validate file size (max 5MB)
+          const maxSize = 5 * 1024 * 1024; // 5MB in bytes
+          if (photoFile.size > maxSize) {
+            showPopup('error', 'Image Too Large', 'Please select an image smaller than 5MB.');
+            setLoading(false);
+            return;
+          }
+
+          // Validate file type
+          const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+          if (!validTypes.includes(photoFile.type)) {
+            showPopup('error', 'Invalid Image Type', 'Please select a valid image file (JPEG, PNG, GIF, or WebP).');
+            setLoading(false);
+            return;
+          }
+
           const base64Photo = await convertToBase64(photoFile);
-          payload.photo = base64Photo; // Send complete base64 data URL
-          console.log('Photo converted to base64, size:', base64Photo.length);
+          
+          // Validate base64 format
+          if (!base64Photo || !base64Photo.startsWith('data:image/') || !base64Photo.includes('base64,')) {
+            showPopup('error', 'Image Processing Error', 'Failed to process the image correctly. Please try another image.');
+            setLoading(false);
+            return;
+          }
+
+          payload.photo = base64Photo;
+          console.log('Photo converted to base64, size:', base64Photo.length, 'type:', photoFile.type);
         } catch (photoError) {
           console.error('Error converting photo to base64:', photoError);
           showPopup('error', 'Image Processing Error', 'Failed to process the selected image. Please try a different image.');
@@ -247,34 +271,58 @@ const AddProperty = ({ isOpen, onClose }) => {
         photo: payload.photo ? `[Base64 data - ${payload.photo.length} chars]` : 'No photo'
       });
 
-      // Send as JSON
+      // Send as JSON with increased timeout
       const response = await axios.post('http://192.168.0.152:5000/api/property', payload, {
         headers: { 
           'Content-Type': 'application/json'
-        }
+        },
+        timeout: 30000, // 30 seconds timeout for large images
+        maxContentLength: Infinity,
+        maxBodyLength: Infinity
       });
       
-      console.log('Property created successfully:', response.data);
-      showPopup('success', 'Property Added Successfully');
+      console.log('✅ Property created successfully:', response.data);
+      showPopup('success', 'Property Added Successfully', 'The property has been added to the database.');
     } catch (err) {
-      console.error('Failed to add property:', err);
-      console.error('Error details:', {
+      console.error('❌ Failed to add property:', err);
+      console.error('📋 Full error object:', err);
+      console.error('📋 Error details:', {
         message: err.message,
         response: err.response?.data,
         status: err.response?.status,
-        statusText: err.response?.statusText
+        statusText: err.response?.statusText,
+        code: err.code,
+        config: {
+          url: err.config?.url,
+          method: err.config?.method,
+          headers: err.config?.headers
+        }
       });
       
+      // Log the actual response if available
+      if (err.response) {
+        console.error('📋 Response data:', err.response.data);
+        console.error('📋 Response status:', err.response.status);
+        console.error('📋 Response headers:', err.response.headers);
+      }
+      
       let errorMsg = 'Failed to add property. Please try again.';
-      if (err.response?.data) {
+      let errorTitle = 'Failed to Add Property';
+      
+      if (err.code === 'ECONNABORTED') {
+        errorMsg = 'Request timeout. The image might be too large or the server is slow. Try a smaller image.';
+        errorTitle = 'Request Timeout';
+      } else if (err.response?.data) {
         errorMsg = err.response.data.error || err.response.data.message || errorMsg;
         if (err.response.data.details) {
-          errorMsg += ` Details: ${err.response.data.details}`;
+          errorMsg += `\n\nDetails: ${err.response.data.details}`;
         }
       } else if (err.request) {
-        errorMsg = 'Network error. Please check your connection.';
+        errorMsg = 'Network error. Please check:\n• Your internet connection\n• Server is running on http://192.168.0.152:5000\n• CORS is properly configured';
+        errorTitle = 'Network Error';
       }
-      showPopup('error', 'Failed to Add Property', errorMsg);
+      
+      showPopup('error', errorTitle, errorMsg);
     } finally {
       setLoading(false);
     }
@@ -455,10 +503,15 @@ const AddProperty = ({ isOpen, onClose }) => {
                     <label>Property Image</label>
                     <input 
                       type="file" 
-                      accept="image/*" 
+                      accept="image/jpeg,image/jpg,image/png,image/gif,image/webp" 
                       onChange={(e) => setPhotoFile(e.target.files[0])} 
                       style={{ padding: '8px' }} 
                     />
+                    {photoFile && (
+                      <small style={{ color: '#666', marginTop: '4px', display: 'block' }}>
+                        Selected: {photoFile.name} ({(photoFile.size / 1024).toFixed(2)} KB)
+                      </small>
+                    )}
                   </div>
                 </div>
 
