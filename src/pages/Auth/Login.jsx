@@ -1,3 +1,5 @@
+//AdminLogin.jsx - COMPLETE FIXED VERSION
+
 import React, { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import axios from "axios";
@@ -18,8 +20,8 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  // Clear messages when component loads
   useEffect(() => {
     setError("");
     setSuccess("");
@@ -29,53 +31,74 @@ const Login = () => {
     e.preventDefault();
     setError("");
     setSuccess("");
+    setLoading(true);
 
     try {
-      const response = await axios.post("http://192.168.0.152:5000/api/login", {
-        email,
+      // FIXED: Correct admin login endpoint
+      const response = await axios.post("http://192.168.0.154:5000/api/admin-login", {
+        email: email.trim().toLowerCase(),
         password,
       });
 
       if (response.data.ok) {
-        // Save full user info + token
+        // CRITICAL FIX: Store authentication token
+        localStorage.setItem("authToken", response.data.token);
+        
+        // Store user data
         localStorage.setItem("user", JSON.stringify(response.data.user));
-        localStorage.setItem("token", response.data.token);
 
         // Remember Me logic
         if (rememberMe) {
           localStorage.setItem("rememberMe", "true");
+          localStorage.setItem("adminEmail", email);
         } else {
           localStorage.removeItem("rememberMe");
+          localStorage.removeItem("adminEmail");
         }
 
-        // Success message
-        setSuccess("Login successful! Redirecting...");
+        setSuccess("Login successful! Redirecting to dashboard...");
 
-        // Delay navigation so user sees notification
         setTimeout(() => {
           navigate("/dashboard");
         }, 1200);
       }
     } catch (err) {
-      console.error("Login error:", err);
-      if (err.response?.data?.error) {
+      console.error("Admin login error:", err);
+      setLoading(false);
+
+      if (err.response?.status === 403) {
+        setError("Access denied. Admin privileges required. Your account does not have admin access.");
+      } else if (err.response?.status === 401) {
+        setError("Invalid email or password. Please try again.");
+      } else if (err.response?.data?.error) {
         setError(err.response.data.error);
+      } else if (err.message === "Network Error") {
+        setError("Cannot connect to server. Please check your connection.");
       } else {
         setError("Login failed. Please try again.");
       }
     }
   };
 
+  useEffect(() => {
+    const remembered = localStorage.getItem("rememberMe");
+    const savedEmail = localStorage.getItem("adminEmail");
+    
+    if (remembered === "true" && savedEmail) {
+      setEmail(savedEmail);
+      setRememberMe(true);
+    }
+  }, []);
+
   return (
     <div className="container-fluid">
       <div className="row g-0">
-        {/* Form Column */}
         <div className="col-lg-5 col-md-12 col-12">
           <div className="form-box">
             <img src={logo} alt="Urban Logo" className="logo mx-auto d-block" />
-            <h2 className="title">Welcome Back! 👋🏻</h2>
+            <h2 className="title">Admin Login 🔐</h2>
             <p className="subtitle">
-              We're glad to see you again. Log in to access your account and explore our latest features.
+              Welcome back, Admin! Please log in with your admin credentials to access the dashboard.
             </p>
 
             <form onSubmit={handleLogin}>
@@ -84,10 +107,12 @@ const Login = () => {
                 <input
                   type="email"
                   className="form-control input"
-                  placeholder="User Name"
+                  placeholder="Admin Email"
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
+                  disabled={loading}
+                  autoComplete="email"
                 />
               </div>
 
@@ -100,6 +125,8 @@ const Login = () => {
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
+                  disabled={loading}
+                  autoComplete="current-password"
                 />
                 <img
                   src={eyeIcon}
@@ -110,9 +137,16 @@ const Login = () => {
                 />
               </div>
 
-              {/* Show errors or success */}
-              {error && <div className="alert alert-danger">{error}</div>}
-              {success && <div className="alert alert-success">{success}</div>}
+              {error && (
+                <div className="alert alert-danger" role="alert">
+                  <strong>Error:</strong> {error}
+                </div>
+              )}
+              {success && (
+                <div className="alert alert-success" role="alert">
+                  <strong>Success!</strong> {success}
+                </div>
+              )}
 
               <div className="d-flex justify-content-between align-items-center mb-4">
                 <div className="form-check form-switch remember-toggle d-flex align-items-center">
@@ -123,6 +157,7 @@ const Login = () => {
                     id="rememberSwitch"
                     checked={rememberMe}
                     onChange={() => setRememberMe(!rememberMe)}
+                    disabled={loading}
                   />
                   <label className="form-check-label" htmlFor="rememberSwitch">
                     Remember Me
@@ -133,8 +168,19 @@ const Login = () => {
                 </p>
               </div>
 
-              <button type="submit" className="btn btn-dark w-100 mb-3">
-                Log In
+              <button 
+                type="submit" 
+                className="btn btn-dark w-100 mb-3"
+                disabled={loading}
+              >
+                {loading ? (
+                  <>
+                    <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+
+                  </>
+                ) : (
+                  "Log In"
+                )}
               </button>
 
               <div className="divider d-flex align-items-center">
@@ -143,20 +189,23 @@ const Login = () => {
                 <hr />
               </div>
 
-              <button type="button" className="btn google-button w-100 mb-3">
+              <button 
+                type="button" 
+                className="btn google-button w-100 mb-3"
+                disabled={loading}
+              >
                 <img src={googleIcon} alt="Google" />
                 Continue With Google
               </button>
 
               <p className="signup">
-                Don't have an account?{" "}
-                <Link to="/signup">Sign up</Link>
+                Don't have admin access?{" "}
+                <a>Sign Up</a>
               </p>
             </form>
           </div>
         </div>
 
-        {/* Image Column */}
         <div className="col-lg-7 d-none d-lg-flex">
           <div className="login-right-pane">
             <img src="/assets/login-bg.png" alt="Login Visual" />

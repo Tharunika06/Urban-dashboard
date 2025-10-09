@@ -57,8 +57,8 @@ const Verification = () => {
     try {
       const endpoint =
         type === "reset"
-          ? "http://192.168.0.152:5000/api/verify-reset-otp"
-          : "http://192.168.0.152:5000/api/verify-code";
+          ? "http://192.168.0.154:5000/api/verify-reset-otp"
+          : "http://192.168.0.154:5000/api/verify-code";
 
       const response = await axios.post(endpoint, {
         email,

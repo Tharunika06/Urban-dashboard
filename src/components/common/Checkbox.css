@@ -1,0 +1,34 @@
+/* Checkbox Component Styling */
+
+.checkbox-wrapper {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.checkbox-input {
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  color: #fff;
+  accent-color: #0D6EFD;
+}
+
+.checkbox-input:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.checkbox-label {
+  cursor: pointer;
+  -webkit-user-select: none;
+  user-select: none;
+  font-size: 14px;
+  color: #495057;
+}
+
+.checkbox-input:disabled + .checkbox-label {
+  cursor: not-allowed;
+  opacity: 0.5;
+}

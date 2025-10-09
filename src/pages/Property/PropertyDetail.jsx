@@ -12,7 +12,7 @@ const PropertyDetail = () => {
   useEffect(() => {
     const fetchProperty = async () => {
       try {
-        const res = await fetch(`http://192.168.0.152:5000/api/property/${propertyId}`);
+        const res = await fetch(`http://192.168.0.154:5000/api/property/${propertyId}`);
         if (!res.ok) {
           throw new Error('Property not found');
         }
@@ -37,7 +37,7 @@ const PropertyDetail = () => {
     
     // If photo is a file path (for backward compatibility)
     if (photo && photo.startsWith('/uploads/')) {
-      return `http://192.168.0.152:5000${photo}`;
+      return `http://192.168.0.154:5000${photo}`;
     }
     
     // Fallback to placeholder image
@@ -53,7 +53,7 @@ const PropertyDetail = () => {
     
     // If photo is a file path (for backward compatibility)
     if (photo && photo.startsWith('/uploads/')) {
-      return `http://192.168.0.152:5000${photo}`;
+      return `http://192.168.0.154:5000${photo}`;
     }
     
     // Fallback to placeholder image

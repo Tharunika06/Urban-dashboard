@@ -49,7 +49,7 @@ export default function CustomerDetail() {
         setIsLoading(true);
         
         // Fetch all transactions to get customer data
-        const response = await fetch('http://192.168.0.152:5000/api/payment/transactions');
+        const response = await fetch('http://192.168.0.154:5000/api/payment/transactions');
         if (!response.ok) throw new Error('Failed to fetch customer data');
         
         const allTransactions = await response.json();

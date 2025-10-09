@@ -15,7 +15,7 @@ const ForgetPassword = () => {
 
   const handleContinue = async () => {
     try {
-      await axios.post("http://192.168.0.152:5000/api/forgot-password", { email });
+      await axios.post("http://192.168.0.154:5000/api/forgot-password", { email });
       localStorage.setItem("resetEmail", email);
       navigate("/verify", { state: { email, type: "reset" } });
     } catch (err) {

@@ -5,7 +5,7 @@ import Header from '../../components/layout/Header';
 import '../../styles/Owners.css';
 
 // Backend API base URL
-const API_BASE_URL = 'http://192.168.0.152:5000';
+const API_BASE_URL = 'http://192.168.0.154:5000';
 
 const OwnerDetail = () => {
   const { ownerId } = useParams();
@@ -26,12 +26,12 @@ const OwnerDetail = () => {
     }
     
     // If photo is a file path (for backward compatibility)
-    if (photo && photo.startsWith('/uploads/')) {
-      return `${API_BASE_URL}${photo}`;
-    }
+    // if (photo && photo.startsWith('/uploads/')) {
+    //   return `${API_BASE_URL}${photo}`;
+    // }
     
     // Fallback to placeholder image
-    return '/assets/default-avatar.png';
+    return '/assets/placeholder.png';
   };
 
   // NEW: Function to get the correct property photo source

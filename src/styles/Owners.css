@@ -51,7 +51,7 @@
   height: 50px;
   object-fit: cover;
   border-radius: 50%;
-  border: 1px solid #ccc;
+  border: none
 }
 
 .owner-info a {
@@ -69,6 +69,7 @@
 .owner-header h2{
    font-size: 20px;
    font-family: 'Prompt';
+   
 }
 .owner-photo-large {
   width: 60px;
@@ -99,9 +100,10 @@
 
 
 .content-header h2 { 
-    font-size: 20px;
-     font-weight: 600; 
+    font-size: 20px; 
      color: #1E293B; 
+       font-weight: 600;
+  font-family: 'Prompt', sans-serif;
     }
 .content-header .subtext { 
     color: #64748B; 

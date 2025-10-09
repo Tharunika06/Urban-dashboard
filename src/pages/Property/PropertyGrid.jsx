@@ -10,8 +10,6 @@ const getStatusClass = (status) => {
       return 'for-rent';
     case 'sale':
       return 'for-sale';
-    case 'sold':
-      return 'sold';
     case 'both':
       return 'for-both';
     default:
@@ -58,7 +56,7 @@ const getImageSrc = (photo) => {
     return photo;
   }
   if (photo && photo.startsWith('/uploads/')) {
-    return `http://192.168.0.152:5000${photo}`;
+    return `http://192.168.0.154:5000${photo}`;
   }
   return '/assets/placeholder-property.png';
 };

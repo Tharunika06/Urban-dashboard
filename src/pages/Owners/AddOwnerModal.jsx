@@ -1,5 +1,4 @@
 // AddOwnerModal.jsx
-
 import React, { useState } from 'react';
 import axios from 'axios';
 
@@ -30,7 +29,6 @@ const SuccessPopup = ({ isOpen, onClose, title = "Owner Added Successfully" }) =
         position: 'relative',
         animation: 'slideIn 0.3s ease-out'
       }}>
-        {/* Close button */}
         <button
           onClick={onClose}
           style={{
@@ -48,7 +46,6 @@ const SuccessPopup = ({ isOpen, onClose, title = "Owner Added Successfully" }) =
           ×
         </button>
 
-        {/* Success Icon */}
         <div style={{
           width: '60px',
           height: '60px',
@@ -65,7 +62,6 @@ const SuccessPopup = ({ isOpen, onClose, title = "Owner Added Successfully" }) =
           }}>✓</span>
         </div>
 
-        {/* Success message */}
         <h2 style={{
           fontSize: '28px',
           fontWeight: '600',
@@ -76,7 +72,6 @@ const SuccessPopup = ({ isOpen, onClose, title = "Owner Added Successfully" }) =
           {title}
         </h2>
 
-        {/* OK Button */}
         <button
           onClick={onClose}
           style={{
@@ -97,7 +92,7 @@ const SuccessPopup = ({ isOpen, onClose, title = "Owner Added Successfully" }) =
           OK
         </button>
 
-        <style jsx>{`
+        <style>{`
           @keyframes slideIn {
             from {
               opacity: 0;
@@ -142,7 +137,6 @@ const ErrorPopup = ({ isOpen, onClose, title = "Error", message = "Something wen
         position: 'relative',
         animation: 'slideIn 0.3s ease-out'
       }}>
-        {/* Close button */}
         <button
           onClick={onClose}
           style={{
@@ -160,7 +154,6 @@ const ErrorPopup = ({ isOpen, onClose, title = "Error", message = "Something wen
           ×
         </button>
 
-        {/* Error Icon */}
         <div style={{
           width: '60px',
           height: '60px',
@@ -177,7 +170,6 @@ const ErrorPopup = ({ isOpen, onClose, title = "Error", message = "Something wen
           }}>✕</span>
         </div>
 
-        {/* Error title */}
         <h2 style={{
           fontSize: '28px',
           fontWeight: '600',
@@ -188,7 +180,6 @@ const ErrorPopup = ({ isOpen, onClose, title = "Error", message = "Something wen
           {title}
         </h2>
 
-        {/* Error message */}
         <p style={{
           fontSize: '16px',
           color: '#666',
@@ -198,7 +189,6 @@ const ErrorPopup = ({ isOpen, onClose, title = "Error", message = "Something wen
           {message}
         </p>
 
-        {/* OK Button */}
         <button
           onClick={onClose}
           style={{
@@ -219,7 +209,7 @@ const ErrorPopup = ({ isOpen, onClose, title = "Error", message = "Something wen
           OK
         </button>
 
-        <style jsx>{`
+        <style>{`
           @keyframes slideIn {
             from {
               opacity: 0;
@@ -238,7 +228,6 @@ const ErrorPopup = ({ isOpen, onClose, title = "Error", message = "Something wen
 
 const AddOwnerModal = ({ isOpen, onClose, onSave }) => {
   const initialForm = {
-    // Step 1
     name: '',
     email: '',
     contact: '',
@@ -246,7 +235,6 @@ const AddOwnerModal = ({ isOpen, onClose, onSave }) => {
     doj: '',
     status: 'Active',
     city: '',
-    // Step 2
     agency: '',
     licenseNumber: '',
     textNumber: '',
@@ -264,10 +252,31 @@ const AddOwnerModal = ({ isOpen, onClose, onSave }) => {
   const [showSuccessPopup, setShowSuccessPopup] = useState(false);
   const [showErrorPopup, setShowErrorPopup] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const [phoneError, setPhoneError] = useState('');
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setForm((prev) => ({ ...prev, [name]: value }));
+    console.log(`Form field changed: ${name} = ${value}`);
+    
+    // Phone number validation for contact field
+    if (name === 'contact') {
+      // Only allow digits
+      const digitsOnly = value.replace(/\D/g, '');
+      
+      // Limit to 10 digits
+      const limitedValue = digitsOnly.slice(0, 10);
+      
+      setForm((prev) => ({ ...prev, [name]: limitedValue }));
+      
+      // Show error if length is not 10 and field is not empty
+      if (limitedValue.length > 0 && limitedValue.length < 10) {
+        setPhoneError('Phone number must be exactly 10 digits');
+      } else {
+        setPhoneError('');
+      }
+    } else {
+      setForm((prev) => ({ ...prev, [name]: value }));
+    }
   };
 
   const handleOwnerFileChange = (e) => {
@@ -275,55 +284,97 @@ const AddOwnerModal = ({ isOpen, onClose, onSave }) => {
     if (file) {
       setOwnerPhoto(file);
       setOwnerPhotoName(file.name);
+      console.log('Photo selected:', file.name);
     } else {
       setOwnerPhoto(null);
       setOwnerPhotoName('No file chosen');
     }
   };
 
+  const convertToBase64 = (file) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = (error) => reject(error);
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const validateForm = () => {
+    // Check if phone number is provided and is exactly 10 digits
+    if (form.contact && form.contact.length !== 10) {
+      setErrorMessage('Phone number must be exactly 10 digits');
+      setShowErrorPopup(true);
+      return false;
+    }
+    return true;
+  };
+
   const handleFormSubmit = async (e) => {
     e.preventDefault();
+    
+    // Validate form before submission
+    if (!validateForm()) {
+      return;
+    }
+    
     setLoading(true);
 
-    const data = new FormData();
-
-    Object.entries(form).forEach(([key, value]) => {
-      data.append(key, value);
-    });
-
-    if (ownerPhoto) {
-      data.append('photo', ownerPhoto);
-    }
-
     try {
-      const response = await axios.post('http://192.168.0.152:5000/api/owners/add-owner', data, {
-        headers: { 'Content-Type': 'multipart/form-data' }
-      });
+      let photoBase64 = null;
+      let photoInfo = null;
 
+      if (ownerPhoto) {
+        photoBase64 = await convertToBase64(ownerPhoto);
+        photoInfo = {
+          name: ownerPhoto.name,
+          type: ownerPhoto.type,
+          size: ownerPhoto.size
+        };
+      }
+
+      const payload = {
+        ...form,
+        photo: photoBase64,
+        photoInfo: photoInfo
+      };
+
+      // Debug logs
+      console.log('=== FORM SUBMISSION DEBUG ===');
+      console.log('Full form state:', form);
+      console.log('DOJ value:', form.doj, '| Type:', typeof form.doj, '| Is empty?', form.doj === '');
+      console.log('Contact value:', form.contact, '| Length:', form.contact.length);
+      console.log('Full payload:', payload);
+      console.log('DOJ in payload:', payload.doj);
+      console.log('============================');
+
+      const response = await axios.post(
+        'http://192.168.0.154:5000/api/owners/add-owner',
+        payload,
+        {
+          headers: { 
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+
+      console.log('Owner added successfully:', response.data);
       setShowSuccessPopup(true);
       onSave(response.data);
 
     } catch (error) {
       console.error('Error saving owner:', error.response ? error.response.data : error.message);
       
-      // Set error message based on the error response
       let errorMsg = 'Failed to save owner. Please try again.';
       
-      if (error.response) {
-        // Server responded with error status
-        if (error.response.data && error.response.data.message) {
-          errorMsg = error.response.data.message;
-        } else if (error.response.data && typeof error.response.data === 'string') {
-          errorMsg = error.response.data;
-        } else {
-          errorMsg = `Server Error: ${error.response.status}`;
-        }
+      if (error.response?.data?.error) {
+        errorMsg = error.response.data.error;
+      } else if (error.response?.data?.message) {
+        errorMsg = error.response.data.message;
+      } else if (error.response?.status) {
+        errorMsg = `Server Error: ${error.response.status}`;
       } else if (error.request) {
-        // Network error
         errorMsg = 'Network error. Please check your connection and try again.';
-      } else {
-        // Other error
-        errorMsg = error.message || 'An unexpected error occurred.';
       }
       
       setErrorMessage(errorMsg);
@@ -344,7 +395,7 @@ const AddOwnerModal = ({ isOpen, onClose, onSave }) => {
           <button onClick={onClose} className="close-btn" style={{ fontSize: '16px' }}> ✖ </button>
         </div>
 
-        <form onSubmit={handleFormSubmit} encType="multipart/form-data">
+        <form onSubmit={handleFormSubmit}>
           <div className="modal-body">
             {step === 1 ? (
               <>
@@ -360,12 +411,38 @@ const AddOwnerModal = ({ isOpen, onClose, onSave }) => {
                 </div>
                 <div className="form-row">
                   <div className="form-group">
-                    <label htmlFor="ownerNumber">Owner Number</label>
-                    <input type="text" id="ownerNumber" name="contact" value={form.contact} onChange={handleChange} />
+                    <label htmlFor="ownerNumber">Owner Number (10 digits)</label>
+                    <input 
+                      type="tel" 
+                      id="ownerNumber" 
+                      name="contact" 
+                      value={form.contact} 
+                      onChange={handleChange}
+                      placeholder="Enter 10-digit phone number"
+                      maxLength="10"
+                      pattern="[0-9]{10}"
+                      title="Phone number must be exactly 10 digits"
+                    />
+                    {phoneError && (
+                      <span style={{ 
+                        color: '#f44336', 
+                        fontSize: '12px', 
+                        marginTop: '4px', 
+                        display: 'block' 
+                      }}>
+                        {phoneError}
+                      </span>
+                    )}
                   </div>
                   <div className="form-group">
                     <label htmlFor="joiningDate">Joining Date</label>
-                    <input type="date" id="joiningDate" name="doj" value={form.doj} onChange={handleChange} />
+                    <input 
+                      type="date" 
+                      id="joiningDate" 
+                      name="doj" 
+                      value={form.doj} 
+                      onChange={handleChange} 
+                    />
                   </div>
                 </div>
                 <div className="form-group">
@@ -459,22 +536,20 @@ const AddOwnerModal = ({ isOpen, onClose, onSave }) => {
           </div>
         </form>
 
-        {/* Success Popup */}
         <SuccessPopup 
           isOpen={showSuccessPopup}
           onClose={() => {
             setShowSuccessPopup(false);
-            // Reset form
             setForm(initialForm);
             setOwnerPhoto(null);
             setOwnerPhotoName('No file chosen');
             setStep(1);
-            onClose(); // Close the AddOwnerModal
+            setPhoneError('');
+            onClose();
           }}
           title="Owner Added Successfully"
         />
 
-        {/* Error Popup */}
         <ErrorPopup 
           isOpen={showErrorPopup}
           onClose={() => setShowErrorPopup(false)}

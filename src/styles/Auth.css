@@ -21,10 +21,7 @@ html, body {
   margin: 0;
 }
 
-.row {
-  height: 100vh;
-  margin: 0;
-}
+
 
 /* Left Column - Form Section */
 .col-lg-5 {

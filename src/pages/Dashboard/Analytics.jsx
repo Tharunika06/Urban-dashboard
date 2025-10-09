@@ -1,45 +1,23 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import DashboardStatCard from '../../components/common/DashboardStatCard.jsx';
-import axios from 'axios';
 import '../../styles/Dashboard.css';
 
-const Analytics = () => {
-  const [stats, setStats] = useState({
-    properties: 0,
-    owners: 0,
-    customers: 0,
-    revenue: 0,
-  });
+const Analytics = ({ stats, loading, error }) => {
+  if (loading) {
+    return <div style={{padding: '20px'}}>Loading analytics...</div>;
+  }
 
-  // Fetch counts from backend
-  useEffect(() => {
-    const fetchStats = async () => {
-      try {
-        const res = await axios.get('http://192.168.0.152:5000/api/stats'); 
-        // 👆 Example API endpoint that returns:
-        // { properties: 18854, owners: 8543, customers: 15974, revenue: 78300000 }
-
-        setStats(res.data);
-      } catch (err) {
-        console.error('Error fetching stats:', err);
-      }
-    };
-
-    fetchStats();
-
-    // Optional: Poll every 10s for real-time updates
-    const interval = setInterval(fetchStats, 10000);
-    return () => clearInterval(interval);
-  }, []);
+  if (error) {
+    return <div style={{padding: '20px', color: 'red'}}>Error: {error}</div>;
+  }
 
   return (
     <>
-      {/* First Row */}
       <div className="file" style={{gap:'10px', display:'flex', flexWrap:'wrap', marginBottom:'10px'}}>
         <div className="fold" style={{ width: '49%' ,height:'20%'}}>
           <DashboardStatCard
             title="No. Of Properties"
-            value={stats.properties.toLocaleString()}
+            value={(stats.properties || 0).toLocaleString()}
             change="8.5%"
             period="Up from yesterday"
             isNegative={false}
@@ -50,7 +28,7 @@ const Analytics = () => {
         <div className="col-md-6" style={{ width: '49%' ,height:'20%'}}>
           <DashboardStatCard
             title="Total Owners"
-            value={stats.owners.toLocaleString()}
+            value={(stats.owners || 0).toLocaleString()}
             change="9.3%"
             period="Up from the last 1 Month"
             isNegative={false}
@@ -60,12 +38,11 @@ const Analytics = () => {
         </div>
       </div>
 
-      {/* Second Row */}
       <div className="file" style={{gap:'10px', display:'flex', flexWrap:'wrap', marginBottom:'10px'}}>
         <div className="col-md-6" style={{ width: '49%' ,height:'20%'}}>
           <DashboardStatCard
             title="Customers"
-            value={stats.customers.toLocaleString()}
+            value={(stats.customers || 0).toLocaleString()}
             change="10.3%"
             period="Up from the last 1 Month"
             isNegative={true}
@@ -76,7 +53,7 @@ const Analytics = () => {
         <div className="col-md-6" style={{ width: '49%' ,height:'20%'}}>
           <DashboardStatCard
             title="Revenue"
-            value={`$${(stats.revenue / 1000000).toFixed(1)}M`}
+            value={`$${((stats.revenue || 0) / 1000000).toFixed(1)}M`}
             change="8.3%"
             period="Up from the last month"
             isNegative={false}

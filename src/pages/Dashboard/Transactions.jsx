@@ -1,10 +1,9 @@
-// src/components/Dashboard/TransactionsTable.jsx
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import api from '../../utils/api';
 import MonthDropdown from '/src/components/common/MonthDropdown.jsx';
-import '../../styles/Dashboard.css'; // Using dashboard.css for styles
+import '../../styles/Dashboard.css';
 
-// Define months array for filtering logic
 const months = [
   'January', 'February', 'March', 'April', 'May', 'June',
   'July', 'August', 'September', 'October', 'November', 'December'
@@ -23,12 +22,8 @@ const TransactionsTable = () => {
   useEffect(() => {
     const fetchTransactions = async () => {
       try {
-        const response = await fetch('http://192.168.0.152:5000/api/payment/transactions');
-        if (!response.ok) {
-          throw new Error('Network response was not ok');
-        }
-        const data = await response.json();
-        setAllTransactions(data);
+        const response = await api.get('/payment/transactions');
+        setAllTransactions(response.data);
       } catch (err) {
         setError(err.message);
         console.error("Failed to fetch dashboard transactions:", err);
@@ -53,7 +48,7 @@ const TransactionsTable = () => {
       }
     }
 
-    setFilteredTransactions(results.slice(0, 5)); // limit to 5 for dashboard view
+    setFilteredTransactions(results.slice(0, 3));
   }, [selectedMonth, allTransactions]);
 
   const handleMonthChange = (month) => {
@@ -76,7 +71,6 @@ const TransactionsTable = () => {
     const updated = allTransactions.filter(tx => tx.customTransactionId !== id);
     setAllTransactions(updated);
     setSelectedRows(prev => prev.filter(rowId => rowId !== id));
-    // TODO: Call API to delete from DB
   };
 
   if (isLoading) {
@@ -88,9 +82,7 @@ const TransactionsTable = () => {
   }
 
   return (
-    
     <div className="card">
-      
       <div className="card-header d-flex justify-content-between align-items-center">
         <h3 className="card-title">Latest Transactions</h3>
         <MonthDropdown onChange={handleMonthChange} />
@@ -170,9 +162,8 @@ const TransactionsTable = () => {
         </table>
       </div>
 
-      {/* View All Button */}
       <div className="card-footer">
-                  <Link to="/transaction" className="btn-view-all-button">
+        <Link to="/transaction" className="btn-view-all-button">
           View All
         </Link>
       </div>

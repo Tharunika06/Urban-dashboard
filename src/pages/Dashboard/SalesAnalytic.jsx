@@ -7,7 +7,7 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
-import axios from "axios";
+import api from "../../utils/api";
 import MonthDropdown from "../../components/common/MonthDropdown";
 
 const MONTH_NAMES = [
@@ -16,7 +16,6 @@ const MONTH_NAMES = [
 ];
 const MONTH_SHORT = MONTH_NAMES.map(m => m.slice(0,3).toLowerCase());
 
-// Fixed Y-axis formatter - check your data scale first
 const yAxisTickFormatter = (value) => {
   if (value >= 1000000) {
     return `$${(value / 1000000).toFixed(1)}M`;
@@ -29,17 +28,14 @@ const yAxisTickFormatter = (value) => {
 
 const toFullMonthName = (raw) => {
   if (raw === null || raw === undefined) return null;
-  // numeric
   if (typeof raw === "number" || (/^\d+$/.test(String(raw).trim()))) {
     const idx = Number(raw) - 1;
     if (idx >= 0 && idx < 12) return MONTH_NAMES[idx];
     return null;
   }
   const s = String(raw).trim().toLowerCase();
-  // exact match full name
   const full = MONTH_NAMES.find(m => m.toLowerCase() === s);
   if (full) return full;
-  // match short name (3 letters)
   const shortIdx = MONTH_SHORT.indexOf(s.length >= 3 ? s.slice(0,3) : s);
   if (shortIdx !== -1) return MONTH_NAMES[shortIdx];
   return null;
@@ -53,33 +49,28 @@ const SalesAnalytic = () => {
   useEffect(() => {
     const fetchSales = async () => {
       try {
-        const res = await axios.get("http://192.168.0.152:5000/api/sales/monthly");
+        const res = await api.get("/sales/monthly");
 
-        // Normalize month names and ensure earnings numeric
         const formattedData = res.data.map((item) => {
           let name = item.month;
           const full = toFullMonthName(name);
           if (full) name = full;
           name = String(name).trim();
 
-          // Ensure earnings is a proper number
           const earnings = parseFloat(item.earnings) || 0;
           return { name, earnings };
         });
 
-        // Filter out any invalid data
         const validData = formattedData.filter(item => 
           item.name && !isNaN(item.earnings)
         );
 
         setData(validData);
 
-        // compute yearly total
         const totalEarnings = validData.reduce((sum, it) => sum + it.earnings, 0);
         setTotal(totalEarnings);
       } catch (err) {
         console.error("Error fetching sales analytics:", err);
-        // Set empty data on error
         setData([]);
         setTotal(0);
       }
@@ -97,7 +88,6 @@ const SalesAnalytic = () => {
       return;
     }
 
-    // try to find a matching month in data
     const monthFull = toFullMonthName(monthValue);
     let monthData = null;
     if (monthFull) {
@@ -114,23 +104,20 @@ const SalesAnalytic = () => {
     }
   };
 
-  // Better domain calculation
   const getYAxisDomain = () => {
-    if (!data.length) return [0, 100]; // fallback domain
+    if (!data.length) return [0, 100];
     
     const maxValue = Math.max(...data.map(d => d.earnings));
     const minValue = Math.min(...data.map(d => d.earnings));
     
-    // Add some padding to the domain
     const padding = (maxValue - minValue) * 0.1 || maxValue * 0.1 || 10;
     
     return [
-      Math.max(0, minValue - padding), // Don't go below 0
+      Math.max(0, minValue - padding),
       maxValue + padding
     ];
   };
 
-  // Custom dot renderer to highlight selected month
   const renderCustomDot = (props) => {
     const { cx, cy, payload } = props;
     if (cx === undefined || cy === undefined) return null;
@@ -193,8 +180,8 @@ const SalesAnalytic = () => {
               height={60}
             />
             <YAxis
-              axisLine={false}
-              tickLine={false}
+              axisLine
+              tickLine
               tickFormatter={yAxisTickFormatter}
               domain={getYAxisDomain()}
             />

@@ -24,7 +24,7 @@ const Orders = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Popup state management (similar to Owners and Customers components)
+  // Popup state management
   const [showDeletePopup, setShowDeletePopup] = useState(false);
   const [orderToDelete, setOrderToDelete] = useState(null);
 
@@ -32,7 +32,7 @@ const Orders = () => {
   useEffect(() => {
     const fetchTransactions = async () => {
       try {
-        const response = await fetch('http://192.168.0.152:5000/api/payment/transactions');
+        const response = await fetch('http://192.168.0.154:5000/api/payment/transactions');
         if (!response.ok) {
           throw new Error('Network response was not ok');
         }
@@ -64,7 +64,7 @@ const Orders = () => {
       }
     }
 
-    // 2. Filter by search term (using new API fields)
+    // 2. Filter by search term
     if (searchTerm) {
       const term = searchTerm.toLowerCase();
       results = results.filter(transaction =>
@@ -82,47 +82,54 @@ const Orders = () => {
     setSelectedMonth(month);
   };
 
-  // Show confirmation popup (similar to Owners and Customers components)
+  // Show confirmation popup
   const handleConfirmDelete = (orderId) => {
     console.log('Order selected for deletion:', orderId);
     setOrderToDelete(orderId);
     setShowDeletePopup(true);
   };
 
-  // Actual delete handler with popup confirmation
+  // Actual delete handler with API call
   const handleDelete = async () => {
     if (!orderToDelete) return;
     
     try {
-      console.log('Attempting to delete order with ID:', orderToDelete);
-      console.log('Type of orderId:', typeof orderToDelete);
+      console.log('Attempting to delete order/transaction with ID:', orderToDelete);
       
-      // If you have an API endpoint for deleting orders, uncomment and modify this:
-      // const response = await axios.delete(`http://192.168.0.152:5000/api/orders/${orderToDelete}`);
-      // console.log('Delete response:', response);
+      const encodedTransactionId = encodeURIComponent(orderToDelete);
+      const response = await fetch(
+        `http://192.168.0.154:5000/api/payment/transactions/${encodedTransactionId}`,
+        { 
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' }
+        }
+      );
       
-      // Filter from local state using customTransactionId
-      const updatedTransactions = allTransactions.filter(transaction => transaction.customTransactionId !== orderToDelete);
+      const data = await response.json();
+      
+      if (!response.ok || !data.success) {
+        throw new Error(data.message || 'Failed to delete transaction');
+      }
+      
+      console.log('Delete response:', data);
+      
+      // Update local state - remove from both arrays
+      const updatedTransactions = allTransactions.filter(t => t.customTransactionId !== orderToDelete);
       setAllTransactions(updatedTransactions);
       
-      // Also update filtered transactions to maintain current view
-      const updatedFilteredTransactions = filteredTransactions.filter(transaction => transaction.customTransactionId !== orderToDelete);
+      const updatedFilteredTransactions = filteredTransactions.filter(t => t.customTransactionId !== orderToDelete);
       setFilteredTransactions(updatedFilteredTransactions);
       
       setShowDeletePopup(false);
       setOrderToDelete(null);
-      console.log('Order deleted successfully');
+      
+      // No success alert - just like Transaction.jsx
+      
     } catch (err) {
       console.error('Failed to delete order:', err);
-      console.error('Error details:', err.response?.data);
-      console.error('Status:', err.response?.status);
-      
-      // Close the popup even if deletion failed
+      alert(`Failed to delete transaction: ${err.message}`);
       setShowDeletePopup(false);
       setOrderToDelete(null);
-      
-      // Show user-friendly error message
-      alert('Failed to delete order. Please try again.');
     }
   };
 

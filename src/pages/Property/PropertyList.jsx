@@ -1,6 +1,8 @@
 // src/pages/Property/PropertyList.jsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import PopupMessage from '../../components/common/PopupMessage';
+import Checkbox from '../../components/common/Checkbox';
 import '../../styles/Property.css';
 
 // UPDATED: Added a case for 'both' to handle dual-status properties
@@ -21,14 +23,22 @@ const getStatusClass = (status) => {
 
 const ITEMS_PER_PAGE = 6;
 
-const PropertyList = ({ properties, handleDelete }) => {
+const PropertyList = ({ properties, handleDelete, handleBulkDelete }) => {
   const [selectAll, setSelectAll] = useState(false);
   const [checkedRows, setCheckedRows] = useState({});
   const [currentPage, setCurrentPage] = useState(1);
+  const [showPopup, setShowPopup] = useState(false);
+  const [propertyToDelete, setPropertyToDelete] = useState(null);
 
   const totalPages = Math.ceil(properties.length / ITEMS_PER_PAGE);
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
   const currentItems = properties.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+
+  // Reset checkboxes when page changes or properties change
+  useEffect(() => {
+    setSelectAll(false);
+    setCheckedRows({});
+  }, [currentPage, properties]);
 
   const handleSelectAll = () => {
     const updated = {};
@@ -40,13 +50,55 @@ const PropertyList = ({ properties, handleDelete }) => {
   };
 
   const toggleCheckbox = (id) => {
-    setCheckedRows((prev) => ({ ...prev, [id]: !prev[id] }));
+    setCheckedRows((prev) => {
+      const newChecked = { ...prev, [id]: !prev[id] };
+      
+      // Check if all current page items are selected
+      const allSelected = currentItems.every(
+        p => newChecked[p._id]
+      );
+      setSelectAll(allSelected);
+      
+      return newChecked;
+    });
   };
 
   const handlePageChange = (page) => {
     setCurrentPage(page);
     setSelectAll(false);
     setCheckedRows({});
+  };
+
+  const handleDeleteClick = (id) => {
+    setPropertyToDelete(id);
+    setShowPopup(true);
+  };
+
+  const confirmDelete = () => {
+    if (propertyToDelete) {
+      handleDelete(propertyToDelete);
+    }
+    setShowPopup(false);
+    setPropertyToDelete(null);
+  };
+
+  const cancelDelete = () => {
+    setShowPopup(false);
+    setPropertyToDelete(null);
+  };
+
+  // Get selected property IDs
+  const getSelectedIds = () => {
+    return Object.keys(checkedRows).filter(id => checkedRows[id]);
+  };
+
+  const selectedCount = getSelectedIds().length;
+
+  const handleBulkDeleteClick = () => {
+    const selectedIds = getSelectedIds();
+    if (selectedIds.length > 0) {
+      handleBulkDelete(selectedIds);
+    }
   };
 
   const formatPrice = (prop) => {
@@ -83,7 +135,7 @@ const PropertyList = ({ properties, handleDelete }) => {
     }
   };
 
-  // NEW: Function to get the correct image source
+  // Function to get the correct image source
   const getImageSrc = (photo) => {
     // If photo exists and is a base64 data URL, use it directly
     if (photo && photo.startsWith('data:image/')) {
@@ -92,27 +144,43 @@ const PropertyList = ({ properties, handleDelete }) => {
     
     // If photo is a file path (for backward compatibility)
     if (photo && photo.startsWith('/uploads/')) {
-      return `http://192.168.0.152:5000${photo}`;
+      return `http://192.168.0.154:5000${photo}`;
     }
     
     // Fallback to placeholder image
-    return '/assets/placeholder-property.png'; // Make sure you have this placeholder image
+    return '/assets/placeholder-property.png';
   };
 
-  // NEW: Function to handle image loading errors
+  // Function to handle image loading errors
   const handleImageError = (e) => {
-    e.target.src = '/assets/placeholder-property.png'; // Fallback image
+    e.target.src = '/assets/placeholder-property.png';
     console.warn('Failed to load property image');
   };
 
   return (
     <>
+      {selectedCount > 0 && (
+        <div className="bulk-actions-bar">
+          <span className="selected-count">{selectedCount} selected</span>
+          <button 
+            className="bulk-delete-btn"
+            onClick={handleBulkDeleteClick}
+          >
+            Delete Selected
+          </button>
+        </div>
+      )}
+
       <div className="table-container">
         <table className="property-table">
           <thead>
             <tr>
               <th>
-                <input type="checkbox" checked={selectAll} onChange={handleSelectAll} />
+                <Checkbox 
+                  checked={selectAll} 
+                  onChange={handleSelectAll}
+                  id="select-all-checkbox"
+                />
               </th>
               <th>Properties Photo & Name</th>
               <th>Owner</th>
@@ -129,10 +197,10 @@ const PropertyList = ({ properties, handleDelete }) => {
             {currentItems.map((prop) => (
               <tr key={prop._id}>
                 <td>
-                  <input
-                    type="checkbox"
+                  <Checkbox
                     checked={checkedRows[prop._id] || false}
                     onChange={() => toggleCheckbox(prop._id)}
+                    id={`checkbox-${prop._id}`}
                   />
                 </td>
 
@@ -202,7 +270,7 @@ const PropertyList = ({ properties, handleDelete }) => {
                   <img
                     src="/assets/delete-icon.png"
                     alt="Delete"
-                    onClick={() => handleDelete(prop._id)}
+                    onClick={() => handleDeleteClick(prop._id)}
                     style={{ cursor: 'pointer' }}
                   />
                   <img src="/assets/edit-icon.png" alt="Edit" />
@@ -239,6 +307,14 @@ const PropertyList = ({ properties, handleDelete }) => {
           Next »
         </button>
       </div>
+
+      {/* Popup Confirmation */}
+      {showPopup && (
+        <PopupMessage 
+          onConfirm={confirmDelete}
+          onCancel={cancelDelete}
+        />
+      )}
     </>
   );
 };

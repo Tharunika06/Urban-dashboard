@@ -31,7 +31,7 @@ const Property = () => {
   const fetchProperties = async () => {
     try {
       setIsLoading(true);
-      const res = await axios.get('http://192.168.0.152:5000/api/property');
+      const res = await axios.get('http://192.168.0.154:5000/api/property');
       setPropertyList(res.data);
     } catch (err) {
       setError(err.message);
@@ -99,7 +99,7 @@ const Property = () => {
     if (!propertyToDelete) return;
 
     try {
-      await axios.delete(`http://192.168.0.152:5000/api/property/${propertyToDelete}`);
+      await axios.delete(`http://192.168.0.154:5000/api/property/${propertyToDelete}`);
       
       // Update local state to remove deleted property
       const updatedProperties = propertyList.filter((prop) => prop._id !== propertyToDelete);
@@ -123,7 +123,7 @@ const Property = () => {
 
   // Get dynamic title based on current view
   const getPageTitle = () => {
-    return view === 'list' ? 'Property List' : 'Property Grid';
+    return view === 'list' ? 'All Property List' : 'All Property Grid';
   };
 
   const renderContent = () => {

@@ -1,5 +1,4 @@
-// src/pages/Transaction/Transaction.jsx
-
+// Transaction.jsx
 import React, { useState, useEffect } from 'react';
 import TransactionList from './TransactionList';
 import PopupMessage from '../../components/common/PopupMessage';
@@ -18,22 +17,21 @@ const Transaction = () => {
   const [filteredTransactions, setFilteredTransactions] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedMonth, setSelectedMonth] = useState('');
-  const [selectedIds, setSelectedIds] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
 
-  // Popup state management (similar to Owners, Customers, and Orders components)
+  // Popup state
   const [showDeletePopup, setShowDeletePopup] = useState(false);
   const [transactionToDelete, setTransactionToDelete] = useState(null);
+  const [isBulkDelete, setIsBulkDelete] = useState(false);
+  const [bulkDeleteIds, setBulkDeleteIds] = useState([]);
 
   useEffect(() => {
     const fetchTransactions = async () => {
       try {
-        // --- UPDATED: Using '192.168.0.152' is more reliable for web clients ---
-        const response = await fetch('http://192.168.0.152:5000/api/payment/transactions');
-        if (!response.ok) {
-          throw new Error('Network response was not ok');
-        }
+        const response = await fetch('http://192.168.0.154:5000/api/payment/transactions');
+        if (!response.ok) throw new Error('Network response was not ok');
         const data = await response.json();
         setAllTransactions(data);
       } catch (err) {
@@ -43,122 +41,157 @@ const Transaction = () => {
         setIsLoading(false);
       }
     };
-
     fetchTransactions();
   }, []);
 
+  // Filter transactions by search and month
   useEffect(() => {
     let results = allTransactions;
 
     if (selectedMonth) {
       const monthIndex = months.indexOf(selectedMonth);
       if (monthIndex > -1) {
-        results = results.filter(transaction => {
-          const transactionDate = new Date(transaction.createdAt);
-          return transactionDate.getMonth() === monthIndex;
-        });
+        results = results.filter(t => new Date(t.createdAt).getMonth() === monthIndex);
       }
     }
 
     if (searchTerm) {
       const term = searchTerm.toLowerCase();
-      results = results.filter(transaction =>
-        (transaction.customTransactionId && transaction.customTransactionId.toLowerCase().includes(term)) ||
-        (transaction.customerName && transaction.customerName.toLowerCase().includes(term)) ||
-        (transaction.customerPhone && transaction.customerPhone.includes(term)) ||
-        (transaction.ownerName && transaction.ownerName.toLowerCase().includes(term))
+      results = results.filter(t =>
+        (t.customTransactionId && t.customTransactionId.toLowerCase().includes(term)) ||
+        (t.customerName && t.customerName.toLowerCase().includes(term)) ||
+        (t.customerPhone && t.customerPhone.includes(term)) ||
+        (t.ownerName && t.ownerName.toLowerCase().includes(term))
       );
     }
-    
+
     setFilteredTransactions(results);
+    setCurrentPage(1); // Reset page when filter changes
   }, [searchTerm, selectedMonth, allTransactions]);
 
   const handleMonthChange = (month) => {
     setSelectedMonth(month);
   };
 
-  const handleSelectAll = (checked) => {
-    if (checked) {
-      const allIds = filteredTransactions.map(t => t.customTransactionId);
-      setSelectedIds(allIds);
-    } else {
-      setSelectedIds([]);
-    }
-  };
-
-  const handleSelectOne = (id) => {
-    setSelectedIds(prev =>
-      prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
-    );
-  };
-
-  // Show confirmation popup (similar to other components)
-  const handleConfirmDelete = (transactionId) => {
-    console.log('Transaction selected for deletion:', transactionId);
+  // Show delete popup for single transaction
+  const handleDelete = (transactionId) => {
     setTransactionToDelete(transactionId);
+    setIsBulkDelete(false);
     setShowDeletePopup(true);
   };
 
-  // Actual delete handler with popup confirmation
-  const handleDelete = async () => {
-    if (!transactionToDelete) return;
-    
+  // Show delete popup for bulk deletion
+  const handleBulkDelete = (selectedIds) => {
+    setBulkDeleteIds(selectedIds);
+    setIsBulkDelete(true);
+    setShowDeletePopup(true);
+  };
+
+  // Confirm deletion (single or bulk)
+  const confirmDelete = async () => {
     try {
-      console.log('Attempting to delete transaction with ID:', transactionToDelete);
-      console.log('Type of transactionId:', typeof transactionToDelete);
-      
-      // If you have an API endpoint for deleting transactions, uncomment and modify this:
-      // const response = await axios.delete(`http://192.168.0.152:5000/api/payment/transactions/${transactionToDelete}`);
-      // console.log('Delete response:', response);
-      
-      // Filter from local state using customTransactionId
-      const updatedTransactions = allTransactions.filter(t => t.customTransactionId !== transactionToDelete);
-      setAllTransactions(updatedTransactions);
-      
-      // Also update filtered transactions to maintain current view
-      const updatedFilteredTransactions = filteredTransactions.filter(t => t.customTransactionId !== transactionToDelete);
-      setFilteredTransactions(updatedFilteredTransactions);
-      
-      // Remove from selected items if it was selected
-      setSelectedIds(prev => prev.filter(i => i !== transactionToDelete));
-      
-      setShowDeletePopup(false);
-      setTransactionToDelete(null);
-      console.log('Transaction deleted successfully');
+      if (isBulkDelete) {
+        // Bulk delete
+        const deletePromises = bulkDeleteIds.map(async (transactionId) => {
+          const encodedTransactionId = encodeURIComponent(transactionId);
+          const response = await fetch(
+            `http://192.168.0.154:5000/api/payment/transactions/${encodedTransactionId}`,
+            { method: 'DELETE', headers: { 'Content-Type': 'application/json' } }
+          );
+          const data = await response.json();
+          if (!response.ok || !data.success) {
+            throw new Error(data.message || `Failed to delete transaction ${transactionId}`);
+          }
+          return transactionId;
+        });
+
+        const deletedIds = await Promise.all(deletePromises);
+
+        // Update frontend state
+        const updatedTransactions = allTransactions.filter(
+          t => !deletedIds.includes(t.customTransactionId)
+        );
+        setAllTransactions(updatedTransactions);
+
+        const updatedFilteredTransactions = filteredTransactions.filter(
+          t => !deletedIds.includes(t.customTransactionId)
+        );
+        setFilteredTransactions(updatedFilteredTransactions);
+
+        // Reset pagination if current page becomes empty
+        const ITEMS_PER_PAGE = 7;
+        const totalPages = Math.ceil(updatedFilteredTransactions.length / ITEMS_PER_PAGE);
+        if (currentPage > totalPages) setCurrentPage(totalPages > 0 ? totalPages : 1);
+
+        setShowDeletePopup(false);
+        setBulkDeleteIds([]);
+        setIsBulkDelete(false);
+
+        alert(`${deletedIds.length} transaction(s) deleted successfully`);
+      } else {
+        // Single delete
+        if (!transactionToDelete) return;
+
+        const encodedTransactionId = encodeURIComponent(transactionToDelete);
+        const response = await fetch(
+          `http://192.168.0.154:5000/api/payment/transactions/${encodedTransactionId}`,
+          { method: 'DELETE', headers: { 'Content-Type': 'application/json' } }
+        );
+        const data = await response.json();
+
+        if (!response.ok || !data.success) {
+          throw new Error(data.message || 'Failed to delete transaction');
+        }
+
+        // Update frontend state
+        const updatedTransactions = allTransactions.filter(
+          t => t.customTransactionId !== transactionToDelete
+        );
+        setAllTransactions(updatedTransactions);
+
+        const updatedFilteredTransactions = filteredTransactions.filter(
+          t => t.customTransactionId !== transactionToDelete
+        );
+        setFilteredTransactions(updatedFilteredTransactions);
+
+        // Reset pagination if current page becomes empty
+        const ITEMS_PER_PAGE = 7;
+        const totalPages = Math.ceil(updatedFilteredTransactions.length / ITEMS_PER_PAGE);
+        if (currentPage > totalPages) setCurrentPage(totalPages > 0 ? totalPages : 1);
+
+        setShowDeletePopup(false);
+        setTransactionToDelete(null);
+
+        // alert('Transaction deleted successfully');
+      }
     } catch (err) {
-      console.error('Failed to delete transaction:', err);
-      console.error('Error details:', err.response?.data);
-      console.error('Status:', err.response?.status);
-      
-      // Close the popup even if deletion failed
+      console.error('Failed to delete transaction(s):', err);
+      alert(`Failed to delete transaction(s): ${err.message}`);
       setShowDeletePopup(false);
       setTransactionToDelete(null);
-      
-      // Show user-friendly error message
-      alert('Failed to delete transaction. Please try again.');
+      setBulkDeleteIds([]);
+      setIsBulkDelete(false);
     }
   };
 
-  // Cancel delete popup
   const handleCancelDelete = () => {
     setShowDeletePopup(false);
     setTransactionToDelete(null);
+    setBulkDeleteIds([]);
+    setIsBulkDelete(false);
   };
 
   const renderContent = () => {
-    if (isLoading) {
-      return <div className="loading-state">Loading transactions...</div>;
-    }
-    if (error) {
-      return <div className="error-state">Error: {error}</div>;
-    }
+    if (isLoading) return <div className="loading-state">Loading transactions...</div>;
+    if (error) return <div className="error-state">Error: {error}</div>;
+
     return (
       <TransactionList
         transactions={filteredTransactions}
-        selectedIds={selectedIds}
-        onSelectAll={handleSelectAll}
-        onSelectOne={handleSelectOne}
-        onDelete={handleConfirmDelete}
+        handleDelete={handleDelete}
+        handleBulkDelete={handleBulkDelete}
+        currentPage={currentPage}
+        setCurrentPage={setCurrentPage}
       />
     );
   };
@@ -174,8 +207,7 @@ const Transaction = () => {
                 <BsSearch className="search-icon" />
                 <input
                   type="search"
-                  // --- UPDATED: More descriptive placeholder ---
-                  placeholder="Search "
+                  placeholder="Search"
                   className="search-input"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
@@ -195,10 +227,14 @@ const Transaction = () => {
         </div>
       </div>
 
-      {/* Delete confirmation popup */}
       {showDeletePopup && (
         <PopupMessage
-          onConfirm={handleDelete}
+          message={
+            isBulkDelete
+              ? `Are you sure you want to delete ${bulkDeleteIds.length} selected transaction(s)?`
+              : 'Are you sure you want to delete this transaction?'
+          }
+          onConfirm={confirmDelete}
           onCancel={handleCancelDelete}
         />
       )}

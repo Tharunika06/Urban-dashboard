@@ -6,31 +6,23 @@ import {
   YAxis,
   ResponsiveContainer,
 } from "recharts";
+import api from "../../utils/api";
 
 const WeeklySales = () => {
   const [salesData, setSalesData] = useState([]);
   const [totalSales, setTotalSales] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [weekOffset, setWeekOffset] = useState(0); // 0 = current week, -1 = last week, +1 = next week
+  const [weekOffset, setWeekOffset] = useState(0);
 
-  // Fetch weekly sales (counts) from backend
   const fetchSalesData = async (offset = 0) => {
     try {
       setLoading(true);
       setError(null);
 
-      const response = await fetch(
-        `http://192.168.0.152:5000/api/sales/weekly?offset=${offset}`
-      );
+      const response = await api.get(`/sales/weekly?offset=${offset}`);
+      let data = response.data;
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      let data = await response.json();
-
-      // If backend returns an object instead of an array, normalize it
       if (!Array.isArray(data)) {
         data = Object.entries(data).map(([day, sales]) => ({
           day: day.charAt(0),
@@ -40,14 +32,12 @@ const WeeklySales = () => {
 
       setSalesData(data);
 
-      // totalSales is now the **count** of properties sold across the week
       const total = data.reduce((sum, d) => sum + Number(d.sales || 0), 0);
       setTotalSales(total);
     } catch (err) {
-      console.error("❌ Error fetching sales data:", err);
+      console.error("Error fetching sales data:", err);
       setError("Failed to load sales data");
 
-      // Fallback dummy data (counts)
       const fallback = [
         { day: "S", sales: 4 },
         { day: "M", sales: 6 },
@@ -64,12 +54,10 @@ const WeeklySales = () => {
     }
   };
 
-  // Re-fetch when weekOffset changes
   useEffect(() => {
     fetchSalesData(weekOffset);
   }, [weekOffset]);
 
-  // Function to get week label based on offset
   const getWeekLabel = (offset) => {
     if (offset === 0) return "This Week";
     if (offset === -1) return "Last Week";
@@ -78,7 +66,6 @@ const WeeklySales = () => {
     if (offset > 1) return `${offset} Weeks Ahead`;
   };
 
-  // Navigation handlers
   const goToPreviousWeek = () => {
     setWeekOffset(prev => prev - 1);
   };
@@ -98,9 +85,8 @@ const WeeklySales = () => {
     );
   }
 
-  // Compute padded Y max so small bars are visible
   const maxCount = Math.max(...salesData.map((d) => Number(d.sales || 0)), 1);
-  const paddedMax = Math.ceil(maxCount * 1.2); // 20% padding
+  const paddedMax = Math.ceil(maxCount * 1.2);
 
   return (
     <div className="card">
@@ -122,7 +108,6 @@ const WeeklySales = () => {
         </div>
       )}
 
-      {/* Week Navigation Header */}
       <div style={{
         display: "flex",
         alignItems: "center",
@@ -179,41 +164,38 @@ const WeeklySales = () => {
             justifyContent: "center"
           }}
           onMouseOver={(e) => e.target.style.opacity = "0.8"}
-          onMouseOut={(e) => e.target.style.opacity = "1"}
-        >
-          &gt;
-        </button>
-      </div>
+onMouseOut={(e) => e.target.style.opacity = "1"}>
+ &gt;
+</button>
+</div>
+  <br />
 
-      <br />
-
-      <div style={{ width: "100%", height: 200 }}>
-        <ResponsiveContainer>
-          <BarChart
-            data={salesData}
-            margin={{ top: 20, right: 0, left: -20, bottom: 0 }}
-          >
-            <XAxis dataKey="day" axisLine={true} tickLine={false} />
-            <YAxis
-              domain={[0, paddedMax]}
-              axisLine={true}
-              tickLine={true}
-              tickCount={5}
-            />
-            <Bar
-              dataKey="sales"
-              fill="var(--primary-blue)"
-              barSize={15}
-              radius={[5, 5, 0, 0]}
-            />
-          </BarChart>
-        </ResponsiveContainer>
-        <p className="total-sales-text">
-          Total Property Sales: <strong>{totalSales}</strong>
-        </p>
-      </div>
-    </div>
-  );
+  <div style={{ width: "100%", height: 200 }}>
+    <ResponsiveContainer>
+      <BarChart
+        data={salesData}
+        margin={{ top: 20, right: 0, left: -20, bottom: 0 }}
+      >
+        <XAxis dataKey="day" axisLine={true} tickLine={false} />
+        <YAxis
+          domain={[0, paddedMax]}
+          axisLine={true}
+          tickLine={true}
+          tickCount={5}
+        />
+        <Bar
+          dataKey="sales"
+          fill="var(--primary-blue)"
+          barSize={15}
+          radius={[5, 5, 0, 0]}
+        />
+      </BarChart>
+    </ResponsiveContainer>
+    <p className="total-sales-text">
+      Total Property Sales: <strong>{totalSales}</strong>
+    </p>
+  </div>
+</div>
+);
 };
-
 export default WeeklySales;

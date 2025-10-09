@@ -8,7 +8,7 @@ const PopupMessage = ({ onConfirm, onCancel }) => {
       <div className="popup-card">
         <button className="close-btn" onClick={onCancel}>×</button>
         <img
-          src="/assets/check-icon.png"
+          src="/assets/remove.png"
           alt="confirm"
           className="popup-icon"
         />

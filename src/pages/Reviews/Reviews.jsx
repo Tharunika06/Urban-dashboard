@@ -5,9 +5,11 @@ import { Link } from "react-router-dom";
 import { FaStar } from "react-icons/fa";
 import Header from "../../components/layout/Header";
 import MonthDropdown from "../../components/common/MonthDropdown";
+import PopupMessage from "../../components/common/PopupMessage";
+import Checkbox from "../../components/common/Checkbox";
 import axios from "axios";
 
-const API_URL = "http://192.168.0.152:5000/api/reviews"; // backend reviews API
+const API_URL = "http://192.168.0.154:5000/api/reviews";
 
 const months = [
   'January', 'February', 'March', 'April', 'May', 'June',
@@ -15,7 +17,8 @@ const months = [
 ];
 
 const Reviews = () => {
-  const [selectedIds, setSelectedIds] = useState([]);
+  const [selectAll, setSelectAll] = useState(false);
+  const [checkedRows, setCheckedRows] = useState({});
   const [reviews, setReviews] = useState([]);
   const [filteredReviews, setFilteredReviews] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -23,11 +26,15 @@ const Reviews = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // ✅ Pagination states
+  // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
 
-  // ✅ Fetch reviews from backend
+  // Popup state management
+  const [showDeletePopup, setShowDeletePopup] = useState(false);
+  const [reviewToDelete, setReviewToDelete] = useState(null);
+
+  // Fetch reviews from backend
   useEffect(() => {
     const fetchReviews = async () => {
       try {
@@ -71,52 +78,136 @@ const Reviews = () => {
     }
 
     setFilteredReviews(reviewsToFilter);
-    setCurrentPage(1); // reset to page 1 whenever filters change
+    setCurrentPage(1);
   }, [searchTerm, selectedMonth, reviews]);
+
+  // Pagination calculations
+  const totalPages = Math.ceil(filteredReviews.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const currentReviews = filteredReviews.slice(startIndex, startIndex + itemsPerPage);
+
+  // Reset checkboxes when page changes or filtered reviews change
+  useEffect(() => {
+    setSelectAll(false);
+    setCheckedRows({});
+  }, [currentPage, filteredReviews]);
 
   const handleMonthChange = (month) => {
     setSelectedMonth(month);
   };
 
-  const handleSelectAll = (checked) => {
-    if (checked) {
-      setSelectedIds(currentReviews.map((r) => r._id));
-    } else {
-      setSelectedIds([]);
-    }
+  const handleSelectAll = () => {
+    const updated = {};
+    currentReviews.forEach((r) => {
+      updated[r._id] = !selectAll;
+    });
+    setCheckedRows(updated);
+    setSelectAll(!selectAll);
   };
 
-  const handleSelectOne = (id) => {
-    setSelectedIds((prev) =>
-      prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]
-    );
+  const toggleCheckbox = (id) => {
+    setCheckedRows((prev) => {
+      const newChecked = { ...prev, [id]: !prev[id] };
+      
+      // Check if all current page items are selected
+      const allSelected = currentReviews.every(
+        r => newChecked[r._id]
+      );
+      setSelectAll(allSelected);
+      
+      return newChecked;
+    });
   };
-
-  const handleDelete = async (id) => {
-    try {
-      await axios.delete(`${API_URL}/${id}`);
-      setReviews((prev) => prev.filter((r) => r._id !== id));
-      setSelectedIds((prev) => prev.filter((i) => i !== id));
-    } catch (err) {
-      console.error("Error deleting review:", err);
-      alert('Failed to delete review. Please try again.');
-    }
-  };
-
-  // ✅ Pagination calculations
-  const totalPages = Math.ceil(filteredReviews.length / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const currentReviews = filteredReviews.slice(startIndex, startIndex + itemsPerPage);
 
   const handlePageChange = (page) => {
     if (page >= 1 && page <= totalPages) {
       setCurrentPage(page);
+      setSelectAll(false);
+      setCheckedRows({});
     }
   };
 
-  const allChecked =
-    currentReviews.length > 0 &&
-    currentReviews.every((r) => selectedIds.includes(r._id));
+  // Show confirmation popup for single delete
+  const handleConfirmDelete = (id) => {
+    console.log('Review selected for deletion:', id);
+    setReviewToDelete(id);
+    setShowDeletePopup(true);
+  };
+
+  // Single delete handler with API call
+  const handleDelete = async () => {
+    if (!reviewToDelete) return;
+
+    try {
+      console.log('Attempting to delete review with ID:', reviewToDelete);
+      
+      await axios.delete(`${API_URL}/${reviewToDelete}`);
+      
+      // Update local state
+      setReviews((prev) => prev.filter((r) => r._id !== reviewToDelete));
+      setCheckedRows((prev) => {
+        const newChecked = { ...prev };
+        delete newChecked[reviewToDelete];
+        return newChecked;
+      });
+      
+      setShowDeletePopup(false);
+      setReviewToDelete(null);
+      
+    } catch (err) {
+      console.error('Error deleting review:', err);
+      alert('Failed to delete review: ' + (err.response?.data?.message || err.message));
+      setShowDeletePopup(false);
+      setReviewToDelete(null);
+    }
+  };
+
+  // Bulk delete handler
+  const handleBulkDelete = async (selectedIds) => {
+    if (selectedIds.length === 0) return;
+
+    const confirmDelete = window.confirm(
+      `Are you sure you want to delete ${selectedIds.length} review(s)?`
+    );
+
+    if (!confirmDelete) return;
+
+    try {
+      // Delete all selected reviews
+      await Promise.all(
+        selectedIds.map((id) => axios.delete(`${API_URL}/${id}`))
+      );
+
+      // Update local state
+      setReviews((prev) => prev.filter((r) => !selectedIds.includes(r._id)));
+      setCheckedRows({});
+      setSelectAll(false);
+
+    } catch (err) {
+      console.error('Error deleting reviews:', err);
+      alert('Failed to delete some reviews: ' + (err.response?.data?.message || err.message));
+    }
+  };
+
+  // Cancel delete popup
+  const handleCancelDelete = () => {
+    setShowDeletePopup(false);
+    setReviewToDelete(null);
+  };
+
+  // Get selected review IDs
+  const getSelectedIds = () => {
+    return Object.keys(checkedRows).filter(id => checkedRows[id]);
+  };
+
+  const selectedCount = getSelectedIds().length;
+
+  const handleBulkDeleteClick = () => {
+    const selectedIds = getSelectedIds();
+    if (selectedIds.length > 0) {
+      handleBulkDelete(selectedIds);
+    }
+  };
 
   return (
     <div className="app-layout">
@@ -136,26 +227,37 @@ const Reviews = () => {
             </div>
           </div>
 
-          <div className="reviews-table-header">
+           <div className="reviews-table-header">
             <h2>
-              All Reviews List <span className="subtext">({filteredReviews.length} Reviews)</span>
+              All Reviews List 
+              {/* <span className="subtext">({filteredReviews.length} Reviews)</span> */}
             </h2>
             <MonthDropdown onChange={handleMonthChange} />
           </div>
 
           <div className="reviews-table">
+           
+            {/* Bulk Actions Bar */}
+            {selectedCount > 0 && (
+              <div className="bulk-actions-bar">
+                <span className="selected-count">{selectedCount} selected</span>
+                <button 
+                  className="bulk-delete-btn"
+                  onClick={handleBulkDeleteClick}
+                >
+                  Delete Selected
+                </button>
+              </div>
+            )}
             <table>
               <thead>
                 <tr>
                   <th>
-                    <label className="custom-checkbox">
-                      <input
-                        type="checkbox"
-                        checked={allChecked}
-                        onChange={(e) => handleSelectAll(e.target.checked)}
-                      />
-                      <span className="checkmark"></span>
-                    </label>
+                    <Checkbox 
+                      checked={selectAll} 
+                      onChange={handleSelectAll}
+                      id="select-all-checkbox"
+                    />
                   </th>
                   <th>Property Name</th>
                   <th>Date</th>
@@ -190,14 +292,11 @@ const Reviews = () => {
                   currentReviews.map((r) => (
                     <tr key={r._id}>
                       <td>
-                        <label className="custom-checkbox">
-                          <input
-                            type="checkbox"
-                            checked={selectedIds.includes(r._id)}
-                            onChange={() => handleSelectOne(r._id)}
-                          />
-                          <span className="checkmark"></span>
-                        </label>
+                        <Checkbox
+                          checked={checkedRows[r._id] || false}
+                          onChange={() => toggleCheckbox(r._id)}
+                          id={`checkbox-${r._id}`}
+                        />
                       </td>
                       <td>{r.propertyId?.name || "Unknown Property"}</td>
                       <td>{new Date(r.createdAt).toLocaleDateString()}</td>
@@ -221,7 +320,7 @@ const Reviews = () => {
                         <img
                           src="/assets/delete-icon.png"
                           alt="Delete"
-                          onClick={() => handleDelete(r._id)}
+                          onClick={() => handleConfirmDelete(r._id)}
                           style={{ cursor: "pointer" }}
                         />
                         <img src="/assets/edit-icon.png" alt="Edit" />
@@ -232,7 +331,7 @@ const Reviews = () => {
               </tbody>
             </table>
 
-            {/* ✅ Pagination (same as transactions) */}
+            {/* Pagination */}
             {totalPages > 1 && (
               <div className="pagination">
                 <button
@@ -263,6 +362,14 @@ const Reviews = () => {
           </div>
         </div>
       </div>
+
+      {/* Delete confirmation popup */}
+      {showDeletePopup && (
+        <PopupMessage
+          onConfirm={handleDelete}
+          onCancel={handleCancelDelete}
+        />
+      )}
     </div>
   );
 };

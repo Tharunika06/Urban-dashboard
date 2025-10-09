@@ -1,5 +1,5 @@
 import React from "react";
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom"; // ✅ FIXED
 
 // Layout + Context
 import Sidebar from "./components/layout/Sidebar";
@@ -24,15 +24,15 @@ import Transaction from "./pages/Transaction/Transaction";
 import Reviews from "./pages/Reviews/Reviews";
 import Settings from "./pages/Settings/SettingsPage";
 
-// PrivateRoute component (checks if user is authenticated)
+// ✅ IMPROVED: Check for authToken (not just "token")
 const PrivateRoute = ({ children }) => {
-  const isLoggedIn = Boolean(localStorage.getItem("token"));  // Check for a token in localStorage
+  const isLoggedIn = Boolean(localStorage.getItem("authToken")); // Changed from "token" to "authToken"
 
   if (!isLoggedIn) {
-    return <Navigate to="/login" />;
+    return <Navigate to="/login" replace />;
   }
 
-  return children;  // If logged in, render the children components
+  return children;
 };
 
 // Layout wrapper for pages with sidebar

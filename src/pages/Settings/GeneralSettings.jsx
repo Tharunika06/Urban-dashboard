@@ -10,37 +10,57 @@ const GeneralSettings = () => {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
-  // API base URL
-  const API_BASE_URL = "http://localhost:5000/api";
+  const API_BASE_URL = "http://192.168.0.154:5000/api";
 
   useEffect(() => {
     loadAdminProfile();
   }, []);
 
-  // Load admin profile from database
+  // ✅ FIXED: Get auth token helper
+  const getAuthHeaders = () => {
+    const token = localStorage.getItem('authToken');
+    return {
+      'Authorization': `Bearer ${token}`
+    };
+  };
+
+  // ✅ FIXED: Load admin profile with auth token
   const loadAdminProfile = async () => {
     try {
       setLoading(true);
       console.log("Loading admin profile...");
       
+      const token = localStorage.getItem('authToken');
+      if (!token) {
+        setError('Not authenticated. Please login again.');
+        return;
+      }
+
       const response = await fetch(`${API_BASE_URL}/admin/profile`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}` // ✅ Added token
         }
       });
 
       console.log("Response status:", response.status);
+
+      if (response.status === 401) {
+        setError('Session expired. Please login again.');
+        localStorage.removeItem('authToken');
+        localStorage.removeItem('user');
+        window.location.href = '/login';
+        return;
+      }
+
       const data = await response.json();
       console.log("Response data:", data);
 
       if (response.ok && data.success) {
         setAdminName(data.profile.name || "");
         setPhone(data.profile.phone || "");
-        
-        // Set photo directly - it's already a base64 data URL
         setProfilePhoto(data.profile.photo || "");
-        
         setError("");
       } else {
         throw new Error(data.message || 'Failed to load profile');
@@ -65,32 +85,28 @@ const GeneralSettings = () => {
   const handlePhotoUpload = (e) => {
     const file = e.target.files[0];
     if (file) {
-      // Validate file size (max 5MB)
       if (file.size > 5 * 1024 * 1024) {
         setError('File size should be less than 5MB');
         return;
       }
 
-      // Validate file type
       if (!file.type.startsWith('image/')) {
         setError('Please select a valid image file');
         return;
       }
 
-      // Store the file for upload
       setProfilePhotoFile(file);
 
-      // Create preview URL (base64)
       const reader = new FileReader();
       reader.onloadend = () => {
-        setProfilePhoto(reader.result); // This will be base64 data URL
-        setError(''); // Clear any previous errors
+        setProfilePhoto(reader.result);
+        setError('');
       };
       reader.readAsDataURL(file);
     }
   };
 
-  // Save admin profile to database
+  // ✅ FIXED: Save profile with auth token
   const handleSaveProfile = async () => {
     try {
       setLoading(true);
@@ -99,7 +115,6 @@ const GeneralSettings = () => {
 
       console.log("Starting profile save...");
 
-      // Validate inputs
       if (!adminName.trim()) {
         setError('Admin name is required');
         return;
@@ -110,40 +125,55 @@ const GeneralSettings = () => {
         return;
       }
 
-      // Phone number validation (10 digits)
       const cleanPhone = phone.replace(/\D/g, '');
       if (!/^[0-9]{10}$/.test(cleanPhone)) {
         setError('Please enter a valid 10-digit phone number');
         return;
       }
 
-      // Create FormData for file upload
+      const token = localStorage.getItem('authToken');
+      if (!token) {
+        setError('Not authenticated. Please login again.');
+        return;
+      }
+
       const formData = new FormData();
       formData.append('name', adminName.trim());
       formData.append('phone', cleanPhone);
       
-      // Add photo file if selected
       if (profilePhotoFile) {
         console.log("Adding photo file to form data");
         formData.append('profilePhoto', profilePhotoFile);
       }
 
-      console.log("Sending request to:", `${API_BASE_URL}/admin/profile`);
+      console.log("Sending request with auth token");
 
       const response = await fetch(`${API_BASE_URL}/admin/profile`, {
         method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}` // ✅ Added token (no Content-Type for FormData)
+        },
         body: formData
       });
 
       console.log("Response status:", response.status);
+
+      if (response.status === 401) {
+        setError('Session expired. Please login again.');
+        localStorage.removeItem('authToken');
+        localStorage.removeItem('user');
+        setTimeout(() => {
+          window.location.href = '/login';
+        }, 2000);
+        return;
+      }
+
       const data = await response.json();
       console.log("Response data:", data);
 
       if (response.ok && data.success) {
-        // Update local state with the returned data
         setProfilePhoto(data.profile.photo || "");
         
-        // Keep localStorage as backup
         const profileData = {
           name: adminName.trim(),
           phone: cleanPhone,
@@ -151,18 +181,14 @@ const GeneralSettings = () => {
         };
         localStorage.setItem("adminProfile", JSON.stringify(profileData));
         
-        // Dispatch custom event with updated profile data
         window.dispatchEvent(new CustomEvent("profileUpdated", {
           detail: profileData
         }));
         
         setSuccess("Profile updated successfully!");
         setError('');
-        
-        // Clear the file input
         setProfilePhotoFile(null);
         
-        // Reset file input
         const fileInput = document.getElementById('upload-photo');
         if (fileInput) fileInput.value = '';
         
@@ -178,16 +204,29 @@ const GeneralSettings = () => {
     }
   };
 
-  // Remove profile photo
+  // ✅ FIXED: Remove photo with auth token
   const handleRemovePhoto = async () => {
     try {
       setLoading(true);
+      
+      const token = localStorage.getItem('authToken');
+      if (!token) {
+        setError('Not authenticated. Please login again.');
+        return;
+      }
+
       const response = await fetch(`${API_BASE_URL}/admin/profile/photo`, {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}` // ✅ Added token
         }
       });
+
+      if (response.status === 401) {
+        setError('Session expired. Please login again.');
+        return;
+      }
 
       const data = await response.json();
 
@@ -195,14 +234,12 @@ const GeneralSettings = () => {
         setProfilePhoto("");
         setProfilePhotoFile(null);
         
-        // Reset file input
         const fileInput = document.getElementById('upload-photo');
         if (fileInput) fileInput.value = '';
         
         setSuccess("Profile photo removed successfully!");
         setTimeout(() => setSuccess(''), 3000);
         
-        // Update localStorage
         const savedProfile = JSON.parse(localStorage.getItem("adminProfile") || '{}');
         savedProfile.photo = "";
         localStorage.setItem("adminProfile", JSON.stringify(savedProfile));

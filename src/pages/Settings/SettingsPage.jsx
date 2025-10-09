@@ -16,7 +16,7 @@ const SettingsPage = () => {
         
         {/* Tabs */}
         <div className="settings-card">
-                  <h3 className="settings-title mb-4" style={{fontFamily:"Prompt"}} >Settings</h3>
+                  <h3 className="settings-title mb-4" style={{fontFamily:"Prompt",fontSize:'20'}} >Settings</h3>
 
           <ul className="nav nav-tabs settings-tabs">
             

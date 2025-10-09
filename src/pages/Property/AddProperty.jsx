@@ -169,7 +169,7 @@ const AddProperty = ({ isOpen, onClose }) => {
   useEffect(() => {
     const fetchOwners = async () => {
       try {
-        const res = await axios.get('http://192.168.0.152:5000/api/owners');
+        const res = await axios.get('http://192.168.0.154:5000/api/owners');
         setOwners(res.data.owners || []);
       } catch (err) {
         console.error('Failed to fetch owners:', err);
@@ -272,7 +272,7 @@ const AddProperty = ({ isOpen, onClose }) => {
       });
 
       // Send as JSON with increased timeout
-      const response = await axios.post('http://192.168.0.152:5000/api/property', payload, {
+      const response = await axios.post('http://192.168.0.154:5000/api/property', payload, {
         headers: { 
           'Content-Type': 'application/json'
         },
@@ -318,7 +318,7 @@ const AddProperty = ({ isOpen, onClose }) => {
           errorMsg += `\n\nDetails: ${err.response.data.details}`;
         }
       } else if (err.request) {
-        errorMsg = 'Network error. Please check:\n• Your internet connection\n• Server is running on http://192.168.0.152:5000\n• CORS is properly configured';
+        errorMsg = 'Network error. Please check:\n• Your internet connection\n• Server is running on http://192.168.0.154:5000\n• CORS is properly configured';
         errorTitle = 'Network Error';
       }
       

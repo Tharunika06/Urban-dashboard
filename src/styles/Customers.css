@@ -132,9 +132,10 @@
 
 .page-title {
   font-size: 20px;
-  font-weight: 600;
   color: #343a40;
   margin: 0;
+    font-weight: 600;
+  font-family: 'Prompt', sans-serif;
 }
 
 /* .filter-dropdown {
@@ -331,8 +332,13 @@
   max-height: 100vh;
   overflow-y: auto;
 
-  scrollbar-width: none;          /* Firefox */
+  /* scrollbar-width: none;          Firefox */
   -ms-overflow-style: none;       /* IE and Edge */
+}
+
+/* Add this for Chrome, Safari, and all webkit browsers */
+.customer-detail-container::-webkit-scrollbar {
+  display: none;                  /* Chrome, Safari, Edge (Chromium) */
 }
 
 .customer-detail-container::-webkit-scrollbar {

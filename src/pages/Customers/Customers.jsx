@@ -31,7 +31,7 @@ const Customers = () => {
   useEffect(() => {
     const fetchAndProcessData = async () => {
       try {
-        const response = await fetch('http://192.168.0.152:5000/api/payment/transactions');
+        const response = await fetch('http://192.168.0.154:5000/api/payment/transactions');
         if (!response.ok) throw new Error('Network response was not ok');
         const data = await response.json();
         console.log('Fetched transactions:', data);
@@ -69,7 +69,7 @@ const Customers = () => {
           name: tx.customerName || 'N/A',
           phone: tx.customerPhone || 'N/A',
           photo: tx.customerPhoto || '/assets/placeholder.png',
-          email: tx.customerEmail || 'N/A', // Fetch from transaction DB
+          email: tx.customerEmail || 'N/A',
           address: tx.customerAddress || 'N/A',
           interestedProperties: tx.property?.name || 'N/A',
           proptype: tx.property?.type || 'Apartment',
@@ -119,7 +119,7 @@ const Customers = () => {
       console.log('Attempting to delete customer with phone:', customerToDelete);
       
       const response = await fetch(
-        `http://192.168.0.152:5000/api/payment/customers/${encodeURIComponent(customerToDelete)}`,
+        `http://192.168.0.154:5000/api/payment/customer/${encodeURIComponent(customerToDelete)}`,
         {
           method: 'DELETE',
           headers: {
@@ -128,13 +128,13 @@ const Customers = () => {
         }
       );
       
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to delete customer');
+      const data = await response.json();
+      
+      if (!response.ok || !data.success) {
+        throw new Error(data.message || 'Failed to delete customer');
       }
       
-      const result = await response.json();
-      console.log('Delete response:', result);
+      console.log('Delete response:', data);
       
       // Remove all transactions for this customer from local state
       const updatedTransactions = allTransactions.filter(tx => tx.customerPhone !== customerToDelete);
@@ -142,17 +142,14 @@ const Customers = () => {
       
       setShowDeletePopup(false);
       setCustomerToDelete(null);
-      console.log('Customer deleted successfully');
+      
+      // No success alert - just like Transaction.jsx
       
     } catch (err) {
       console.error('Failed to delete customer:', err);
-      
-      // Close the popup
+      alert(`Failed to delete customer: ${err.message}`);
       setShowDeletePopup(false);
       setCustomerToDelete(null);
-      
-      // Show user-friendly error message
-      alert(`Failed to delete customer: ${err.message}`);
     }
   };
 

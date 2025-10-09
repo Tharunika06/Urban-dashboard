@@ -32,9 +32,8 @@ const Owners = () => {
   const fetchOwners = async () => {
     try {
       setIsLoading(true);
-      const res = await axios.get('http://192.168.0.152:5000/api/owners');
+      const res = await axios.get('http://192.168.0.154:5000/api/owners');
 
-      // Your backend sends { owners: [...], count, includePhotos }
       const ownersArray = Array.isArray(res.data.owners) ? res.data.owners : [];
       setOwners(ownersArray);
       setFilteredOwners(ownersArray);
@@ -54,12 +53,10 @@ const Owners = () => {
     }
     
     // If photo is a file path (for backward compatibility)
-    if (photo && photo.startsWith('/uploads/')) {
-      return `http://192.168.0.152:5000${photo}`;
-    }
+    if (photo && photo.startsWith('/uploads/')) 
     
     // Fallback to placeholder image
-    return '/assets/default-avatar.png';
+    return '/assets/placeholder.png';
   };
 
   // NEW: Function to handle image loading errors
@@ -117,7 +114,7 @@ const Owners = () => {
     if (!ownerToDelete) return;
     
     try {
-      await axios.delete(`http://192.168.0.152:5000/api/owners/${ownerToDelete}`);
+      await axios.delete(`http://192.168.0.154:5000/api/owners/${ownerToDelete}`);
       
       // Remove owner from list
       setOwners((prev) => prev.filter((owner) => owner.ownerId !== ownerToDelete));
@@ -174,7 +171,6 @@ const Owners = () => {
                 objectFit: 'cover',
                 borderRadius: '50%',
                 marginRight: '12px',
-                border: '2px solid #e0e0e0'
               }}
             />
             
