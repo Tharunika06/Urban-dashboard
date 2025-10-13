@@ -185,6 +185,7 @@
   grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
   gap: 1.5rem;
 }
+
 .customer-card {
   background-color: #fff;
   border-radius: 12px;
@@ -207,7 +208,7 @@
   font-size: 1.2rem;
   font-weight: 600;
   margin: 0 0 1rem 0;
-  text-align: center;
+  text-align: left;
 }
 .customer-contact-info p {
   font-size: 0.9rem;
@@ -273,19 +274,24 @@
 /* --- STATUS BADGES --- */
 .customergrid-status-badge {
   padding: 0.3rem 0.8rem;
-  border-radius: 16px;
-  font-size: 0.8rem;
+  border-radius: 5px;
+  font-size: 12px;
   font-weight: 500;
 
 }
-.status-badge.available{
+.status-badge.active{
   background-color: #52BD94;
-  color:#FFFFFF
+  color:#fff;
+   border-radius: 5px;
+   font-size: 12px;
+   padding: 0.3rem 0.5rem 0.3rem 0.5rem;
 
 }
-.status-badge.unavailable{
+.status-badge.inactive{
    background-color: #D14343;
-   color:#FFFFFF
+   color:#fff;
+    border-radius: 5px;
+    font-size: 12px;
 }
 /* --- ACTION ICONS & PAGINATION --- */
 .action-icons {

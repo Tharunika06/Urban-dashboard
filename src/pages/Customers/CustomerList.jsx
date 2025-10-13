@@ -65,7 +65,7 @@ const CustomerList = ({ customers, onDelete }) => {
                     onClick={() => onDelete(customer.phone)}
                     style={{ cursor: 'pointer' }}
                   />
-                  <img src="/assets/edit-icon.png" alt="Edit" />
+                  {/* <img src="/assets/edit-icon.png" alt="Edit" /> */}
                 </td>
               </tr>
             ))

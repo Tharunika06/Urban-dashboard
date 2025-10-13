@@ -64,7 +64,7 @@ const OrderList = ({ orders, onDelete }) => {
                     onClick={() => onDelete(order.customTransactionId)}
                     style={{ cursor: 'pointer' }}
                   />
-                  <img src="/assets/edit-icon.png" alt="Edit" />
+                  {/* <img src="/assets/edit-icon.png" alt="Edit" /> */}
                 </td>
               </tr>
             ))

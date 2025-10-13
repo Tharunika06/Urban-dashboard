@@ -483,7 +483,7 @@ const AddProperty = ({ isOpen, onClose }) => {
                     <label>City</label>
                     <select name="city" value={form.city} onChange={handleChange}>
                       <option value="">Choose a City</option>
-                      {['Chennai', 'Mumbai', 'Delhi', 'Bangalore', 'Pune', 'New York', 'London'].map(c => <option key={c} value={c}>{c}</option>)}
+                      {['Chennai', 'Mumbai', 'Delhi', 'Bangalore', 'Pune', 'New York', 'London','Austin'].map(c => <option key={c} value={c}>{c}</option>)}
                     </select>
                   </div>
                 </div>

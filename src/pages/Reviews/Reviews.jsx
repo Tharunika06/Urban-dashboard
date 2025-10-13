@@ -323,7 +323,7 @@ const Reviews = () => {
                           onClick={() => handleConfirmDelete(r._id)}
                           style={{ cursor: "pointer" }}
                         />
-                        <img src="/assets/edit-icon.png" alt="Edit" />
+                        {/* <img src="/assets/edit-icon.png" alt="Edit" /> */}
                       </td>
                     </tr>
                   ))

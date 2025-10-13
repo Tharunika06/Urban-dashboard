@@ -36,7 +36,6 @@ export default function CustomerGrid({ customers = [] }) {
                 <FiMoreVertical className="more-options-icon" />
               </div>
             </div>
-
             <div className="card-body">
               <div className="customer-main-info">
                 <h3>{c.name}</h3>

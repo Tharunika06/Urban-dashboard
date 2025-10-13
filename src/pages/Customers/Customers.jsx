@@ -178,7 +178,7 @@ const Customers = () => {
               <img src="/assets/search-icon.png" alt="search" />
               <input
                 type="text"
-                placeholder="Search by name, phone, or email"
+                placeholder="Search"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />

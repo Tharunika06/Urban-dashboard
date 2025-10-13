@@ -149,7 +149,7 @@ const TransactionsTable = () => {
                       onClick={() => handleDelete(tx.customTransactionId)}
                       style={{ cursor: 'pointer'}}
                     />
-                    <img src="/assets/edit-icon.png" alt="Edit" style={{ cursor: 'pointer' }} />
+                    {/* <img src="/assets/edit-icon.png" alt="Edit" style={{ cursor: 'pointer' }} /> */}
                   </td>
                 </tr>
               ))

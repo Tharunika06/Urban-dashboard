@@ -203,11 +203,11 @@ const Owners = () => {
             onClick={() => handleConfirmDelete(owner.ownerId)}
             style={{ cursor: 'pointer' }}
           />
-          <img
+          {/* <img
             src="/assets/edit-icon.png"
             alt="Edit"
             style={{ cursor: 'pointer' }}
-          />
+          /> */}
         </td>
       </tr>
     ));

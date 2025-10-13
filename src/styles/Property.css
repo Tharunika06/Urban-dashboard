@@ -204,24 +204,26 @@
 
 /* --- Status Badges --- */
 .status-badge {
-  padding: 0.4rem 1rem;
-  border-radius: 6px;
-  font-size: 0.8rem;
-  font-weight: 500;
-  text-align: center;
-  text-transform: capitalize;
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  display: inline-block;
 }
 .status-badge.status-rent{
-    background-color: #E7F4E9;
-    color: #3A974C;
+    background-color: #e3f2fd;
+  color: #1976d2;
 }
 .status-badge.status-sale {
-    background-color: #FEF3E7;
-    color: #F29339;
+   background-color: #e8f5e9;
+  color: #388e3c;
 }
-.status-badge.status-sold {
-    background-color: #FCE4E6;
-    color: #D11A2A;
+.status-badge.status-both {
+  background: #e3f2fd;
+  color: #1d4eb9;
+  border: 1px solid #ddd;
+
 }
 
 :root {
@@ -491,7 +493,7 @@
 .property-stats {
   display: flex;
   flex-wrap: wrap;
-  gap: 1rem;
+  gap: 0.5rem;
   font-size: 0.85rem;
   color: var(--text-secondary);
   border-bottom: 1px solid var(--border-color);
@@ -523,7 +525,7 @@
 .property-price {
   font-size: 16px;
   font-weight: 600;
-  color: var(--text-primary);
+color: #333;
 }
 
 .view-more {

@@ -3,54 +3,59 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import '../../styles/Property.css';
 
-// ✅ Status Badge
+// ✅ Status Badge - UPDATED to match PropertyList
 const getStatusClass = (status) => {
   switch (status?.toLowerCase()) {
     case 'rent':
-      return 'for-rent';
+      return 'status-rent';
     case 'sale':
-      return 'for-sale';
+      return 'status-sale';
     case 'both':
-      return 'for-both';
+      return 'status-both';
+    case 'sold':
+      return 'status-sold';
     default:
       return '';
   }
 };
 
-// ✅ Price Formatter
-const formatPriceForGrid = (prop) => {
-  if (!prop) return 'N/A';
+// ✅ Price Formatter - UPDATED to match PropertyList exactly
+const formatPrice = (prop) => {
   const status = prop.status?.toLowerCase();
-
+  
+  // Priority 1: Handle properties available for both rent and sale
   if (status === 'both' && prop.rentPrice && prop.salePrice) {
     return (
-      <div className="grid-price-dual">
-        <span className="grid-price-rent">
-          Rent: ${Number(prop.rentPrice).toLocaleString()} /mo
-        </span><br />
-        <span className="grid-price-sale">
-          Sale: ${Number(prop.salePrice).toLocaleString()}
-        </span>
+      <div className="price-dual">
+        <span className="price-rent">{`Rent: $${Number(prop.rentPrice).toLocaleString()} /mo`}</span>
+        <br />
+        <span className="price-sale">{`Sale: $${Number(prop.salePrice).toLocaleString()}`}</span>
       </div>
     );
   }
 
+  // Priority 2: Handle rent-only properties
   if (status === 'rent' && prop.rentPrice) {
-    return `$${Number(prop.rentPrice).toLocaleString()} /mo`;
-  }
-
-  if (status === 'sale' && prop.salePrice) {
+    return `$${Number(prop.rentPrice).toLocaleString()} /month`;
+  } 
+  
+  // Priority 3: Handle sale-only properties
+  else if (status === 'sale' && prop.salePrice) {
     return `$${Number(prop.salePrice).toLocaleString()}`;
-  }
-
-  if (prop.price) {
+  } 
+  
+  // Priority 4: Fallback for older data with a generic 'price'
+  else if (prop.price) {
     return `$${Number(prop.price).toLocaleString()}`;
+  } 
+  
+  // Final fallback
+  else {
+    return 'N/A';
   }
-
-  return 'N/A';
 };
 
-// ✅ Handle Image Sources (same as PropertyList)
+// ✅ Handle Image Sources
 const getImageSrc = (photo) => {
   if (photo && photo.startsWith('data:image/')) {
     return photo;
@@ -58,12 +63,12 @@ const getImageSrc = (photo) => {
   if (photo && photo.startsWith('/uploads/')) {
     return `http://192.168.0.154:5000${photo}`;
   }
-  return '/assets/placeholder-property.png';
+  return '/assets/placeholder.png';
 };
 
 // ✅ Fallback Image Handler
 const handleImageError = (e) => {
-  e.target.src = '/assets/placeholder-property.png';
+  e.target.src = '/assets/placeholder.png';
   console.warn('Failed to load property image');
 };
 
@@ -96,14 +101,9 @@ const PropertyGrid = ({ properties }) => {
                   <p className="property-address">{prop.address || 'N/A'}</p>
                 </div>
               </div>
-              <span className={`badge ${getStatusClass(prop.status)}`}>
-                {prop.status === 'rent'
-                  ? 'For Rent'
-                  : prop.status === 'sale'
-                  ? 'For Sale'
-                  : prop.status === 'both'
-                  ? 'For Rent & Sale'
-                  : prop.status || 'Unknown'}
+              {/* Status Badge - Now matches PropertyList styling */}
+              <span className={`status-badge ${getStatusClass(prop.status)}`}>
+                {prop.status || 'N/A'}
               </span>
             </div>
 
@@ -123,14 +123,14 @@ const PropertyGrid = ({ properties }) => {
               </div>
               <div className="stat-item">
                 <img src="/assets/floor-icon.png" alt="floor" />
-                {prop.floors || '1'} Floor
+                {prop.floor || '1'} Floor
               </div>
             </div>
 
-            {/* Price + View More */}
+            {/* Price + View More - Now displays dual prices like PropertyList */}
             <div className="property-footer">
               <div className="property-price">
-                {formatPriceForGrid(prop)}
+                {formatPrice(prop)}
               </div>
               <Link to={`/property/${prop._id}`} className="view-more">
                 View More →

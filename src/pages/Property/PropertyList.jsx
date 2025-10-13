@@ -148,12 +148,12 @@ const PropertyList = ({ properties, handleDelete, handleBulkDelete }) => {
     }
     
     // Fallback to placeholder image
-    return '/assets/placeholder-property.png';
+    return '/assets/placeholder.png';
   };
 
   // Function to handle image loading errors
   const handleImageError = (e) => {
-    e.target.src = '/assets/placeholder-property.png';
+    e.target.src = '/assets/placeholder.png';
     console.warn('Failed to load property image');
   };
 
@@ -273,7 +273,7 @@ const PropertyList = ({ properties, handleDelete, handleBulkDelete }) => {
                     onClick={() => handleDeleteClick(prop._id)}
                     style={{ cursor: 'pointer' }}
                   />
-                  <img src="/assets/edit-icon.png" alt="Edit" />
+                  {/* <img src="/assets/edit-icon.png" alt="Edit" /> */}
                 </td>
               </tr>
             ))}

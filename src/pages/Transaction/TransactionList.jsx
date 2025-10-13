@@ -198,9 +198,9 @@ const TransactionList = ({
                         onClick={() => handleDelete(transaction.customTransactionId)}
                         style={{ cursor: 'pointer' }}
                       />
-                      <Link to={`/transaction/edit/${transaction.customTransactionId}`}>
+                      {/* <Link to={`/transaction/edit/${transaction.customTransactionId}`}>
                         <img src="/assets/edit-icon.png" alt="Edit" />
-                      </Link>
+                      </Link> */}
                     </td>
                   </tr>
                 );

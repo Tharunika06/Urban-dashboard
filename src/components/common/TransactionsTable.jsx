@@ -30,7 +30,7 @@ const TransactionsTable = ({ transactions }) => (
             <td><span className={`status ${t.status.toLowerCase()}`}>{t.status}</span></td>
             <td><div className="action-icons">
               <img src="/assets/eye.png" alt="View" className="icon-img"/>
-              <img src="/assets/edit.png" alt="Edit" className="icon-img"/>
+              {/* <img src="/assets/edit.png" alt="Edit" className="icon-img"/> */}
               <img src="/assets/trash.png" alt="Delete" className="icon-img"/>
             </div></td>
           </tr>
