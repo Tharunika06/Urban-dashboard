@@ -1,7 +1,6 @@
 // src/pages/Property/PropertyList.jsx
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import PopupMessage from '../../components/common/PopupMessage';
 import Checkbox from '../../components/common/Checkbox';
 import '../../styles/Property.css';
 
@@ -27,8 +26,6 @@ const PropertyList = ({ properties, handleDelete, handleBulkDelete }) => {
   const [selectAll, setSelectAll] = useState(false);
   const [checkedRows, setCheckedRows] = useState({});
   const [currentPage, setCurrentPage] = useState(1);
-  const [showPopup, setShowPopup] = useState(false);
-  const [propertyToDelete, setPropertyToDelete] = useState(null);
 
   const totalPages = Math.ceil(properties.length / ITEMS_PER_PAGE);
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
@@ -52,13 +49,11 @@ const PropertyList = ({ properties, handleDelete, handleBulkDelete }) => {
   const toggleCheckbox = (id) => {
     setCheckedRows((prev) => {
       const newChecked = { ...prev, [id]: !prev[id] };
-      
+
       // Check if all current page items are selected
-      const allSelected = currentItems.every(
-        p => newChecked[p._id]
-      );
+      const allSelected = currentItems.every((p) => newChecked[p._id]);
       setSelectAll(allSelected);
-      
+
       return newChecked;
     });
   };
@@ -69,27 +64,14 @@ const PropertyList = ({ properties, handleDelete, handleBulkDelete }) => {
     setCheckedRows({});
   };
 
+  // ✅ Simplified delete — call parent only (no popup here)
   const handleDeleteClick = (id) => {
-    setPropertyToDelete(id);
-    setShowPopup(true);
-  };
-
-  const confirmDelete = () => {
-    if (propertyToDelete) {
-      handleDelete(propertyToDelete);
-    }
-    setShowPopup(false);
-    setPropertyToDelete(null);
-  };
-
-  const cancelDelete = () => {
-    setShowPopup(false);
-    setPropertyToDelete(null);
+    handleDelete(id);
   };
 
   // Get selected property IDs
   const getSelectedIds = () => {
-    return Object.keys(checkedRows).filter(id => checkedRows[id]);
+    return Object.keys(checkedRows).filter((id) => checkedRows[id]);
   };
 
   const selectedCount = getSelectedIds().length;
@@ -103,55 +85,40 @@ const PropertyList = ({ properties, handleDelete, handleBulkDelete }) => {
 
   const formatPrice = (prop) => {
     const status = prop.status?.toLowerCase();
-    
-    // Priority 1: Handle properties available for both rent and sale
+
     if (status === 'both' && prop.rentPrice && prop.salePrice) {
       return (
         <div className="price-dual">
-          <span className="price-rent">{`$Rent Price:${Number(prop.rentPrice).toLocaleString()} /mo`}</span><br></br>
-          <span className="price-sale">{`$Sale Price:${Number(prop.salePrice).toLocaleString()}`}</span>
+          <span className="price-rent">{`$Rent Price: ${Number(prop.rentPrice).toLocaleString()} /mo`}</span>
+          <br />
+          <span className="price-sale">{`$Sale Price: ${Number(prop.salePrice).toLocaleString()}`}</span>
         </div>
       );
     }
 
-    // Priority 2: Handle rent-only properties
     if (status === 'rent' && prop.rentPrice) {
       return `$${Number(prop.rentPrice).toLocaleString()} /month`;
-    } 
-    
-    // Priority 3: Handle sale-only properties
-    else if (status === 'sale' && prop.salePrice) {
+    } else if (status === 'sale' && prop.salePrice) {
       return `$${Number(prop.salePrice).toLocaleString()}`;
-    } 
-    
-    // Priority 4: Fallback for older data with a generic 'price'
-    else if (prop.price) {
+    } else if (prop.price) {
       return `$${Number(prop.price).toLocaleString()}`;
-    } 
-    
-    // Final fallback
-    else {
+    } else {
       return 'N/A';
     }
   };
 
-  // Function to get the correct image source
   const getImageSrc = (photo) => {
-    // If photo exists and is a base64 data URL, use it directly
     if (photo && photo.startsWith('data:image/')) {
       return photo;
     }
-    
-    // If photo is a file path (for backward compatibility)
+
     if (photo && photo.startsWith('/uploads/')) {
       return `http://192.168.0.154:5000${photo}`;
     }
-    
-    // Fallback to placeholder image
+
     return '/assets/placeholder.png';
   };
 
-  // Function to handle image loading errors
   const handleImageError = (e) => {
     e.target.src = '/assets/placeholder.png';
     console.warn('Failed to load property image');
@@ -162,10 +129,7 @@ const PropertyList = ({ properties, handleDelete, handleBulkDelete }) => {
       {selectedCount > 0 && (
         <div className="bulk-actions-bar">
           <span className="selected-count">{selectedCount} selected</span>
-          <button 
-            className="bulk-delete-btn"
-            onClick={handleBulkDeleteClick}
-          >
+          <button className="bulk-delete-btn" onClick={handleBulkDeleteClick}>
             Delete Selected
           </button>
         </div>
@@ -176,8 +140,8 @@ const PropertyList = ({ properties, handleDelete, handleBulkDelete }) => {
           <thead>
             <tr>
               <th>
-                <Checkbox 
-                  checked={selectAll} 
+                <Checkbox
+                  checked={selectAll}
                   onChange={handleSelectAll}
                   id="select-all-checkbox"
                 />
@@ -217,7 +181,7 @@ const PropertyList = ({ properties, handleDelete, handleBulkDelete }) => {
                           height: '50px',
                           objectFit: 'cover',
                           borderRadius: '4px',
-                          marginRight: '10px'
+                          marginRight: '10px',
                         }}
                       />
                       <span>{prop.name}</span>
@@ -258,7 +222,7 @@ const PropertyList = ({ properties, handleDelete, handleBulkDelete }) => {
                 <td>
                   <Link to={`/property/${prop._id}`}>{prop.city || prop.address || 'N/A'}</Link>
                 </td>
-                
+
                 <td>
                   <Link to={`/property/${prop._id}`}>{formatPrice(prop)}</Link>
                 </td>
@@ -273,7 +237,6 @@ const PropertyList = ({ properties, handleDelete, handleBulkDelete }) => {
                     onClick={() => handleDeleteClick(prop._id)}
                     style={{ cursor: 'pointer' }}
                   />
-                  {/* <img src="/assets/edit-icon.png" alt="Edit" /> */}
                 </td>
               </tr>
             ))}
@@ -307,14 +270,6 @@ const PropertyList = ({ properties, handleDelete, handleBulkDelete }) => {
           Next »
         </button>
       </div>
-
-      {/* Popup Confirmation */}
-      {showPopup && (
-        <PopupMessage 
-          onConfirm={confirmDelete}
-          onCancel={cancelDelete}
-        />
-      )}
     </>
   );
 };

@@ -227,16 +227,13 @@ const Reviews = () => {
             </div>
           </div>
 
-           <div className="reviews-table-header">
-            <h2>
-              All Reviews List 
-              {/* <span className="subtext">({filteredReviews.length} Reviews)</span> */}
-            </h2>
-            <MonthDropdown onChange={handleMonthChange} />
-          </div>
-
-          <div className="reviews-table">
-           
+         <section className="content-section">
+            {/* Header - Stays fixed during horizontal scroll */}
+            <div className="list-header">
+              <h2 className="page-title">All Reviews List</h2>
+              <MonthDropdown onChange={handleMonthChange} />
+            </div>
+            <div className="reviews-table">
             {/* Bulk Actions Bar */}
             {selectedCount > 0 && (
               <div className="bulk-actions-bar">
@@ -249,117 +246,124 @@ const Reviews = () => {
                 </button>
               </div>
             )}
-            <table>
-              <thead>
-                <tr>
-                  <th>
-                    <Checkbox 
-                      checked={selectAll} 
-                      onChange={handleSelectAll}
-                      id="select-all-checkbox"
-                    />
-                  </th>
-                  <th>Property Name</th>
-                  <th>Date</th>
-                  <th>Customer Name</th>
-                  <th>Property Address</th>
-                  <th>Rating</th>
-                  <th>Review</th>
-                  <th>Status</th>
-                  <th>Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                {isLoading ? (
+
+            {/* Scrollable table container */}
+            <div className="table-scroll-container">
+              <table>
+                <thead>
                   <tr>
-                    <td colSpan="9" style={{ textAlign: 'center', padding: '20px' }}>
-                      Loading reviews...
-                    </td>
+                    <th>
+                      <Checkbox 
+                        checked={selectAll} 
+                        onChange={handleSelectAll}
+                        id="select-all-checkbox"
+                      />
+                    </th>
+                    <th>Property Name</th>
+                    <th>Date</th>
+                    <th>Customer Name</th>
+                    <th>Property Address</th>
+                    <th>Rating</th>
+                    <th>Review</th>
+                    <th>Status</th>
+                    <th>Action</th>
                   </tr>
-                ) : error ? (
-                  <tr>
-                    <td colSpan="9" style={{ textAlign: 'center', padding: '20px' }}>
-                      Error: {error}
-                    </td>
-                  </tr>
-                ) : currentReviews.length === 0 ? (
-                  <tr>
-                    <td colSpan="9" style={{ textAlign: 'center', padding: '20px' }}>
-                      No reviews found
-                    </td>
-                  </tr>
-                ) : (
-                  currentReviews.map((r) => (
-                    <tr key={r._id}>
-                      <td>
-                        <Checkbox
-                          checked={checkedRows[r._id] || false}
-                          onChange={() => toggleCheckbox(r._id)}
-                          id={`checkbox-${r._id}`}
-                        />
-                      </td>
-                      <td>{r.propertyId?.name || "Unknown Property"}</td>
-                      <td>{new Date(r.createdAt).toLocaleDateString()}</td>
-                      <td>{r.customerName}</td>
-                      <td className="address">{r.propertyId?.address || "N/A"}</td>
-                      <td>
-                        {[...Array(5)].map((_, i) => (
-                          <FaStar
-                            key={i}
-                            className={i < Math.round(r.rating) ? "filled-star" : "empty-star"}
-                          />
-                        ))}
-                        <span className="rating-value">{r.rating}/5</span>
-                      </td>
-                      <td><p>{r.comment}</p></td>
-                      <td><span className="status-tag published">Published</span></td>
-                      <td className="action-icons">
-                        <Link to={`/reviews/${r._id}`}>
-                          <img src="/assets/view-icon.png" alt="View" />
-                        </Link>
-                        <img
-                          src="/assets/delete-icon.png"
-                          alt="Delete"
-                          onClick={() => handleConfirmDelete(r._id)}
-                          style={{ cursor: "pointer" }}
-                        />
-                        {/* <img src="/assets/edit-icon.png" alt="Edit" /> */}
+                </thead>
+                <tbody>
+                  {isLoading ? (
+                    <tr>
+                      <td colSpan="9" style={{ textAlign: 'center', padding: '20px' }}>
+                        Loading reviews...
                       </td>
                     </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
+                  ) : error ? (
+                    <tr>
+                      <td colSpan="9" style={{ textAlign: 'center', padding: '20px' }}>
+                        Error: {error}
+                      </td>
+                    </tr>
+                  ) : currentReviews.length === 0 ? (
+                    <tr>
+                      <td colSpan="9" style={{ textAlign: 'center', padding: '20px' }}>
+                        No reviews found
+                      </td>
+                    </tr>
+                  ) : (
+                    currentReviews.map((r) => (
+                      <tr key={r._id}>
+                        <td>
+                          <Checkbox
+                            checked={checkedRows[r._id] || false}
+                            onChange={() => toggleCheckbox(r._id)}
+                            id={`checkbox-${r._id}`}
+                          />
+                        </td>
+                        <td>{r.propertyId?.name || "Unknown Property"}</td>
+                        <td>{new Date(r.createdAt).toLocaleDateString()}</td>
+                        <td>{r.customerName}</td>
+                        <td className="address">{r.propertyId?.address || "N/A"}</td>
+                        <td>
+                          {[...Array(5)].map((_, i) => (
+                            <FaStar
+                              key={i}
+                              className={i < Math.round(r.rating) ? "filled-star" : "empty-star"}
+                            />
+                          ))}
+                          <span className="rating-value">{r.rating}/5</span>
+                        </td>
+                        <td><p>{r.comment}</p></td>
+                        <td><span className="status-tag published">Published</span></td>
+                        <td className="action-icons">
+                          <Link to={`/reviews/${r._id}`}>
+                            <img src="/assets/view-icon.png" alt="View" />
+                          </Link>
+                          <img
+                            src="/assets/delete-icon.png"
+                            alt="Delete"
+                            onClick={() => handleConfirmDelete(r._id)}
+                            style={{ cursor: "pointer" }}
+                          />
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
 
-            {/* Pagination */}
+            {/* Pagination - Stays fixed at bottom */}
             {totalPages > 1 && (
-              <div className="pagination">
-                <button
-                  className="page-link"
-                  onClick={() => handlePageChange(currentPage - 1)}
-                  disabled={currentPage === 1}
-                >
-                  « Back
-                </button>
-                {Array.from({ length: totalPages }, (_, i) => (
+              <div className="pagination-wrapper">
+                <div className="pagination">
                   <button
-                    key={i + 1}
-                    className={`page-link ${currentPage === i + 1 ? 'active' : ''}`}
-                    onClick={() => handlePageChange(i + 1)}
+                    className="page-link"
+                    onClick={() => handlePageChange(currentPage - 1)}
+                    disabled={currentPage === 1}
                   >
-                    {i + 1}
+                    « Back
                   </button>
-                ))}
-                <button
-                  className="page-link"
-                  onClick={() => handlePageChange(currentPage + 1)}
-                  disabled={currentPage === totalPages}
-                >
-                  Next »
-                </button>
+                  {Array.from({ length: totalPages }, (_, i) => (
+                    <button
+                      key={i + 1}
+                      className={`page-link ${currentPage === i + 1 ? 'active' : ''}`}
+                      onClick={() => handlePageChange(i + 1)}
+                    >
+                      {i + 1}
+                    </button>
+                  ))}
+                  <button
+                    className="page-link"
+                    onClick={() => handlePageChange(currentPage + 1)}
+                    disabled={currentPage === totalPages}
+                  >
+                    Next »
+                  </button>
+                </div>
               </div>
             )}
+            
           </div>
+          </section>
         </div>
       </div>
 

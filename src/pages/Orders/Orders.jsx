@@ -181,7 +181,7 @@ const Orders = () => {
                   <img src={view === 'grid' ? '/assets/grid-active.png' : '/assets/grid-inactive.png'} alt="Grid View" />
                 </button>
               </div>
-                <button className="add-button">Add Order</button>
+                {/* <button className="add-button">Add Order</button> */}
               </div>
             </div>
 

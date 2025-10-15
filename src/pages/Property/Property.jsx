@@ -6,6 +6,7 @@ import PropertyGrid from './PropertyGrid.jsx';
 import AddProperty from './AddProperty.jsx';
 import Header from '../../components/layout/Header';
 import MonthDropdown from '../../components/common/MonthDropdown';
+import PopupMessage from '../../components/common/PopupMessage';
 import '../../styles/Property.css';
 
 const months = [
@@ -23,11 +24,9 @@ const Property = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Delete confirmation states
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [propertyToDelete, setPropertyToDelete] = useState(null);
 
-  // Fetch properties
   const fetchProperties = async () => {
     try {
       setIsLoading(true);
@@ -45,23 +44,19 @@ const Property = () => {
     fetchProperties();
   }, []);
 
-  // Filter properties based on search term and selected month
   useEffect(() => {
     let propertiesToFilter = propertyList;
 
-    // Apply month filter if a month is selected
     if (selectedMonth) {
       const monthIndex = months.indexOf(selectedMonth);
       if (monthIndex > -1) {
-        propertiesToFilter = propertiesToFilter.filter(property => {
-          // Assuming properties have a createdAt field, adjust field name as needed
+        propertiesToFilter = propertiesToFilter.filter((property) => {
           const propertyDate = new Date(property.createdAt || property.dateAdded);
           return propertyDate.getMonth() === monthIndex;
         });
       }
     }
 
-    // Apply search filter
     if (searchTerm) {
       const term = searchTerm.toLowerCase();
       propertiesToFilter = propertiesToFilter.filter(
@@ -75,36 +70,25 @@ const Property = () => {
     setFilteredList(propertiesToFilter);
   }, [searchTerm, selectedMonth, propertyList]);
 
-  const handleSearch = (event) => {
-    setSearchTerm(event.target.value);
-  };
-
-  const handleMonthChange = (month) => {
-    setSelectedMonth(month);
-  };
-
+  const handleSearch = (event) => setSearchTerm(event.target.value);
+  const handleMonthChange = (month) => setSelectedMonth(month);
   const handleSaveProperty = () => {
     fetchProperties();
     setIsModalOpen(false);
   };
 
-  // Open delete confirmation modal
   const confirmDelete = (id) => {
     setPropertyToDelete(id);
     setDeleteModalOpen(true);
   };
 
-  // Delete property after confirmation
   const handleDeleteProperty = async () => {
     if (!propertyToDelete) return;
 
     try {
       await axios.delete(`http://192.168.0.154:5000/api/property/${propertyToDelete}`);
-      
-      // Update local state to remove deleted property
       const updatedProperties = propertyList.filter((prop) => prop._id !== propertyToDelete);
       setPropertyList(updatedProperties);
-      
       console.log('Property deleted successfully');
     } catch (err) {
       console.error('Failed to delete property:', err);
@@ -115,24 +99,18 @@ const Property = () => {
     }
   };
 
-  // Cancel delete popup
   const handleCancelDelete = () => {
     setDeleteModalOpen(false);
     setPropertyToDelete(null);
   };
 
-  // Get dynamic title based on current view
-  const getPageTitle = () => {
-    return view === 'list' ? 'All Property List' : 'All Property Grid';
-  };
+  const getPageTitle = () => (view === 'list' ? 'All Property List' : 'All Property Grid');
 
   const renderContent = () => {
     if (isLoading) return <div className="loading-state">Loading properties...</div>;
     if (error) return <div className="error-state">Error: {error}</div>;
-    
-    if (view === 'list') {
+    if (view === 'list')
       return <PropertyList properties={filteredList} handleDelete={confirmDelete} />;
-    }
     return <PropertyGrid properties={filteredList} />;
   };
 
@@ -197,24 +175,9 @@ const Property = () => {
             onSave={handleSaveProperty}
           />
 
-          {/* Delete Confirmation Modal */}
+          {/* ✅ Only ONE Delete Confirmation Popup */}
           {deleteModalOpen && (
-            <div className="modal-overlay">
-              <div className="modal-content">
-                <span className="close-btn" onClick={handleCancelDelete}>×</span>
-                <div className="modal-body">
-                  <div className="modal-icon">
-                    <span style={{ fontSize: '40px', color: 'green' }}>✔</span>
-                  </div>
-                  <h2>Are You Sure?</h2>
-                  <p>Do you really want to delete this property? This process cannot be undone.</p>
-                  <div className="modal-actions">
-                    <button className="btn-cancel" onClick={handleCancelDelete}>Cancel</button>
-                    <button className="btn-delete" onClick={handleDeleteProperty}>Delete</button>
-                  </div>
-                </div>
-              </div>
-            </div>
+            <PopupMessage onConfirm={handleDeleteProperty} onCancel={handleCancelDelete} />
           )}
         </main>
       </div>
