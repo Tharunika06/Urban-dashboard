@@ -1,3 +1,4 @@
+// Sidebar.jsx
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import '/src/styles/Sidebar.css';

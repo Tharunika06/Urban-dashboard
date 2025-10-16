@@ -18,84 +18,99 @@ const OwnerDetail = () => {
   const [showPropertyModal, setShowPropertyModal] = useState(false);
   const [loadingProperties, setLoadingProperties] = useState(false);
 
-  // NEW: Function to get the correct owner photo source
+  // Function to get the correct owner photo source
   const getOwnerPhotoSrc = (photo) => {
-    // If photo exists and is a base64 data URL, use it directly
     if (photo && photo.startsWith('data:image/')) {
       return photo;
     }
-    
-    // If photo is a file path (for backward compatibility)
-    // if (photo && photo.startsWith('/uploads/')) {
-    //   return `${API_BASE_URL}${photo}`;
-    // }
-    
-    // Fallback to placeholder image
     return '/assets/placeholder.png';
   };
 
-  // NEW: Function to get the correct property photo source
+  // Function to get the correct property photo source
   const getPropertyPhotoSrc = (photo) => {
-    // If photo exists and is a base64 data URL, use it directly
     if (photo && photo.startsWith('data:image/')) {
       return photo;
     }
-    
-    // If photo is a file path (for backward compatibility)
     if (photo && photo.startsWith('/uploads/')) {
       return `${API_BASE_URL}${photo}`;
     }
-    
-    // Fallback to placeholder image
     return '/assets/default-property.png';
   };
 
-  // NEW: Function to handle image loading errors
+  // Function to handle image loading errors
   const handleImageError = (e, fallbackSrc) => {
     e.target.src = fallbackSrc;
     console.warn('Failed to load image, using fallback');
   };
 
-  // Fetch owner details + owner properties on mount
+  // Fetch owner details - THIS WILL GET FRESH AUTO-CALCULATED STATS
+  const fetchOwnerDetails = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      console.log(`📥 Fetching owner details for ID: ${ownerId}`);
+      const response = await fetch(`${API_BASE_URL}/api/owners/${ownerId}`);
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        const errorMessage = errorData.error || `Request failed with status: ${response.status}`;
+        throw new Error(errorMessage);
+      }
+      
+      const data = await response.json();
+      console.log('✅ Owner data received:', data);
+      console.log('📊 Auto-calculated stats:', {
+        propertyOwned: data.propertyOwned,
+        propertyRent: data.propertyRent,
+        propertySold: data.propertySold,
+        totalListing: data.totalListing
+      });
+      
+      setOwner(data);
+    } catch (err) {
+      console.error('❌ Error fetching owner:', err);
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Fetch owner properties
+  const fetchOwnerProperties = async () => {
+    try {
+      console.log(`📥 Fetching properties for owner ID: ${ownerId}`);
+      const res = await fetch(`${API_BASE_URL}/api/property/owner/${ownerId}`);
+      
+      if (!res.ok) throw new Error("Failed to fetch owner properties");
+      
+      const data = await res.json();
+      console.log(`✅ Found ${data.length} properties for this owner`);
+      
+      setSelectedProperties(data);
+      setAvailableProperties(data);
+    } catch (err) {
+      console.error("❌ Error fetching owner properties:", err);
+    }
+  };
+
+  // Initial data fetch on mount
   useEffect(() => {
-    const fetchOwnerDetails = async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        const response = await fetch(`${API_BASE_URL}/api/owners/${ownerId}`);
-        if (!response.ok) {
-          const errorData = await response.json().catch(() => ({}));
-          const errorMessage = errorData.error || `Request failed with status: ${response.status}`;
-          throw new Error(errorMessage);
-        }
-        const data = await response.json();
-        setOwner(data);
-      } catch (err) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    const fetchOwnerProperties = async () => {
-      try {
-        const res = await fetch(`${API_BASE_URL}/api/property/owner/${ownerId}`);
-        if (!res.ok) throw new Error("Failed to fetch owner properties");
-        const data = await res.json();
-        setSelectedProperties(data);   // load properties into carousel
-        setAvailableProperties(data);  // also store for modal
-      } catch (err) {
-        console.error("Error fetching owner properties:", err);
-      }
-    };
-
     if (ownerId) {
       fetchOwnerDetails();
       fetchOwnerProperties();
     }
   }, [ownerId]);
 
-  // Fetch available properties again when opening modal
+  // Refresh owner stats when properties change
+  useEffect(() => {
+    if (ownerId && selectedProperties.length > 0) {
+      // Refetch owner details to get updated auto-calculated stats
+      console.log('🔄 Properties changed, refreshing owner stats...');
+      fetchOwnerDetails();
+    }
+  }, [selectedProperties.length]); // Trigger when property count changes
+
+  // Fetch available properties for modal
   const fetchAvailableProperties = async () => {
     setLoadingProperties(true);
     try {
@@ -138,23 +153,51 @@ const OwnerDetail = () => {
     return (
       <div className="main-content">
         <Header title="Owner Detail" />
-        <main className="dashboard-body"><p>Loading...</p></main>
+        <main className="dashboard-body">
+          <div style={{ textAlign: 'center', padding: '40px' }}>
+            <p>Loading owner details...</p>
+          </div>
+        </main>
       </div>
     );
   }
+
   if (error) {
     return (
       <div className="main-content">
         <Header title="Owner Detail" />
-        <main className="dashboard-body"><h2>Error: {error}</h2></main>
+        <main className="dashboard-body">
+          <div style={{ textAlign: 'center', padding: '40px', color: '#f44336' }}>
+            <h2>Error: {error}</h2>
+            <button 
+              onClick={() => fetchOwnerDetails()}
+              style={{
+                marginTop: '20px',
+                padding: '10px 20px',
+                backgroundColor: '#4285f4',
+                color: 'white',
+                border: 'none',
+                borderRadius: '6px',
+                cursor: 'pointer'
+              }}
+            >
+              Retry
+            </button>
+          </div>
+        </main>
       </div>
     );
   }
+
   if (!owner) {
     return (
       <div className="main-content">
         <Header title="Owner Detail" />
-        <main className="dashboard-body"><h2>Owner not found</h2></main>
+        <main className="dashboard-body">
+          <div style={{ textAlign: 'center', padding: '40px' }}>
+            <h2>Owner not found</h2>
+          </div>
+        </main>
       </div>
     );
   }
@@ -214,47 +257,76 @@ const OwnerDetail = () => {
                   </div>
                 </div>
 
-                {/* STATUS SECTION */}
+                {/* PROPERTY STATUS SECTION - AUTO-CALCULATED STATS */}
                 <div className="property-status-section">
                   <h3 className="status-heading">Property Status :</h3>
                   <div className="status-cards">
                     <div className="status-card">
                       <div className="status-info">
-                        <div className="status-icon-container purple-bg"><img src="/assets/property-iconn.png" alt="Total Listing" /></div>
+                        <div className="status-icon-container purple-bg">
+                          <img src="/assets/property-iconn.png" alt="Total Listing" />
+                        </div>
                         <p className="status-label">Total Listing</p>
                       </div>
                       <div className="status-ring">
-                        <svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="42" className="ring-fg purple-ring" /></svg>
+                        <svg viewBox="0 0 100 100">
+                          <circle cx="50" cy="50" r="42" className="ring-fg purple-ring" />
+                        </svg>
                         <span className="status-count">{owner.totalListing || 0}</span>
                       </div>
                     </div>
                     <div className="status-card">
                       <div className="status-info">
-                        <div className="status-icon-container orange-bg"><img src="/assets/revenue-bag.png" alt="Property Sold" /></div>
+                        <div className="status-icon-container orange-bg">
+                          <img src="/assets/revenue-bag.png" alt="Property Sold" />
+                        </div>
                         <p className="status-label">Property Sold</p>
                       </div>
                       <div className="status-ring">
-                        <svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="42" className="ring-fg orange-ring" /></svg>
+                        <svg viewBox="0 0 100 100">
+                          <circle cx="50" cy="50" r="42" className="ring-fg orange-ring" />
+                        </svg>
                         <span className="status-count">{owner.propertySold || 0}</span>
                       </div>
                     </div>
                     <div className="status-card">
                       <div className="status-info">
-                        <div className="status-icon-container blue-bg"><img src="/assets/rent.png" alt="Property Rent" /></div>
+                        <div className="status-icon-container blue-bg">
+                          <img src="/assets/rent.png" alt="Property Rent" />
+                        </div>
                         <p className="status-label">Property Rent</p>
                       </div>
                       <div className="status-ring">
-                        <svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="42" className="ring-fg blue-ring" /></svg>
+                        <svg viewBox="0 0 100 100">
+                          <circle cx="50" cy="50" r="42" className="ring-fg blue-ring" />
+                        </svg>
                         <span className="status-count">{owner.propertyRent || 0}</span>
                       </div>
                     </div>
                   </div>
+
+                  {/* Stats Info */}
+                  {/* <div style={{
+                    marginTop: '15px',
+                    padding: '12px',
+                    backgroundColor: '#e3f2fd',
+                    borderRadius: '6px',
+                    fontSize: '13px',
+                    color: '#1976d2'
+                  }}>
+                    <p style={{ margin: 0 }}>
+                      📊 <strong>Total Properties Owned:</strong> {owner.propertyOwned || 0}
+                    </p>
+                    <p style={{ margin: '8px 0 0 0', fontSize: '12px', color: '#666' }}>
+                      Stats are automatically calculated from properties in the system
+                    </p>
+                  </div> */}
                 </div>
 
-                <div className="owner-reviews">
+                {/* <div className="owner-reviews">
                   <h3 className="review-heading">Reviews :</h3>
                   <p>No reviews available for this owner yet.</p>
-                </div>
+                </div> */}
               </div>
 
               {/* RIGHT SIDEBAR */}
@@ -286,7 +358,7 @@ const OwnerDetail = () => {
                 <br/>
                 <div className="property-carousel-card">
                   <div className="carousel-header">
-                    <h3>Property Photos</h3>
+                    <h3>Property Photos ({selectedProperties.length})</h3>
                   </div>
                   {selectedProperties.length > 0 ? (
                     <div className="carousel-wrapper">

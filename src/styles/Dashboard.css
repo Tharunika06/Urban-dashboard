@@ -41,6 +41,14 @@ body {
   font-size: 14px;
   overflow-x: hidden;
 }
+/* .dashboard-card{
+margin:20px;
+  border:none;
+  border-radius: 8px;
+  padding: 16px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  background-color: #fff;
+} */
 
 .dashboard-container {
   display: flex;
@@ -220,9 +228,10 @@ body {
 /* --- Cards --- */
 .card { 
   background-color: var(--card-bg); 
-  border: 1px solid var(--border-color); 
+  border: none; 
   border-radius: 12px !important; 
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04); 
+  
   padding: 1.25rem; 
   width: 100%; 
   margin-bottom: 1rem;

@@ -1,3 +1,4 @@
+// src/pages/Owners/Owners.jsx
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
@@ -8,6 +9,8 @@ import PopupMessage from '../../components/common/PopupMessage';
 
 import '../../styles/Dashboard.css';
 import '../../styles/Owners.css';
+
+const API_BASE_URL = 'http://192.168.0.154:5000';
 
 const months = [
   'January', 'February', 'March', 'April', 'May', 'June',
@@ -25,41 +28,60 @@ const Owners = () => {
   const [showDeletePopup, setShowDeletePopup] = useState(false);
   const [ownerToDelete, setOwnerToDelete] = useState(null);
 
+  // Fetch owners on mount and set up auto-refresh
   useEffect(() => {
     fetchOwners();
+    
+    // Optional: Set up auto-refresh every 30 seconds to get updated stats
+    const refreshInterval = setInterval(() => {
+      console.log('🔄 Auto-refreshing owner data...');
+      fetchOwners(true); // Silent refresh
+    }, 30000);
+
+    return () => clearInterval(refreshInterval);
   }, []);
 
-  const fetchOwners = async () => {
+  const fetchOwners = async (silent = false) => {
     try {
-      setIsLoading(true);
-      const res = await axios.get('http://192.168.0.154:5000/api/owners');
+      if (!silent) setIsLoading(true);
+      
+      console.log('📥 Fetching owners list...');
+      const res = await axios.get(`${API_BASE_URL}/api/owners`);
 
       const ownersArray = Array.isArray(res.data.owners) ? res.data.owners : [];
+      
+      console.log(`✅ Fetched ${ownersArray.length} owners`);
+      console.log('📊 Sample owner stats:', ownersArray[0] ? {
+        name: ownersArray[0].name,
+        propertyOwned: ownersArray[0].propertyOwned,
+        propertyRent: ownersArray[0].propertyRent,
+        propertySold: ownersArray[0].propertySold,
+        totalListing: ownersArray[0].totalListing
+      } : 'No owners');
+      
       setOwners(ownersArray);
       setFilteredOwners(ownersArray);
+      setError(null);
     } catch (err) {
       setError(err.message);
-      console.error('Failed to fetch owners:', err);
+      console.error('❌ Failed to fetch owners:', err);
     } finally {
-      setIsLoading(false);
+      if (!silent) setIsLoading(false);
     }
   };
 
-  // NEW: Function to get the correct owner photo source
+  // Function to get the correct owner photo source
   const getOwnerPhotoSrc = (photo) => {
-    // If photo exists and is a base64 data URL, use it directly
     if (photo && photo.startsWith('data:image/')) {
       return photo;
     }
-    
-    // If photo is a file path (for backward compatibility)
-    if (photo && photo.startsWith('/uploads/')) 
-    
-    // Fallback to placeholder image
+    if (photo && photo.startsWith('/uploads/')) {
+      return `${API_BASE_URL}${photo}`;
+    }
     return '/assets/placeholder.png';
   };
 
-  // NEW: Function to handle image loading errors
+  // Function to handle image loading errors
   const handleImageError = (e) => {
     e.target.src = '/assets/default-avatar.png';
     console.warn('Failed to load owner photo, using fallback');
@@ -100,9 +122,9 @@ const Owners = () => {
   };
 
   const handleSaveOwner = (savedOwner) => {
-    // Add new owner to both owners and filteredOwners
-    setOwners((prev) => [...prev, savedOwner]);
-    setFilteredOwners((prev) => [...prev, savedOwner]);
+    console.log('✅ New owner saved, refreshing list...');
+    // Refresh the entire list to get accurate stats
+    fetchOwners();
   };
 
   const handleConfirmDelete = (ownerId) => {
@@ -114,17 +136,22 @@ const Owners = () => {
     if (!ownerToDelete) return;
     
     try {
-      await axios.delete(`http://192.168.0.154:5000/api/owners/${ownerToDelete}`);
+      console.log(`🗑️ Deleting owner: ${ownerToDelete}`);
+      await axios.delete(`${API_BASE_URL}/api/owners/${ownerToDelete}`);
       
       // Remove owner from list
       setOwners((prev) => prev.filter((owner) => owner.ownerId !== ownerToDelete));
       setFilteredOwners((prev) => prev.filter((owner) => owner.ownerId !== ownerToDelete));
 
+      console.log('✅ Owner deleted successfully');
       setShowDeletePopup(false);
       setOwnerToDelete(null);
     } catch (err) {
-      console.error('Failed to delete owner:', err);
-      alert('Failed to delete owner. Please try again.');
+      console.error('❌ Failed to delete owner:', err);
+      
+      const errorMsg = err.response?.data?.message || err.response?.data?.error || 'Failed to delete owner';
+      alert(errorMsg);
+      
       setShowDeletePopup(false);
       setOwnerToDelete(null);
     }
@@ -138,20 +165,42 @@ const Owners = () => {
   const renderTableContent = () => {
     if (isLoading) return (
       <tr>
-        <td colSpan="8" className="loading-state">Loading owners...</td>
+        <td colSpan="8" className="loading-state">
+          <div style={{ textAlign: 'center', padding: '20px' }}>
+            Loading owners...
+          </div>
+        </td>
       </tr>
     );
     
     if (error) return (
       <tr>
-        <td colSpan="8" className="error-state">Error: {error}</td>
+        <td colSpan="8" className="error-state">
+          <div style={{ textAlign: 'center', padding: '20px', color: '#f44336' }}>
+            <p>Error: {error}</p>
+            <button 
+              onClick={() => fetchOwners()}
+              style={{
+                marginTop: '10px',
+                padding: '8px 16px',
+                backgroundColor: '#4285f4',
+                color: 'white',
+                border: 'none',
+                borderRadius: '6px',
+                cursor: 'pointer'
+              }}
+            >
+              Retry
+            </button>
+          </div>
+        </td>
       </tr>
     );
 
     if (!Array.isArray(filteredOwners) || filteredOwners.length === 0) return (
       <tr>
         <td colSpan="8" style={{ textAlign: 'center', padding: '20px' }}>
-          No owners found
+          {searchTerm || selectedMonth ? 'No owners found matching your filters' : 'No owners found'}
         </td>
       </tr>
     );
@@ -186,7 +235,22 @@ const Owners = () => {
         <td>{owner.address || '-'}</td>
         <td>{owner.email || '-'}</td>
         <td>{owner.contact || '-'}</td>
-        <td>{owner.properties ? owner.properties.length : (owner.propertyOwned || 0)}</td>
+        <td>
+          {/* Display propertyOwned - Auto-calculated from backend */}
+          <span style={{ fontWeight: '500' }}>
+            {owner.propertyOwned || 0}
+          </span>
+          {owner.propertyOwned > 0 && (
+            <span style={{ 
+              fontSize: '11px', 
+              color: '#666', 
+              marginLeft: '4px',
+              display: 'block'
+            }}>
+              {/* (R:{owner.propertyRent || 0} | S:{owner.propertySold || 0}) */}
+            </span>
+          )}
+        </td>
         <td>{owner.doj ? new Date(owner.doj).toLocaleDateString() : '-'}</td>
         <td>
           <span className={`status ${owner.status?.toLowerCase()}`}>
@@ -195,19 +259,19 @@ const Owners = () => {
         </td>
         <td className="action-icons">
           <Link to={`/owners/${owner.ownerId}`}>
-            <img src="/assets/view-icon.png" alt="View" />
+            <img 
+              src="/assets/view-icon.png" 
+              alt="View"
+              title="View Details" 
+            />
           </Link>
           <img
             src="/assets/delete-icon.png"
             alt="Delete"
+            title="Delete Owner"
             onClick={() => handleConfirmDelete(owner.ownerId)}
             style={{ cursor: 'pointer' }}
           />
-          {/* <img
-            src="/assets/edit-icon.png"
-            alt="Edit"
-            style={{ cursor: 'pointer' }}
-          /> */}
         </td>
       </tr>
     ));
@@ -253,6 +317,22 @@ const Owners = () => {
               </h2>
               <div className="content-actions">
                 <MonthDropdown onChange={handleMonthChange} />
+                {/* <button 
+                  onClick={() => fetchOwners()}
+                  style={{
+                    marginLeft: '10px',
+                    padding: '6px 12px',
+                    backgroundColor: '#4285f4',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '6px',
+                    cursor: 'pointer',
+                    fontSize: '14px'
+                  }}
+                  title="Refresh owner data"
+                >
+                  🔄 Refresh
+                </button> */}
               </div>
             </div>
 
@@ -275,6 +355,23 @@ const Owners = () => {
                 </tbody>
               </table>
             </div>
+
+            {/* Stats Info Banner */}
+            {/* {!isLoading && filteredOwners.length > 0 && (
+              <div style={{
+                marginTop: '20px',
+                padding: '15px',
+                backgroundColor: '#e8f5e9',
+                borderRadius: '8px',
+                fontSize: '14px',
+                color: '#2e7d32'
+              }}>
+                <p style={{ margin: 0 }}>
+                  📊 <strong>Property Statistics:</strong> All property counts are automatically calculated from the database. 
+                  <strong> R</strong> = Rent properties, <strong>S</strong> = Sale properties.
+                </p>
+              </div>
+            )} */}
 
             <div className="pagination">
               <a href="#" className="page-link">« Back</a>

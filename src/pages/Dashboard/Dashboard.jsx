@@ -73,6 +73,7 @@ const Dashboard = () => {
   }, []);
 
   return (
+    
     <div className="dashboard-container">
       <div className="main-content">
         <Header title="Dashboard" onToggleSidebar={toggleSidebar} />
@@ -115,6 +116,8 @@ const Dashboard = () => {
         </main>
       </div>
     </div>
+       
+
   );
 };
 

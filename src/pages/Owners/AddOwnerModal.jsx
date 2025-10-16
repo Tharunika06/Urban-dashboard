@@ -239,9 +239,8 @@ const AddOwnerModal = ({ isOpen, onClose, onSave }) => {
     licenseNumber: '',
     textNumber: '',
     servicesArea: '',
-    about: '',
-    propertySold: '',
-    propertyRent: ''
+    about: ''
+    // REMOVED: propertySold and propertyRent - these are auto-calculated
   };
 
   const [form, setForm] = useState(initialForm);
@@ -333,10 +332,12 @@ const AddOwnerModal = ({ isOpen, onClose, onSave }) => {
         };
       }
 
+      // NOTE: Property stats are NOT included - they will be auto-calculated
       const payload = {
         ...form,
         photo: photoBase64,
         photoInfo: photoInfo
+        // propertySold and propertyRent are auto-calculated from properties
       };
 
       // Debug logs
@@ -345,7 +346,7 @@ const AddOwnerModal = ({ isOpen, onClose, onSave }) => {
       console.log('DOJ value:', form.doj, '| Type:', typeof form.doj, '| Is empty?', form.doj === '');
       console.log('Contact value:', form.contact, '| Length:', form.contact.length);
       console.log('Full payload:', payload);
-      console.log('DOJ in payload:', payload.doj);
+      console.log('Note: Property stats will be auto-calculated from actual properties');
       console.log('============================');
 
       const response = await axios.post(
@@ -359,6 +360,12 @@ const AddOwnerModal = ({ isOpen, onClose, onSave }) => {
       );
 
       console.log('Owner added successfully:', response.data);
+      console.log('Initial stats (all 0):', {
+        propertyOwned: response.data.owner?.propertyOwned || 0,
+        propertyRent: response.data.owner?.propertyRent || 0,
+        propertySold: response.data.owner?.propertySold || 0,
+        totalListing: response.data.owner?.totalListing || 0
+      });
       setShowSuccessPopup(true);
       onSave(response.data);
 
@@ -503,16 +510,23 @@ const AddOwnerModal = ({ isOpen, onClose, onSave }) => {
                     <input type="text" id="servicesArea" name="servicesArea" value={form.servicesArea} onChange={handleChange} placeholder="e.g., Lincoln Drive Harrisburg" />
                   </div>
                 </div>
-                <p style={{ marginTop: '20px', marginBottom: '10px', borderTop: '1px solid #eee', paddingTop: '15px', fontSize: '14px', fontWeight: 'bold' }}>Property Status</p>
-                <div className="form-row">
-                  <div className="form-group">
-                    <label htmlFor="propertySold">Properties Sold</label>
-                    <input type="number" id="propertySold" name="propertySold" value={form.propertySold} onChange={handleChange} placeholder="e.g., 243" />
-                  </div>
-                  <div className="form-group">
-                    <label htmlFor="propertyRent">Properties for Rent</label>
-                    <input type="number" id="propertyRent" name="propertyRent" value={form.propertyRent} onChange={handleChange} placeholder="e.g., 243" />
-                  </div>
+                
+                {/* INFO BOX - Property stats are auto-calculated */}
+                <div style={{
+                  marginTop: '20px',
+                  padding: '15px',
+                  backgroundColor: '#e3f2fd',
+                  borderLeft: '4px solid #2196F3',
+                  borderRadius: '4px'
+                }}>
+                  <p style={{ 
+                    margin: 0, 
+                    fontSize: '14px', 
+                    color: '#1976d2',
+                    fontWeight: '500'
+                  }}>
+                    ℹ️ <strong>Property Statistics:</strong> Property counts (Sold, Rent, Total Listing) are automatically calculated when properties are added to this owner.
+                  </p>
                 </div>
               </>
             )}
