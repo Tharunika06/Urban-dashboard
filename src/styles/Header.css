@@ -169,11 +169,13 @@ background: transparent;
   background: #e9ecef;
   color: #495057;
 }
-
+.notif-admin_action { background: #ffbfbf; color: #d90f0f; }
 .notif-transaction { background: #e7f5ff; color: #0b7285; }
 .notif-review { background: #fff4e6; color: #d9480f; }
 .notif-login { background: #e6fcf5; color: #087f5b; }
 .notif-signup { background: #f3f0ff; color: #5f3dc4; }
+.notif-property_created,.notif-owner_added { background: #e2e2f9; color: #1818b5; }
+.notif-property_deleted,.notif-owner_deleted { background: #fff0f0; color: #c2255c; }
 
 /* --- Animation --- */
 @keyframes fadeIn {
