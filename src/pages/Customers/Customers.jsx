@@ -1,5 +1,6 @@
 // src/pages/Customers/Customers.jsx
 import React, { useState, useEffect } from 'react';
+import io from 'socket.io-client';
 import CustomerList from './CustomerList';
 import CustomerGrid from './CustomerGrid';
 import MonthDropdown from '../../components/common/MonthDropdown';
@@ -7,6 +8,8 @@ import Header from '../../components/layout/Header';
 import PopupMessage from '../../components/common/PopupMessage';
 import '../../styles/Dashboard.css';
 import '../../styles/Customers.css';
+
+const API_BASE_URL = 'http://192.168.1.45:5000';
 
 const months = [
   'January', 'February', 'March', 'April', 'May', 'June',
@@ -28,23 +31,50 @@ const Customers = () => {
   const [showDeletePopup, setShowDeletePopup] = useState(false);
   const [customerToDelete, setCustomerToDelete] = useState(null);
 
+  // Initialize Socket.io client
   useEffect(() => {
-    const fetchAndProcessData = async () => {
-      try {
-        const response = await fetch('http://192.168.0.154:5000/api/payment/transactions');
-        if (!response.ok) throw new Error('Network response was not ok');
-        const data = await response.json();
-        console.log('Fetched transactions:', data);
-        setAllTransactions(data);
-      } catch (err) {
-        setError(err.message);
-        console.error("Failed to fetch customer data:", err);
-      } finally {
-        setIsLoading(false);
+    const socket = io(API_BASE_URL);
+
+    // Listen for customer/transaction updates
+    socket.on('update-analytics', (data) => {
+      if (data.type === 'transaction-updated' || data.type === 'owner-stats-updated' || data.type === 'customer-updated') {
+        console.log('🔔 Received update event:', data.type);
+        fetchAndProcessData(true); // Silent refresh
       }
+    });
+
+    // Cleanup Socket.io connection
+    return () => {
+      socket.disconnect();
+      console.log('🔌 Socket.io disconnected');
     };
-    fetchAndProcessData();
   }, []);
+
+  useEffect(() => {
+    fetchAndProcessData();
+    // Optional: Add polling as fallback
+    const refreshInterval = setInterval(() => {
+      fetchAndProcessData(true);
+    }, 30000); // Refresh every 30 seconds
+    return () => clearInterval(refreshInterval);
+  }, []);
+
+  const fetchAndProcessData = async (silent = false) => {
+    try {
+      if (!silent) setIsLoading(true);
+      const response = await fetch(`${API_BASE_URL}/api/payment/transactions`);
+      if (!response.ok) throw new Error('Network response was not ok');
+      const data = await response.json();
+      console.log('Fetched transactions:', data);
+      setAllTransactions(data);
+      setError(null);
+    } catch (err) {
+      setError(err.message);
+      console.error("Failed to fetch customer data:", err);
+    } finally {
+      if (!silent) setIsLoading(false);
+    }
+  };
 
   useEffect(() => {
     let transactionsToProcess = allTransactions;
@@ -119,7 +149,7 @@ const Customers = () => {
       console.log('Attempting to delete customer with phone:', customerToDelete);
       
       const response = await fetch(
-        `http://192.168.0.154:5000/api/payment/customer/${encodeURIComponent(customerToDelete)}`,
+        `${API_BASE_URL}/api/payment/customer/${encodeURIComponent(customerToDelete)}`,
         {
           method: 'DELETE',
           headers: {
@@ -142,8 +172,6 @@ const Customers = () => {
       
       setShowDeletePopup(false);
       setCustomerToDelete(null);
-      
-      // No success alert - just like Transaction.jsx
       
     } catch (err) {
       console.error('Failed to delete customer:', err);

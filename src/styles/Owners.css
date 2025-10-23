@@ -153,7 +153,7 @@
 .table-container { overflow-x: auto; }
 table { width: 100%; border-collapse: collapse; }
 th, td { padding: 16px; text-align: middle; border-top:1.5px solid #E6E8F0 ; white-space: nowrap; }
-th { color: #64748B; font-weight: 500; font-size: 12px; text-transform: uppercase; }
+th { background-color:#E6E8F0; color: #64748B; font-weight: 500; font-size: 12px; text-transform: uppercase; }
 td { color: #334155; font-weight: 500; font-size: 14px; }
 
 .status { padding: 4px 12px; border-radius: 16px; font-size: 12px; font-weight: 600; }

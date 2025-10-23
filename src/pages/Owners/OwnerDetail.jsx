@@ -5,7 +5,7 @@ import Header from '../../components/layout/Header';
 import '../../styles/Owners.css';
 
 // Backend API base URL
-const API_BASE_URL = 'http://192.168.0.154:5000';
+const API_BASE_URL = 'http://192.168.1.45:5000';
 
 const OwnerDetail = () => {
   const { ownerId } = useParams();

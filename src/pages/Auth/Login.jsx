@@ -35,7 +35,7 @@ const Login = () => {
 
     try {
       // FIXED: Correct admin login endpoint
-      const response = await axios.post("http://192.168.0.154:5000/api/admin-login", {
+      const response = await axios.post("http://192.168.1.45:5000/api/admin-login", {
         email: email.trim().toLowerCase(),
         password,
       });
@@ -69,7 +69,7 @@ const Login = () => {
       if (err.response?.status === 403) {
         setError("Access denied. Admin privileges required. Your account does not have admin access.");
       } else if (err.response?.status === 401) {
-        setError("Invalid email or password. Please try again.");
+        setError("Access denied.Please try again.");
       } else if (err.response?.data?.error) {
         setError(err.response.data.error);
       } else if (err.message === "Network Error") {

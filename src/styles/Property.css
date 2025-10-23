@@ -119,7 +119,7 @@
   width: 18px;
   height: 18px;
   cursor: pointer;
-  accent-color: #007bff;
+  accent-color: #000000a0;
 }
 
 .checkbox-input:disabled {
@@ -222,10 +222,15 @@
 .status-badge.status-both {
   background: #e3f2fd;
   color: #1d4eb9;
-  border: 1px solid #ddd;
+  /* border: 1px solid #ddd; */
 
 }
+.status-badge.status-sold {
+  background: #fde3e3;
+  color: #b91d1d;
+  /* border: 1px solid #ddd; */
 
+}
 :root {
   --primary-blue: #007bff;
   --text-primary: #1a2238;

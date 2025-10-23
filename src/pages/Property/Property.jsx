@@ -9,6 +9,9 @@ import MonthDropdown from '../../components/common/MonthDropdown';
 import PopupMessage from '../../components/common/PopupMessage';
 import '../../styles/Property.css';
 
+// API Configuration - Update this URL to match your backend
+const API_URL = 'http://localhost:5000';
+
 const months = [
   'January', 'February', 'March', 'April', 'May', 'June',
   'July', 'August', 'September', 'October', 'November', 'December'
@@ -26,28 +29,36 @@ const Property = () => {
 
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [propertyToDelete, setPropertyToDelete] = useState(null);
+  const [bulkDeleteMode, setBulkDeleteMode] = useState(false);
 
-  const fetchProperties = async () => {
+  // Auto-refresh every 30 seconds (like Owners page)
+  useEffect(() => {
+    fetchProperties();
+    const refreshInterval = setInterval(() => {
+      fetchProperties(true); // silent refresh
+    }, 30000);
+    return () => clearInterval(refreshInterval);
+  }, []);
+
+  const fetchProperties = async (silent = false) => {
     try {
-      setIsLoading(true);
-      const res = await axios.get('http://192.168.0.154:5000/api/property');
-      setPropertyList(res.data);
+      if (!silent) setIsLoading(true);
+      setError(null);
+      const res = await axios.get(`${API_URL}/api/property`);
+      const propertiesArray = Array.isArray(res.data) ? res.data : [];
+      setPropertyList(propertiesArray);
     } catch (err) {
       setError(err.message);
-      console.error('Failed to fetch properties:', err);
+      console.error('❌ Failed to fetch properties:', err);
     } finally {
-      setIsLoading(false);
+      if (!silent) setIsLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchProperties();
-  }, []);
+    let propertiesToFilter = Array.isArray(propertyList) ? propertyList : [];
 
-  useEffect(() => {
-    let propertiesToFilter = propertyList;
-
-    if (selectedMonth) {
+    if (selectedMonth && selectedMonth !== '') {
       const monthIndex = months.indexOf(selectedMonth);
       if (monthIndex > -1) {
         propertiesToFilter = propertiesToFilter.filter((property) => {
@@ -72,13 +83,29 @@ const Property = () => {
 
   const handleSearch = (event) => setSearchTerm(event.target.value);
   const handleMonthChange = (month) => setSelectedMonth(month);
-  const handleSaveProperty = () => {
-    fetchProperties();
+  
+  const handleSaveProperty = async (newProperty) => {
+    // Immediately update the list with the new property
+    if (newProperty) {
+      setPropertyList(prevList => [...prevList, newProperty]);
+    } else {
+      // Fetch all properties again to ensure data consistency
+      await fetchProperties();
+    }
     setIsModalOpen(false);
   };
 
+  // Single property delete
   const confirmDelete = (id) => {
     setPropertyToDelete(id);
+    setBulkDeleteMode(false);
+    setDeleteModalOpen(true);
+  };
+
+  // Bulk delete
+  const confirmBulkDelete = (ids) => {
+    setPropertyToDelete(ids);
+    setBulkDeleteMode(true);
     setDeleteModalOpen(true);
   };
 
@@ -86,31 +113,97 @@ const Property = () => {
     if (!propertyToDelete) return;
 
     try {
-      await axios.delete(`http://192.168.0.154:5000/api/property/${propertyToDelete}`);
-      const updatedProperties = propertyList.filter((prop) => prop._id !== propertyToDelete);
-      setPropertyList(updatedProperties);
-      console.log('Property deleted successfully');
+      if (bulkDeleteMode) {
+        // Bulk delete - delete multiple properties
+        const deletePromises = propertyToDelete.map(id => 
+          axios.delete(`${API_URL}/api/property/${id}`)
+        );
+        
+        await Promise.all(deletePromises);
+        
+        // Immediately update UI by filtering out all deleted properties
+        setPropertyList(prevList => 
+          prevList.filter((prop) => !propertyToDelete.includes(prop._id))
+        );
+        
+        console.log(`✅ ${propertyToDelete.length} properties deleted successfully`);
+      } else {
+        // Single delete
+        await axios.delete(`${API_URL}/api/property/${propertyToDelete}`);
+        
+        // Immediately update the UI by filtering out the deleted property
+        setPropertyList(prevList => 
+          prevList.filter((prop) => prop._id !== propertyToDelete)
+        );
+        
+        console.log('✅ Property deleted successfully');
+      }
     } catch (err) {
-      console.error('Failed to delete property:', err);
-      alert('Failed to delete property. Please try again.');
+      console.error('❌ Failed to delete property:', err);
+      alert(err.response?.data?.message || 'Failed to delete property. Please try again.');
+      // Refetch to ensure data consistency if delete failed
+      fetchProperties();
     } finally {
       setDeleteModalOpen(false);
       setPropertyToDelete(null);
+      setBulkDeleteMode(false);
     }
   };
 
   const handleCancelDelete = () => {
     setDeleteModalOpen(false);
     setPropertyToDelete(null);
+    setBulkDeleteMode(false);
   };
 
   const getPageTitle = () => (view === 'list' ? 'All Property List' : 'All Property Grid');
 
   const renderContent = () => {
-    if (isLoading) return <div className="loading-state">Loading properties...</div>;
-    if (error) return <div className="error-state">Error: {error}</div>;
-    if (view === 'list')
-      return <PropertyList properties={filteredList} handleDelete={confirmDelete} />;
+    if (isLoading) {
+      return (
+        <div className="loading-state" style={{ textAlign: 'center', padding: '40px' }}>
+          Loading properties...
+        </div>
+      );
+    }
+
+    if (error) {
+      return (
+        <div className="error-state" style={{ textAlign: 'center', padding: '40px', color: '#f44336' }}>
+          <p>Error: {error}</p>
+          <button onClick={() => fetchProperties()} className="retry-btn" style={{
+            marginTop: '10px',
+            padding: '8px 16px',
+            backgroundColor: '#000',
+            color: '#fff',
+            border: 'none',
+            borderRadius: '6px',
+            cursor: 'pointer'
+          }}>
+            Retry
+          </button>
+        </div>
+      );
+    }
+
+    if (!Array.isArray(filteredList) || filteredList.length === 0) {
+      return (
+        <div className="empty-state" style={{ textAlign: 'center', padding: '40px' }}>
+          No properties found
+        </div>
+      );
+    }
+    
+    if (view === 'list') {
+      return (
+        <PropertyList 
+          properties={filteredList} 
+          handleDelete={confirmDelete}
+          handleBulkDelete={confirmBulkDelete}
+        />
+      );
+    }
+    
     return <PropertyGrid properties={filteredList} />;
   };
 
@@ -161,7 +254,10 @@ const Property = () => {
           <div className="content-body-wrapper">
             <div className="content-card">
               <div className="list-header">
-                <h2 className="page-title">{getPageTitle()}</h2>
+                <h2 className="page-title">
+                  {getPageTitle()} 
+                  {/* <span className="subtext"> ({filteredList.length} Properties)</span> */}
+                </h2>
                 <MonthDropdown onChange={handleMonthChange} />
               </div>
               {renderContent()}
@@ -175,9 +271,12 @@ const Property = () => {
             onSave={handleSaveProperty}
           />
 
-          {/* ✅ Only ONE Delete Confirmation Popup */}
+          {/* Delete Confirmation Popup */}
           {deleteModalOpen && (
-            <PopupMessage onConfirm={handleDeleteProperty} onCancel={handleCancelDelete} />
+            <PopupMessage 
+              onConfirm={handleDeleteProperty} 
+              onCancel={handleCancelDelete} 
+            />
           )}
         </main>
       </div>

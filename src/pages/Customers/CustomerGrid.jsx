@@ -30,9 +30,9 @@ export default function CustomerGrid({ customers = [] }) {
             <div className="card-header">
               <img src={c.photo || '/assets/placeholder.png'} alt={c.name} className="customer-photo-large" />
               <div className="card-header-right">
-                <span className={`status-badge ${getStatusClass(c.status)}`}>
+                {/* <span className={`status-badge ${getStatusClass(c.status)}`}>
                   {c.status}
-                </span>
+                </span> */}
                 <FiMoreVertical className="more-options-icon" />
               </div>
             </div>
@@ -43,7 +43,7 @@ export default function CustomerGrid({ customers = [] }) {
                 <p><strong>Contact Number :</strong> {c.phone}</p>
               </div>
 
-              <div className="card-stats">
+              {/* <div className="card-stats">
                 <div>
                   <span>{c.stats?.ownProperty || 0}</span>
                   <p>Own Property</p>
@@ -52,7 +52,7 @@ export default function CustomerGrid({ customers = [] }) {
                   <span>{c.stats?.investOnProperty || 0}</span>
                   <p>Invest On Property</p>
                 </div>
-              </div>
+              </div> */}
 
               <div className="social-media">
                 <span>Social Information: </span><br />

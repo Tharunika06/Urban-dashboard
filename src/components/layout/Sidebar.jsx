@@ -10,7 +10,7 @@ const navItems = [
   { path: '/customers', icon: '/assets/customer-icon.png', label: 'Customers' },
   { path: '/orders', icon: '/assets/orders-icon.png', label: 'Orders' },
   { path: '/transaction', icon: '/assets/transac-icon.png', label: 'Transaction' },
-  { path: '/reviews', icon: '/assets/rs-icon.png', label: 'Reviews' },
+  { path: '/reviews', icon: '/assets/review-iconn.png', label: 'Reviews' },
   { path: '/settings', icon: '/assets/rs-icon.png', label: 'Settings' }
 ];
 

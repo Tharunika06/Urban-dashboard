@@ -85,7 +85,7 @@ const TransactionList = ({
 
   const getImageSrc = (photo) => {
     if (photo && photo.startsWith('data:image/')) return photo;
-    if (photo && photo.startsWith('/uploads/')) return `http://192.168.0.154:5000${photo}`;
+    if (photo && photo.startsWith('/uploads/')) return `http://192.168.1.45:5000${photo}`;
     return '/assets/placeholder.png';
   };
 

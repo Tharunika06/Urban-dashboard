@@ -159,14 +159,15 @@
 .customer-list-table th{
     color:#283D56;
     /* font-weight: 600; */
-    /* background-color: #E6E8F0; */
+    background-color: #E6E8F0;
     font-size: 0.8rem;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  text-align:center
 }
  .customer-list-table td {
   padding: 1.rem 1rem;
-  text-align: left;
+  text-align:left;
   /* border-bottom: 1px solid #f1f3f5; */
   vertical-align: middle;
   font-size: 14px;

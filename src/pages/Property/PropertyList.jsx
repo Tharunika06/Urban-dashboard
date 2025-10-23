@@ -4,14 +4,14 @@ import { Link } from 'react-router-dom';
 import Checkbox from '../../components/common/Checkbox';
 import '../../styles/Property.css';
 
-// UPDATED: Added a case for 'both' to handle dual-status properties
+// ✅ UPDATED: Added 'sold' status class
 const getStatusClass = (status) => {
   switch (status?.toLowerCase()) {
     case 'rent':
       return 'status-rent';
     case 'sale':
       return 'status-sale';
-    case 'both': // New class for properties available for both
+    case 'both':
       return 'status-both';
     case 'sold':
       return 'status-sold';
@@ -64,7 +64,6 @@ const PropertyList = ({ properties, handleDelete, handleBulkDelete }) => {
     setCheckedRows({});
   };
 
-  // ✅ Simplified delete — call parent only (no popup here)
   const handleDeleteClick = (id) => {
     handleDelete(id);
   };
@@ -83,15 +82,29 @@ const PropertyList = ({ properties, handleDelete, handleBulkDelete }) => {
     }
   };
 
+  // ✅ UPDATED: Format price based on status (including 'sold')
   const formatPrice = (prop) => {
     const status = prop.status?.toLowerCase();
+
+    // If property is sold, show "SOLD" instead of price
+    if (status === 'sold') {
+      return (
+        <span className="sold-badge-inline" style={{ 
+          color: '#ef4444', 
+          fontWeight: 'bold',
+          fontSize: '14px'
+        }}>
+          SOLD
+        </span>
+      );
+    }
 
     if (status === 'both' && prop.rentPrice && prop.salePrice) {
       return (
         <div className="price-dual">
-          <span className="price-rent">{`$Rent Price: ${Number(prop.rentPrice).toLocaleString()} /mo`}</span>
+          <span className="price-rent">{`Rent: $${Number(prop.rentPrice).toLocaleString()} /mo`}</span>
           <br />
-          <span className="price-sale">{`$Sale Price: ${Number(prop.salePrice).toLocaleString()}`}</span>
+          <span className="price-sale">{`Sale: $${Number(prop.salePrice).toLocaleString()}`}</span>
         </div>
       );
     }
@@ -113,7 +126,7 @@ const PropertyList = ({ properties, handleDelete, handleBulkDelete }) => {
     }
 
     if (photo && photo.startsWith('/uploads/')) {
-      return `http://192.168.0.154:5000${photo}`;
+      return `http://192.168.1.45:5000${photo}`;
     }
 
     return '/assets/placeholder.png';
@@ -150,7 +163,7 @@ const PropertyList = ({ properties, handleDelete, handleBulkDelete }) => {
               <th>Owner</th>
               <th>Size</th>
               <th>Property Type</th>
-              <th>Rent/Sale</th>
+              <th>Status</th>
               <th>Bedrooms</th>
               <th>Location</th>
               <th>Price</th>
@@ -158,88 +171,102 @@ const PropertyList = ({ properties, handleDelete, handleBulkDelete }) => {
             </tr>
           </thead>
           <tbody>
-            {currentItems.map((prop) => (
-              <tr key={prop._id}>
-                <td>
-                  <Checkbox
-                    checked={checkedRows[prop._id] || false}
-                    onChange={() => toggleCheckbox(prop._id)}
-                    id={`checkbox-${prop._id}`}
-                  />
-                </td>
+            {currentItems.map((prop) => {
+              // ✅ Check if property is sold
+              const isSold = prop.status?.toLowerCase() === 'sold';
+              
+              return (
+                <tr key={prop._id} className={isSold ? 'sold-row' : ''}>
+                  <td>
+                    <Checkbox
+                      checked={checkedRows[prop._id] || false}
+                      onChange={() => toggleCheckbox(prop._id)}
+                      id={`checkbox-${prop._id}`}
+                    />
+                  </td>
 
-                <td>
-                  <Link to={`/property/${prop._id}`}>
-                    <div className="prop-name-cell">
-                      <img
-                        src={getImageSrc(prop.photo)}
-                        alt={prop.name || 'Property'}
-                        className="prop-photo"
-                        onError={handleImageError}
-                        style={{
-                          width: '50px',
-                          height: '50px',
-                          objectFit: 'cover',
-                          borderRadius: '4px',
-                          marginRight: '10px',
-                        }}
-                      />
-                      <span>{prop.name}</span>
-                    </div>
-                  </Link>
-                </td>
-
-                <td>
-                  {prop.ownerId && prop.ownerName ? (
-                    <Link to={`/owners/${prop.ownerId}`} className="owner-link">
-                      {prop.ownerName}
+                  <td>
+                    <Link to={`/property/${prop._id}`}>
+                      <div className="prop-name-cell">
+                        <img
+                          src={getImageSrc(prop.photo)}
+                          alt={prop.name || 'Property'}
+                          className="prop-photo"
+                          onError={handleImageError}
+                          style={{
+                            width: '50px',
+                            height: '50px',
+                            objectFit: 'cover',
+                            borderRadius: '4px',
+                            marginRight: '10px',
+                            // opacity: isSold ? 0.6 : 1
+                          }}
+                        />
+                        <span >
+                          {prop.name}
+                          {/* {isSold && <span style={{ 
+                            marginLeft: '8px', 
+                            color: '#ef4444',
+                            fontSize: '12px',
+                            fontWeight: 'bold'
+                          }}>● SOLD</span>} */}
+                        </span>
+                      </div>
                     </Link>
-                  ) : (
-                    'N/A'
-                  )}
-                </td>
+                  </td>
 
-                <td>
-                  <Link to={`/property/${prop._id}`}>{prop.size || 'N/A'}</Link>
-                </td>
+                  <td>
+                    {prop.ownerId && prop.ownerName ? (
+                      <Link to={`/owners/${prop.ownerId}`} className="owner-link">
+                        {prop.ownerName}
+                      </Link>
+                    ) : (
+                      'N/A'
+                    )}
+                  </td>
 
-                <td>
-                  <Link to={`/property/${prop._id}`}>{prop.type || 'N/A'}</Link>
-                </td>
+                  <td>
+                    <Link to={`/property/${prop._id}`}>{prop.size || 'N/A'}</Link>
+                  </td>
 
-                <td>
-                  <Link to={`/property/${prop._id}`}>
-                    <span className={`status-badge ${getStatusClass(prop.status)}`}>
-                      {prop.status || 'N/A'}
-                    </span>
-                  </Link>
-                </td>
+                  <td>
+                    <Link to={`/property/${prop._id}`}>{prop.type || 'N/A'}</Link>
+                  </td>
 
-                <td>
-                  <Link to={`/property/${prop._id}`}>{prop.bedrooms || 'N/A'}</Link>
-                </td>
+                  <td>
+                    <Link to={`/property/${prop._id}`}>
+                      <span className={`status-badge ${getStatusClass(prop.status)}`}>
+                        {prop.status?.toUpperCase() || 'N/A'}
+                      </span>
+                    </Link>
+                  </td>
 
-                <td>
-                  <Link to={`/property/${prop._id}`}>{prop.city || prop.address || 'N/A'}</Link>
-                </td>
+                  <td>
+                    <Link to={`/property/${prop._id}`}>{prop.bedrooms || 'N/A'}</Link>
+                  </td>
 
-                <td>
-                  <Link to={`/property/${prop._id}`}>{formatPrice(prop)}</Link>
-                </td>
+                  <td>
+                    <Link to={`/property/${prop._id}`}>{prop.city || prop.address || 'N/A'}</Link>
+                  </td>
 
-                <td className="action-icons">
-                  <Link to={`/property/${prop._id}`}>
-                    <img src="/assets/view-icon.png" alt="View" />
-                  </Link>
-                  <img
-                    src="/assets/delete-icon.png"
-                    alt="Delete"
-                    onClick={() => handleDeleteClick(prop._id)}
-                    style={{ cursor: 'pointer' }}
-                  />
-                </td>
-              </tr>
-            ))}
+                  <td>
+                    <Link to={`/property/${prop._id}`}>{formatPrice(prop)}</Link>
+                  </td>
+
+                  <td className="action-icons">
+                    <Link to={`/property/${prop._id}`}>
+                      <img src="/assets/view-icon.png" alt="View" />
+                    </Link>
+                    <img
+                      src="/assets/delete-icon.png"
+                      alt="Delete"
+                      onClick={() => handleDeleteClick(prop._id)}
+                      style={{ cursor: 'pointer' }}
+                    />
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>

@@ -9,7 +9,7 @@ import PopupMessage from "../../components/common/PopupMessage";
 import Checkbox from "../../components/common/Checkbox";
 import axios from "axios";
 
-const API_URL = "http://192.168.0.154:5000/api/reviews";
+const API_URL = "http://192.168.1.45:5000/api/reviews";
 
 const months = [
   'January', 'February', 'March', 'April', 'May', 'June',

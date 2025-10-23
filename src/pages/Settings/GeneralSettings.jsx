@@ -10,7 +10,7 @@ const GeneralSettings = () => {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
-  const API_BASE_URL = "http://192.168.0.154:5000/api";
+  const API_BASE_URL = "http://192.168.1.45:5000/api";
 
   useEffect(() => {
     loadAdminProfile();

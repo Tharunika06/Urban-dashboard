@@ -142,12 +142,13 @@
 .order-list-table th,
 .order-list-table td {
   padding: 1.2rem 1rem;
-  text-align: left;
+  text-align: center;
   vertical-align: middle;
   font-size: 14px;
   white-space: nowrap;
 }
 .order-list-table th {
+  background-color: #E6E8F0;
   color: #6C757D;
   font-weight: 500;
   font-size: 0.8rem;

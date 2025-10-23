@@ -1,11 +1,14 @@
 // Transaction.jsx
 import React, { useState, useEffect } from 'react';
+import io from 'socket.io-client';
 import TransactionList from './TransactionList';
 import PopupMessage from '../../components/common/PopupMessage';
 import '../../styles/Transaction.css';
 import { BsSearch } from 'react-icons/bs';
 import MonthDropdown from '../../components/common/MonthDropdown';
 import Header from '../../components/layout/Header';
+
+const API_BASE_URL = 'http://192.168.1.45:5000';
 
 const months = [
   'January', 'February', 'March', 'April', 'May', 'June',
@@ -27,22 +30,49 @@ const Transaction = () => {
   const [isBulkDelete, setIsBulkDelete] = useState(false);
   const [bulkDeleteIds, setBulkDeleteIds] = useState([]);
 
+  // Initialize Socket.io client
   useEffect(() => {
-    const fetchTransactions = async () => {
-      try {
-        const response = await fetch('http://192.168.0.154:5000/api/payment/transactions');
-        if (!response.ok) throw new Error('Network response was not ok');
-        const data = await response.json();
-        setAllTransactions(data);
-      } catch (err) {
-        setError(err.message);
-        console.error("Failed to fetch transactions:", err);
-      } finally {
-        setIsLoading(false);
+    const socket = io(API_BASE_URL);
+
+    // Listen for transaction updates
+    socket.on('update-analytics', (data) => {
+      if (data.type === 'transaction-updated' || data.type === 'owner-stats-updated') {
+        console.log('🔔 Received update event:', data.type);
+        fetchTransactions(true); // Silent refresh
       }
+    });
+
+    // Cleanup Socket.io connection
+    return () => {
+      socket.disconnect();
+      console.log('🔌 Socket.io disconnected');
     };
-    fetchTransactions();
   }, []);
+
+  useEffect(() => {
+    fetchTransactions();
+    // Optional: Add polling as fallback
+    const refreshInterval = setInterval(() => {
+      fetchTransactions(true);
+    }, 30000); // Refresh every 30 seconds
+    return () => clearInterval(refreshInterval);
+  }, []);
+
+  const fetchTransactions = async (silent = false) => {
+    try {
+      if (!silent) setIsLoading(true);
+      const response = await fetch(`${API_BASE_URL}/api/payment/transactions`);
+      if (!response.ok) throw new Error('Network response was not ok');
+      const data = await response.json();
+      setAllTransactions(data);
+      setError(null);
+    } catch (err) {
+      setError(err.message);
+      console.error("Failed to fetch transactions:", err);
+    } finally {
+      if (!silent) setIsLoading(false);
+    }
+  };
 
   // Filter transactions by search and month
   useEffect(() => {
@@ -95,7 +125,7 @@ const Transaction = () => {
         const deletePromises = bulkDeleteIds.map(async (transactionId) => {
           const encodedTransactionId = encodeURIComponent(transactionId);
           const response = await fetch(
-            `http://192.168.0.154:5000/api/payment/transactions/${encodedTransactionId}`,
+            `${API_BASE_URL}/api/payment/transactions/${encodedTransactionId}`,
             { method: 'DELETE', headers: { 'Content-Type': 'application/json' } }
           );
           const data = await response.json();
@@ -134,7 +164,7 @@ const Transaction = () => {
 
         const encodedTransactionId = encodeURIComponent(transactionToDelete);
         const response = await fetch(
-          `http://192.168.0.154:5000/api/payment/transactions/${encodedTransactionId}`,
+          `${API_BASE_URL}/api/payment/transactions/${encodedTransactionId}`,
           { method: 'DELETE', headers: { 'Content-Type': 'application/json' } }
         );
         const data = await response.json();
@@ -161,8 +191,6 @@ const Transaction = () => {
 
         setShowDeletePopup(false);
         setTransactionToDelete(null);
-
-        // alert('Transaction deleted successfully');
       }
     } catch (err) {
       console.error('Failed to delete transaction(s):', err);

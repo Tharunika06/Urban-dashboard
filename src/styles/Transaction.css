@@ -101,13 +101,14 @@
 .transaction-list-table th,
 .transaction-list-table td {
   padding: 1.2rem 1rem;
-  text-align: left;
+  text-align: center;
   /* border-bottom  : 1px solid #f1f3f5; */
   vertical-align: middle;
   font-size: 14px;
   white-space: nowrap;
 }
 .transaction-list-table th {
+  background-color: #E6E8F0;
   color: #6C757D;
   font-weight: 500;
   font-size: 0.8rem;
@@ -171,7 +172,7 @@
   width: 18px;
   height: 18px;
   cursor: pointer;
-  accent-color: #007bff;
+  accent-color: #000000a0;
 }
 
 .checkbox-label {
@@ -190,7 +191,7 @@
   border-radius: 4px;
   cursor: pointer;
   color: #fff;
-  accent-color: #0D6EFD;
+  accent-color: #000000a0;
 
 }
 .transaction-list-table tr:last-child td {
