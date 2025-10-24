@@ -54,22 +54,22 @@ const PropertyRevenue = ({ stats, loading, error }) => {
           <PropertyRevenueItem
             title="Property"
             icon="/assets/property-iconn.png"
-            iconBg="var(--stat-icon-bg-1)"
+            iconBg="#DFD9FF"
             value={(stats.properties || 0).toLocaleString()}
             target="60% Target"
             progress="60%"
-            progressColor="var(--progress-bar-1)"
+            progressColor="#897AE3"
           />
         </div>
         <div className="col-6">
           <PropertyRevenueItem
             title="Revenue"
             icon="/assets/revenue-bag.png"
-            iconBg="var(--stat-icon-bg-3)"
+            iconBg="#FFE0D2"
             value={`$${((stats.revenue || 0) / 1000000).toFixed(1)}M`}
             target="80% Target"
             progress="80%"
-            progressColor="var(--progress-bar-2)"
+            progressColor="#DE7548"
           />
         </div>
       </div>

@@ -14,7 +14,7 @@ const Analytics = ({ stats, loading, error }) => {
   return (
     <>
       <div className="file" style={{gap:'10px', display:'flex', flexWrap:'wrap', marginBottom:'10px'}}>
-        <div className="fold" style={{ width: '49%' ,height:'20%'}}>
+        <div className="fold" style={{ width: '49%' ,height:'20%',fontFamily:'Montserrat'}}>
           <DashboardStatCard
             title="No. Of Properties"
             value={(stats.properties || 0).toLocaleString()}
@@ -25,7 +25,7 @@ const Analytics = ({ stats, loading, error }) => {
             iconBg="#ebf3fe"
           />
         </div>
-        <div className="col-md-6" style={{ width: '49%' ,height:'20%'}}>
+        <div className="col-md-6" style={{ width: '49%' ,height:'20%',fontFamily:'Montserrat'}}>
           <DashboardStatCard
             title="Total Owners"
             value={(stats.owners || 0).toLocaleString()}
@@ -39,7 +39,7 @@ const Analytics = ({ stats, loading, error }) => {
       </div>
 
       <div className="file" style={{gap:'10px', display:'flex', flexWrap:'wrap', marginBottom:'10px'}}>
-        <div className="col-md-6" style={{ width: '49%' ,height:'20%'}}>
+        <div className="col-md-6" style={{ width: '49%' ,height:'20%',fontFamily:'Montserrat'}}>
           <DashboardStatCard
             title="Customers"
             value={(stats.customers || 0).toLocaleString()}
@@ -50,7 +50,7 @@ const Analytics = ({ stats, loading, error }) => {
             iconBg="#fff5ec"
           />
         </div>
-        <div className="col-md-6" style={{ width: '49%' ,height:'20%'}}>
+        <div className="col-md-6" style={{ width: '49%' ,height:'20%',fontFamily:'Montserrat'}}>
           <DashboardStatCard
             title="Revenue"
             value={`$${((stats.revenue || 0) / 1000000).toFixed(1)}M`}

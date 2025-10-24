@@ -134,7 +134,7 @@ const SalesAnalytic = () => {
           cx={cx}
           cy={cy}
           r={7}
-          stroke="#ff4d4f"
+          stroke="#e52c82ff"
           strokeWidth={2.5}
           fill="#fff"
         />
@@ -192,7 +192,7 @@ const SalesAnalytic = () => {
             <Line
               type="monotone"
               dataKey="earnings"
-              stroke="var(--chart-line-1)"
+              stroke="#0075FF"
               strokeWidth={3}
               dot={renderCustomDot}
               activeDot={renderCustomDot}

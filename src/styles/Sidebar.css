@@ -98,6 +98,7 @@
   transition: opacity 0.3s ease;
   white-space: nowrap;
   opacity: 1;
+  font-family: 'Montserrat', sans-serif;
 }
 
 .label-text.hide {

@@ -1,5 +1,5 @@
 // src/pages/Reviews/Review.jsx
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import "../../styles/Reviews.css";
 import { Link } from "react-router-dom";
 import { FaStar } from "react-icons/fa";
@@ -8,8 +8,10 @@ import MonthDropdown from "../../components/common/MonthDropdown";
 import PopupMessage from "../../components/common/PopupMessage";
 import Checkbox from "../../components/common/Checkbox";
 import axios from "axios";
+import io from "socket.io-client";
 
-const API_URL = "http://192.168.1.45:5000/api/reviews";
+const API_BASE_URL = "http://192.168.1.45:5000";
+const API_URL = `${API_BASE_URL}/api/reviews`;
 
 const months = [
   'January', 'February', 'March', 'April', 'May', 'June',
@@ -34,23 +36,115 @@ const Reviews = () => {
   const [showDeletePopup, setShowDeletePopup] = useState(false);
   const [reviewToDelete, setReviewToDelete] = useState(null);
 
-  // Fetch reviews from backend
+  // Socket reference
+  const socketRef = useRef(null);
+
+  // ✅ Initialize Socket.IO connection for real-time updates
   useEffect(() => {
-    const fetchReviews = async () => {
-      try {
-        setIsLoading(true);
-        const res = await axios.get(API_URL);
-        setReviews(res.data);
-        setFilteredReviews(res.data);
-      } catch (err) {
-        setError(err.message);
-        console.error("Error fetching reviews:", err);
-      } finally {
-        setIsLoading(false);
+    console.log('🔌 Initializing Socket.IO connection for Reviews...');
+    socketRef.current = io(API_BASE_URL, {
+      transports: ['websocket', 'polling'],
+      reconnection: true,
+      reconnectionDelay: 1000,
+      reconnectionAttempts: 5
+    });
+
+    const socket = socketRef.current;
+
+    // ✅ Listen for real-time review events
+    socket.on('update-analytics', (data) => {
+      console.log('📦 Received update-analytics event:', data);
+      
+      if (data.type === 'review-added') {
+        console.log('🔔 New review added, refreshing data...');
+        fetchReviews(true); // Silent refresh
+      } else if (data.type === 'review-updated') {
+        console.log('📝 Review updated, refreshing data...');
+        fetchReviews(true); // Silent refresh
+      } else if (data.type === 'review-deleted') {
+        console.log('🗑️ Review deleted, refreshing data...');
+        fetchReviews(true); // Silent refresh
       }
+    });
+
+    // ✅ Listen for specific review events (if your backend emits these)
+    socket.on('new-review', (newReview) => {
+      console.log('🆕 New review received:', newReview);
+      setReviews((prev) => [newReview, ...prev]);
+    });
+
+    socket.on('review-updated', (updatedReview) => {
+      console.log('✏️ Review updated:', updatedReview);
+      setReviews((prev) =>
+        prev.map((r) => (r._id === updatedReview._id ? updatedReview : r))
+      );
+    });
+
+    socket.on('review-deleted', (deletedId) => {
+      console.log('🗑️ Review deleted:', deletedId);
+      setReviews((prev) => prev.filter((r) => r._id !== deletedId));
+    });
+
+    // ✅ Connection status monitoring
+    socket.on('connect', () => {
+      console.log('✅ Socket.IO connected to Reviews:', socket.id);
+    });
+
+    socket.on('disconnect', (reason) => {
+      console.log('🔌 Socket.IO disconnected from Reviews:', reason);
+    });
+
+    socket.on('connect_error', (error) => {
+      console.error('❌ Socket.IO connection error:', error);
+    });
+
+    // ✅ Cleanup function
+    return () => {
+      console.log('🧹 Cleaning up Socket.IO connection for Reviews...');
+      socket.off('update-analytics');
+      socket.off('new-review');
+      socket.off('review-updated');
+      socket.off('review-deleted');
+      socket.off('connect');
+      socket.off('disconnect');
+      socket.off('connect_error');
+      socket.disconnect();
     };
-    fetchReviews();
   }, []);
+
+  // ✅ Fetch reviews from backend (with optional silent mode)
+  useEffect(() => {
+    fetchReviews();
+    
+    // ✅ Set up periodic refresh as fallback (every 30 seconds)
+    const refreshInterval = setInterval(() => {
+      console.log('🔄 Periodic refresh triggered...');
+      fetchReviews(true); // Silent refresh
+    }, 30000);
+
+    return () => clearInterval(refreshInterval);
+  }, []);
+
+  const fetchReviews = async (silent = false) => {
+    try {
+      if (!silent) {
+        setIsLoading(true);
+        console.log('⏳ Loading reviews...');
+      }
+      
+      const res = await axios.get(API_URL);
+      console.log(`✅ Fetched ${res.data.length} reviews`);
+      
+      setReviews(res.data);
+      setFilteredReviews(res.data);
+      setError(null);
+    } catch (err) {
+      setError(err.message);
+      console.error("❌ Error fetching reviews:", err);
+    } finally {
+      if (!silent) setIsLoading(false);
+    }
+  };
 
   // Filter reviews based on search term and selected month
   useEffect(() => {
@@ -129,7 +223,7 @@ const Reviews = () => {
 
   // Show confirmation popup for single delete
   const handleConfirmDelete = (id) => {
-    console.log('Review selected for deletion:', id);
+    console.log('📋 Review selected for deletion:', id);
     setReviewToDelete(id);
     setShowDeletePopup(true);
   };
@@ -139,7 +233,7 @@ const Reviews = () => {
     if (!reviewToDelete) return;
 
     try {
-      console.log('Attempting to delete review with ID:', reviewToDelete);
+      console.log('🗑️ Attempting to delete review with ID:', reviewToDelete);
       
       await axios.delete(`${API_URL}/${reviewToDelete}`);
       
@@ -151,11 +245,12 @@ const Reviews = () => {
         return newChecked;
       });
       
+      console.log('✅ Review deleted successfully');
       setShowDeletePopup(false);
       setReviewToDelete(null);
       
     } catch (err) {
-      console.error('Error deleting review:', err);
+      console.error('❌ Error deleting review:', err);
       alert('Failed to delete review: ' + (err.response?.data?.message || err.message));
       setShowDeletePopup(false);
       setReviewToDelete(null);
@@ -173,6 +268,8 @@ const Reviews = () => {
     if (!confirmDelete) return;
 
     try {
+      console.log(`🗑️ Bulk deleting ${selectedIds.length} reviews...`);
+      
       // Delete all selected reviews
       await Promise.all(
         selectedIds.map((id) => axios.delete(`${API_URL}/${id}`))
@@ -183,8 +280,9 @@ const Reviews = () => {
       setCheckedRows({});
       setSelectAll(false);
 
+      console.log('✅ Bulk delete completed successfully');
     } catch (err) {
-      console.error('Error deleting reviews:', err);
+      console.error('❌ Error deleting reviews:', err);
       alert('Failed to delete some reviews: ' + (err.response?.data?.message || err.message));
     }
   };
@@ -278,8 +376,19 @@ const Reviews = () => {
                     </tr>
                   ) : error ? (
                     <tr>
-                      <td colSpan="9" style={{ textAlign: 'center', padding: '20px' }}>
-                        Error: {error}
+                      <td colSpan="9" style={{ textAlign: 'center', padding: '20px', color: '#f44336' }}>
+                        <p>Error: {error}</p>
+                        <button onClick={() => fetchReviews()} className="retry-btn" style={{
+                          marginTop: '10px',
+                          padding: '8px 16px',
+                          backgroundColor: '#1a73e8',
+                          color: '#fff',
+                          border: 'none',
+                          borderRadius: '4px',
+                          cursor: 'pointer'
+                        }}>
+                          Retry
+                        </button>
                       </td>
                     </tr>
                   ) : currentReviews.length === 0 ? (

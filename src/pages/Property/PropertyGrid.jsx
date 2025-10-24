@@ -94,7 +94,7 @@ const PropertyGrid = ({ properties }) => {
                 <img
                   src="/assets/home-icon.png"
                   alt="icon"
-                  style={{ width: '50px', marginRight: '8px', height: '50px' }}
+                  style={{ width: '40px', marginRight: '8px', height: '40px' }}
                 />
                 <div>
                   <h4 className="property-title">{prop.name}</h4>
@@ -106,7 +106,6 @@ const PropertyGrid = ({ properties }) => {
                 {prop.status || 'N/A'}
               </span>
             </div>
-
             {/* Property Stats */}
             <div className="property-stats">
               <div className="stat-item">
@@ -119,7 +118,7 @@ const PropertyGrid = ({ properties }) => {
               </div>
               <div className="stat-item">
                 <img src="/assets/size-icon.png" alt="area" />
-                {prop.size || 'N/A'}
+                {prop.size || 'N/A'}sq ft
               </div>
               <div className="stat-item">
                 <img src="/assets/floor-icon.png" alt="floor" />

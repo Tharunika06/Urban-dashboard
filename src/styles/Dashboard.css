@@ -246,9 +246,11 @@ margin:20px;
 }
 
 .card-title { 
-  font-size: 1.1rem; 
+  font-size: 16px; 
   font-weight: 600; 
   margin: 0; 
+  color:#283D56;
+  font-family:'Prompt', sans-serif
 }
 
 /* --- Dashboard Stat Cards --- */
@@ -279,11 +281,12 @@ margin:20px;
 }
 
 .dashboard-stat-card .stat-value { 
-  font-size: 28px; 
-  font-weight: 700; 
-  color: var(--text-primary); 
+  font-size: 22px; 
+  font-weight: 600; 
+  color: #474D66; 
   margin: 0 0 10px 0; 
   line-height: 1.1; 
+  font-family:'Prompt';
 }
 
 .dashboard-stat-card .stat-trend { 
@@ -312,8 +315,10 @@ margin:20px;
 }
 
 .dashboard-stat-card .trend-period { 
-  color: var(--text-light); 
+  color: #474D66; 
   white-space: nowrap; 
+  font-weight: 600;
+  font-size:14px
 }
 
 .dashboard-stat-card .stat-icon-wrapper { 
@@ -417,9 +422,12 @@ margin:20px;
 
 /* --- Social Source --- */
 .social-source-chart-container { 
-  position: relative; 
+  display: flex;
+  justify-content: center;
+  align-items: center;
   width: 150px; 
-  height: 175px; 
+  height: 175px;
+  margin-left:60px 
 }
 
 .social-source-center-text { 
@@ -435,7 +443,12 @@ margin:20px;
   font-weight: 700; 
   color: var(--text-primary); 
 }
-
+/* .social-source-recharts-surface{
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-left:20px
+} */
 .social-source-center-text .label { 
   font-size: 0.9rem; 
   color: var(--text-secondary); 

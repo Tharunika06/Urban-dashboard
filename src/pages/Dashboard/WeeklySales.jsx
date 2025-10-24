@@ -137,7 +137,7 @@ const WeeklySales = () => {
         </button>
         
         <span 
-          className="card-title" 
+          className="card-subtitle" 
           style={{ 
             minWidth: "120px", 
             textAlign: "center",
@@ -185,7 +185,7 @@ onMouseOut={(e) => e.target.style.opacity = "1"}>
         />
         <Bar
           dataKey="sales"
-          fill="var(--primary-blue)"
+          fill="#0075FF"
           barSize={15}
           radius={[5, 5, 0, 0]}
         />

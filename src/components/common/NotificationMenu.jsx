@@ -6,15 +6,23 @@ import { io as socketIO } from "socket.io-client";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
 const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || "http://localhost:5000";
-const socket = socketIO(SOCKET_URL, { withCredentials: true });
 
 const NotificationMenu = () => {
   const [notifications, setNotifications] = useState([]);
   const [notifOpen, setNotifOpen] = useState(false);
   const notifRef = useRef();
+  const socketRef = useRef(null);
 
   useEffect(() => {
-    // ✅ Fetch notifications
+    // ✅ Initialize Socket.IO connection
+    socketRef.current = socketIO(SOCKET_URL, { 
+      withCredentials: true,
+      transports: ['websocket', 'polling']
+    });
+
+    const socket = socketRef.current;
+
+    // ✅ Fetch initial notifications
     const fetchNotifications = async () => {
       try {
         const token = localStorage.getItem("token");
@@ -23,16 +31,57 @@ const NotificationMenu = () => {
         });
         setNotifications(res.data || []);
       } catch (err) {
-        console.error("Error fetching notifications:", err);
+        console.error("❌ Error fetching notifications:", err);
       }
     };
     fetchNotifications();
 
     // ✅ Listen for real-time notifications
-    const onNewNotification = (payload) => {
+    socket.on("new-notification", (payload) => {
+      console.log("🔔 New notification received:", payload);
       setNotifications((prev) => [payload, ...prev].slice(0, 20));
-    };
-    socket.on("new-notification", onNewNotification);
+      
+      // Optional: Play notification sound
+      // playNotificationSound();
+      
+      // Optional: Show browser notification
+      // showBrowserNotification(payload);
+    });
+
+    // ✅ Listen for notification updates (if you have mark as read functionality)
+    socket.on("notification-updated", (updatedNotification) => {
+      console.log("📝 Notification updated:", updatedNotification);
+      setNotifications((prev) =>
+        prev.map((n) =>
+          n._id === updatedNotification._id ? updatedNotification : n
+        )
+      );
+    });
+
+    // ✅ Listen for notification deletions
+    socket.on("notification-deleted", (deletedId) => {
+      console.log("🗑️ Notification deleted:", deletedId);
+      setNotifications((prev) => prev.filter((n) => n._id !== deletedId));
+    });
+
+    // ✅ Listen for bulk notification clear
+    socket.on("notifications-cleared", () => {
+      console.log("🧹 All notifications cleared");
+      setNotifications([]);
+    });
+
+    // ✅ Handle connection events
+    socket.on("connect", () => {
+      console.log("✅ Socket.IO connected:", socket.id);
+    });
+
+    socket.on("disconnect", (reason) => {
+      console.log("🔌 Socket.IO disconnected:", reason);
+    });
+
+    socket.on("connect_error", (error) => {
+      console.error("❌ Socket.IO connection error:", error);
+    });
 
     // ✅ Close dropdown when clicking outside
     const handleClickOutside = (event) => {
@@ -42,20 +91,38 @@ const NotificationMenu = () => {
     };
     document.addEventListener("mousedown", handleClickOutside);
 
+    // ✅ Cleanup function
     return () => {
-      socket.off("new-notification", onNewNotification);
+      socket.off("new-notification");
+      socket.off("notification-updated");
+      socket.off("notification-deleted");
+      socket.off("notifications-cleared");
+      socket.off("connect");
+      socket.off("disconnect");
+      socket.off("connect_error");
+      socket.disconnect();
       document.removeEventListener("mousedown", handleClickOutside);
+      console.log("🔌 Socket.IO disconnected and cleaned up");
     };
   }, []);
 
   const markAsRead = async (id) => {
     try {
-      await axios.patch(`${API_URL}/notifications/${id}/read`);
+      const token = localStorage.getItem("token");
+      await axios.patch(
+        `${API_URL}/notifications/${id}/read`,
+        {},
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      
+      // Optimistically update UI
       setNotifications((prev) =>
         prev.map((n) => (n._id === id ? { ...n, isRead: true } : n))
       );
     } catch (err) {
-      console.error("Error marking notification as read:", err);
+      console.error("❌ Error marking notification as read:", err);
     }
   };
 
@@ -66,22 +133,56 @@ const NotificationMenu = () => {
       await axios.delete(`${API_URL}/notifications`, {
         headers: { Authorization: `Bearer ${token}` },
       });
+      
+      // Optimistically update UI
       setNotifications([]);
     } catch (err) {
-      console.error("Error clearing notifications:", err);
+      console.error("❌ Error clearing notifications:", err);
     }
   };
+
+  // ✅ Optional: Play notification sound
+  const playNotificationSound = () => {
+    try {
+      const audio = new Audio('/assets/notification-sound.mp3');
+      audio.volume = 0.5;
+      audio.play().catch(err => console.log('Could not play sound:', err));
+    } catch (err) {
+      console.log('Notification sound not available');
+    }
+  };
+
+  // ✅ Optional: Show browser notification
+  const showBrowserNotification = (notification) => {
+    if ('Notification' in window && Notification.permission === 'granted') {
+      new Notification(notification.message || 'New Notification', {
+        body: notification.type || '',
+        icon: '/assets/logo.png',
+        badge: '/assets/logo.png',
+        tag: notification._id,
+      });
+    } else if ('Notification' in window && Notification.permission !== 'denied') {
+      Notification.requestPermission().then(permission => {
+        if (permission === 'granted') {
+          showBrowserNotification(notification);
+        }
+      });
+    }
+  };
+
+  const unreadCount = notifications.filter((n) => !n.isRead).length;
 
   return (
     <div className="notification-wrapper" ref={notifRef}>
       <button
         className="notification-btn"
         onClick={() => setNotifOpen(!notifOpen)}
+        aria-label="Notifications"
       >
-        <IoMdNotificationsOutline />
-        {notifications.filter((n) => !n.isRead).length > 0 && (
+        <IoMdNotificationsOutline size={24} />
+        {unreadCount > 0 && (
           <span className="notif-badge">
-            {notifications.filter((n) => !n.isRead).length}
+            {unreadCount > 99 ? '99+' : unreadCount}
           </span>
         )}
       </button>
@@ -89,7 +190,12 @@ const NotificationMenu = () => {
       {notifOpen && (
         <div className="dropdown-menu show position-absolute end-0 mt-2 notif-dropdown">
           <div className="dropdown-header d-flex justify-content-between align-items-center">
-            <span className="fw-bold">Notifications</span>
+            <span className="fw-bold">
+              Notifications
+              {unreadCount > 0 && (
+                <span className="badge bg-primary ms-2">{unreadCount}</span>
+              )}
+            </span>
             {notifications.length > 0 && (
               <button
                 className="btn btn-sm btn-link text-danger"
@@ -101,33 +207,87 @@ const NotificationMenu = () => {
           </div>
           <hr className="m-1" />
 
-          {notifications.length === 0 ? (
-            <div className="dropdown-item">No new notifications</div>
-          ) : (
-            notifications.map((n, idx) => (
-              <div
-                key={n._id || `${n.type}-${n.time}-${idx}`}
-                className={`dropdown-item notif-item ${
-                  n.isRead ? "notif-read" : ""
-                }`}
-                onClick={() => !n.isRead && markAsRead(n._id)}
-              >
-                <div className="notif-title">{n.message}</div>
-                <div className="notif-meta">
-                  <span className={`notif-tag notif-${n.type || "info"}`}>
-                    {n.type || "info"}
-                  </span>
-                  <small className="ms-2">
-                    {new Date(n.time).toLocaleString()}
-                  </small>
-                </div>
+          <div 
+            className="notifications-list" 
+            style={{ 
+              maxHeight: '400px', 
+              overflowY: 'auto',
+              /* Hide scrollbar for Chrome, Safari and Opera */
+              scrollbarWidth: 'none', /* Firefox */
+              msOverflowStyle: 'none', /* IE and Edge */
+            }}
+          >
+            {notifications.length === 0 ? (
+              <div className="dropdown-item text-center text-muted py-3">
+                <IoMdNotificationsOutline size={48} style={{ opacity: 0.3 }} />
+                <p className="mb-0 mt-2">No new notifications</p>
               </div>
-            ))
-          )}
+            ) : (
+              notifications.map((n, idx) => (
+                <div
+                  key={n._id || `${n.type}-${n.time}-${idx}`}
+                  className={`dropdown-item notif-item ${
+                    n.isRead ? "notif-read" : "notif-unread"
+                  }`}
+                  onClick={() => !n.isRead && markAsRead(n._id)}
+                  style={{ cursor: !n.isRead ? 'pointer' : 'default' }}
+                >
+                  <div className="d-flex align-items-start">
+                    <div className="flex-grow-1">
+                      <div className="notif-title fw-semibold">
+                        {n.message}
+                      </div>
+                      <div className="notif-meta d-flex align-items-center mt-1">
+                        <span className={`notif-tag notif-${n.type || "info"} badge`}>
+                          {n.type || "info"}
+                        </span>
+                        <small className="ms-2 text-muted">
+                          {formatTimestamp(n.time)}
+                        </small>
+                      </div>
+                    </div>
+                    {!n.isRead && (
+                      <span 
+                        className="badge bg-primary rounded-circle ms-2" 
+                        style={{ width: '8px', height: '8px', padding: 0 }}
+                        aria-label="Unread"
+                      />
+                    )}
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
         </div>
       )}
+
+      {/* Hidden scrollbar CSS */}
+      <style jsx>{`
+        .notifications-list::-webkit-scrollbar {
+          display: none;
+        }
+      `}</style>
     </div>
   );
+};
+
+// Helper function to format timestamp
+const formatTimestamp = (timestamp) => {
+  if (!timestamp) return '';
+  
+  const date = new Date(timestamp);
+  const now = new Date();
+  const diffMs = now - date;
+  const diffMins = Math.floor(diffMs / 60000);
+  const diffHours = Math.floor(diffMs / 3600000);
+  const diffDays = Math.floor(diffMs / 86400000);
+
+  if (diffMins < 1) return 'Just now';
+  if (diffMins < 60) return `${diffMins}m ago`;
+  if (diffHours < 24) return `${diffHours}h ago`;
+  if (diffDays < 7) return `${diffDays}d ago`;
+  
+  return date.toLocaleDateString();
 };
 
 export default NotificationMenu;

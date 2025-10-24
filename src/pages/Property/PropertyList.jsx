@@ -226,7 +226,7 @@ const PropertyList = ({ properties, handleDelete, handleBulkDelete }) => {
                   </td>
 
                   <td>
-                    <Link to={`/property/${prop._id}`}>{prop.size || 'N/A'}</Link>
+                    <Link to={`/property/${prop._id}`}>{prop.size || 'N/A'}sq ft</Link>
                   </td>
 
                   <td>
