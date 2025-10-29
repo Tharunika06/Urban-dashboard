@@ -5,8 +5,8 @@ import '../../styles/Customers.css';
 
 export default function CustomerGrid({ customers = [] }) {
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 6;
-
+  const itemsPerPage = 8; // Changed from 6 to 8 for 2 rows of 4 items
+  
   const getStatusClass = (status) => {
     return status ? status.toLowerCase().replace(' ', '-') : '';
   };
@@ -42,7 +42,6 @@ export default function CustomerGrid({ customers = [] }) {
                 <p><strong>Email Address :</strong> {c.email || 'N/A'}</p>
                 <p><strong>Contact Number :</strong> {c.phone}</p>
               </div>
-
               {/* <div className="card-stats">
                 <div>
                   <span>{c.stats?.ownProperty || 0}</span>
@@ -53,7 +52,6 @@ export default function CustomerGrid({ customers = [] }) {
                   <p>Invest On Property</p>
                 </div>
               </div> */}
-
               <div className="social-media">
                 <span>Social Information: </span><br />
                 <a href="#"><img src="/assets/fb.png" alt="facebook" /></a>
@@ -62,10 +60,9 @@ export default function CustomerGrid({ customers = [] }) {
                 <a href="#"><img src="/assets/wp.png" alt="whatsapp" /></a>
               </div>
             </div>
-
             <div className="card-footer">
               <button className="card-btn open-chat-btn">Open Chat</button>
-              <button className="card-btn">Call to Customer</button>
+              <button className="card-btn call-btn">Call to Customer</button>
             </div>
           </div>
         )) : (
@@ -83,7 +80,6 @@ export default function CustomerGrid({ customers = [] }) {
           >
             ‹ Back
           </button>
-
           {Array.from({ length: totalPages }, (_, i) => (
             <button
               key={i + 1}
@@ -93,7 +89,6 @@ export default function CustomerGrid({ customers = [] }) {
               {i + 1}
             </button>
           ))}
-
           <button
             className="page-link"
             onClick={() => handlePageChange(currentPage + 1)}

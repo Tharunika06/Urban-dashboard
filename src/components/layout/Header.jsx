@@ -3,6 +3,7 @@ import React, { useEffect, useState, useRef } from "react";
 import { useLocation, Link, useNavigate } from "react-router-dom";
 import { FiChevronDown } from "react-icons/fi";
 import NotificationMenu from "../common/NotificationMenu";
+import LanguageSelector from "../common/LanguageSelector";
 import "../../styles/Header.css";
 
 const Header = ({ title }) => {
@@ -114,11 +115,8 @@ const Header = ({ title }) => {
       </div>
 
       <div className="header-right">
-        <div className="lang-selector">
-          <img src="/assets/flag-us.png" alt="US Flag" className="flag-icon" />
-          <span className="d-none d-md-inline">Eng (US)</span>
-          <FiChevronDown className="d-none d-md-inline" />
-        </div>
+        {/* Replace the old lang-selector with the new LanguageSelector component */}
+        <LanguageSelector />
 
         <NotificationMenu />
 
