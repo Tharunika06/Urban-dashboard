@@ -8,7 +8,7 @@ import { BsSearch } from 'react-icons/bs';
 import MonthDropdown from '../../components/common/MonthDropdown';
 import Header from '../../components/layout/Header';
 
-const API_BASE_URL = 'http://192.168.1.45:5000';
+const API_BASE_URL = 'http://192.168.0.152:5000';
 
 const months = [
   'January', 'February', 'March', 'April', 'May', 'June',
@@ -147,8 +147,7 @@ const Transaction = () => {
           t => !deletedIds.includes(t.customTransactionId)
         );
         setFilteredTransactions(updatedFilteredTransactions);
-
-        // Reset pagination if current page becomes empty
+       // Reset pagination if current page becomes empty
         const ITEMS_PER_PAGE = 7;
         const totalPages = Math.ceil(updatedFilteredTransactions.length / ITEMS_PER_PAGE);
         if (currentPage > totalPages) setCurrentPage(totalPages > 0 ? totalPages : 1);

@@ -126,7 +126,7 @@ const PropertyList = ({ properties, handleDelete, handleBulkDelete }) => {
     }
 
     if (photo && photo.startsWith('/uploads/')) {
-      return `http://192.168.1.45:5000${photo}`;
+      return `http://192.168.0.152:5000${photo}`;
     }
 
     return '/assets/placeholder.png';

@@ -350,7 +350,7 @@ const AddOwnerModal = ({ isOpen, onClose, onSave }) => {
       console.log('============================');
 
       const response = await axios.post(
-        'http://192.168.1.45:5000/api/owners/add-owner',
+        'http://192.168.0.152:5000/api/owners/add-owner',
         payload,
         {
           headers: { 

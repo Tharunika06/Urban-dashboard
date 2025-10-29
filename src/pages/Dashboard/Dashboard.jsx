@@ -12,6 +12,7 @@ import Transactions from "./Transactions";
 import { io as socketIO } from "socket.io-client";
 import api from "../../utils/api";
 import "/src/styles/Dashboard.css";
+import "bootstrap/dist/css/bootstrap.min.css";
 
 const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || "http://localhost:5000";
 const socket = socketIO(SOCKET_URL, { withCredentials: true });
@@ -77,9 +78,9 @@ const Dashboard = () => {
     <div className="dashboard-container">
       <div className="main-content">
         <Header title="Dashboard" onToggleSidebar={toggleSidebar} />
-
+        <Sidebar isOpen={isSidebarOpen} onClose={toggleSidebar} />
         <main className="dashboard-body">
-          <div className="container-xxl p-0">
+          <div className="dashboard-content">
             {/* Row 1: Analytics Stat Cards */}
             <Analytics stats={stats} loading={loading} error={error} />
 

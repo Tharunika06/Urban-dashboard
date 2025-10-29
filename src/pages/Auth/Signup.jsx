@@ -30,7 +30,7 @@ const Signup = () => {
     }
 
     try {
-      const res = await fetch("http://192.168.1.45:5000/api/signup", {
+      const res = await fetch("http://192.168.0.152:5000/api/signup", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password })

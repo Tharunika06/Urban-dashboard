@@ -21,7 +21,7 @@
 
 /* --- TRANSACTION PAGE CONTAINER & CONTROLS --- */
 .transaction-page-container {
-  padding: 1rem 2rem; }
+  padding: 1.5rem; }
 
 .controls-bar {
   display: flex;

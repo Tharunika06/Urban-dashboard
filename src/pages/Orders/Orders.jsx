@@ -32,7 +32,7 @@ const Orders = () => {
   useEffect(() => {
     const fetchTransactions = async () => {
       try {
-        const response = await fetch('http://192.168.1.45:5000/api/payment/transactions');
+        const response = await fetch('http://192.168.0.152:5000/api/payment/transactions');
         if (!response.ok) {
           throw new Error('Network response was not ok');
         }
@@ -98,7 +98,7 @@ const Orders = () => {
       
       const encodedTransactionId = encodeURIComponent(orderToDelete);
       const response = await fetch(
-        `http://192.168.1.45:5000/api/payment/transactions/${encodedTransactionId}`,
+        `http://192.168.0.152:5000/api/payment/transactions/${encodedTransactionId}`,
         { 
           method: 'DELETE',
           headers: { 'Content-Type': 'application/json' }

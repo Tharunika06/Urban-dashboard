@@ -12,7 +12,7 @@ const SettingsPage = () => {
   return (
     <div className="main-content">
       <Header />
-      <div className="container mt-4">
+      <div className="settings-container">
         
         {/* Tabs */}
         <div className="settings-card">

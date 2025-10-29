@@ -11,7 +11,7 @@ import PopupMessage from '../../components/common/PopupMessage';
 import '../../styles/Dashboard.css';
 import '../../styles/Owners.css';
 
-const API_BASE_URL = 'http://192.168.1.45:5000';
+const API_BASE_URL = 'http://192.168.0.152:5000';
 
 const months = [
   'January', 'February', 'March', 'April', 'May', 'June',
@@ -33,19 +33,23 @@ const Owners = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const ownersPerPage = 6;
 
-  // 初始化 Socket.io 客户端
+  // Socket.io for real-time updates
   useEffect(() => {
     const socket = io(API_BASE_URL);
 
-    // 监听 owner-stats-updated 事件
+    // Listen for owner-stats-updated events
     socket.on('update-analytics', (data) => {
-      if (data.type === 'owner-stats-updated') {
-        console.log(`🔔 Received owner-stats-updated event for owner ID: ${data.ownerId}`);
-        fetchOwners(true); // 静默刷新业主数据
+      if (data.type === 'owner-stats-updated' || 
+          data.type === 'property-sold' || 
+          data.type === 'owner-added' ||
+          data.type === 'owner-updated' ||
+          data.type === 'owner-deleted' ||
+          data.type === 'all-owners-stats-updated') {
+        console.log(`🔔 Received ${data.type} event`);
+        fetchOwners(true); // Silent refresh
       }
     });
 
-    // 清理 Socket.io 连接
     return () => {
       socket.disconnect();
       console.log('🔌 Socket.io disconnected');
@@ -86,6 +90,13 @@ const Owners = () => {
     e.target.src = '/assets/default-avatar.png';
   };
 
+  // Calculate available properties (total - sold)
+  const getAvailableProperties = (owner) => {
+    const total = owner.propertyOwned || 0;
+    const sold = owner.propertySold || 0;
+    return Math.max(0, total - sold); // Ensure it doesn't go negative
+  };
+
   useEffect(() => {
     let ownersToFilter = Array.isArray(owners) ? owners : [];
 
@@ -111,7 +122,7 @@ const Owners = () => {
     }
 
     setFilteredOwners(ownersToFilter);
-    setCurrentPage(1); // reset to first page after filter/search
+    setCurrentPage(1);
   }, [searchTerm, selectedMonth, owners]);
 
   const handleMonthChange = (month) => {
@@ -180,43 +191,62 @@ const Owners = () => {
     if (!Array.isArray(filteredOwners) || filteredOwners.length === 0)
       return <tr><td colSpan="8" style={{ textAlign: 'center' }}>No owners found</td></tr>;
 
-    return currentOwners.map((owner) => (
-      <tr key={owner._id || owner.ownerId}>
-        <td>
-          <div className="owner-info">
+    return currentOwners.map((owner) => {
+      const availableProps = getAvailableProperties(owner);
+      const soldProps = owner.propertySold || 0;
+      
+      return (
+        <tr key={owner._id || owner.ownerId}>
+          <td>
+            <div className="owner-info">
+              <img
+                src={getOwnerPhotoSrc(owner.photo)}
+                alt={owner.name || 'No Name'}
+                className="owner-photo"
+                onError={handleImageError}
+              />
+              {owner?.name ? (
+                <Link to={`/owners/${owner.ownerId}`} className="owner-link">
+                  {owner.name}
+                </Link>
+              ) : 'N/A'}
+            </div>
+          </td>
+          <td>{owner.address || '-'}</td>
+          <td>{owner.email || '-'}</td>
+          <td>{owner.contact || '-'}</td>
+          <td>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+              <span style={{ 
+                fontWeight: '600', 
+                color: availableProps === 0 ? '#95a5a6' : '#2c3e50' 
+              }}>
+                {availableProps} Available
+              </span>
+              {soldProps > 0 && (
+                <span style={{ fontSize: '0.85em', color: '#95a5a6' }}>
+                  ({soldProps} Sold)
+                </span>
+              )}
+            </div>
+          </td>
+          <td>{owner.doj ? new Date(owner.doj).toLocaleDateString() : '-'}</td>
+          <td><span className={`status ${owner.status?.toLowerCase()}`}>{owner.status || 'Active'}</span></td>
+          <td className="action-icons">
+            <Link to={`/owners/${owner.ownerId}`}>
+              <img src="/assets/view-icon.png" alt="View" title="View Details" />
+            </Link>
             <img
-              src={getOwnerPhotoSrc(owner.photo)}
-              alt={owner.name || 'No Name'}
-              className="owner-photo"
-              onError={handleImageError}
+              src="/assets/delete-icon.png"
+              alt="Delete"
+              title="Delete Owner"
+              onClick={() => handleConfirmDelete(owner.ownerId)}
+              style={{ cursor: 'pointer' }}
             />
-            {owner?.name ? (
-              <Link to={`/owners/${owner.ownerId}`} className="owner-link">
-                {owner.name}
-              </Link>
-            ) : 'N/A'}
-          </div>
-        </td>
-        <td>{owner.address || '-'}</td>
-        <td>{owner.email || '-'}</td>
-        <td>{owner.contact || '-'}</td>
-        <td>{owner.propertyOwned || 0}</td>
-        <td>{owner.doj ? new Date(owner.doj).toLocaleDateString() : '-'}</td>
-        <td><span className={`status ${owner.status?.toLowerCase()}`}>{owner.status || 'Active'}</span></td>
-        <td className="action-icons">
-          <Link to={`/owners/${owner.ownerId}`}>
-            <img src="/assets/view-icon.png" alt="View" title="View Details" />
-          </Link>
-          <img
-            src="/assets/delete-icon.png"
-            alt="Delete"
-            title="Delete Owner"
-            onClick={() => handleConfirmDelete(owner.ownerId)}
-            style={{ cursor: 'pointer' }}
-          />
-        </td>
-      </tr>
-    ));
+          </td>
+        </tr>
+      );
+    });
   };
 
   return (

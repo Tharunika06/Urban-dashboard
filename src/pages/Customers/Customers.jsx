@@ -9,7 +9,7 @@ import PopupMessage from '../../components/common/PopupMessage';
 import '../../styles/Dashboard.css';
 import '../../styles/Customers.css';
 
-const API_BASE_URL = 'http://192.168.1.45:5000';
+const API_BASE_URL = 'http://192.168.0.152:5000';
 
 const months = [
   'January', 'February', 'March', 'April', 'May', 'June',

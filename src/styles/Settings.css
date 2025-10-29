@@ -8,11 +8,13 @@ body {
 .settings-tabs {
   /* display: flex; */
   background: #F6F6F6;
-  /* border-radius: 8px; */
+  border-radius: 8px;
   padding: 6px 10px 6px 10px;
-  /* margin-bottom: 20px; */
+  margin-bottom: 20px;
 }
-
+.settings-container{
+  padding: 1.5rem;
+}
 .settings-tab {
   flex: 1;
   text-align: center;
@@ -23,19 +25,11 @@ body {
   color: #6b7280; /* Gray */
   cursor: pointer;
   transition: all 0.2s ease;
-    /* width: 20px; */
 
 }
 
-/* .settings-tab.active {
-  background: #fff;
-  font-weight: 600;
-  color: #007bff;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-} */
 .settings-nav-link{
 padding: 6px 10px 6px 10px;
- margin-right: 20px;
  width:280px;
   border-radius: 6px;
   border: none;
@@ -49,7 +43,7 @@ font-weight: 600;
   max-width: 960px; /* Adjust as needed to match the content area width in the image */
   margin-left: auto;
   margin-right: auto;
-  padding: 20px; /* Some padding around the content */
+  padding: 1.5rem; /* Some padding around the content */
 }
 
 /* Card styling */

@@ -35,7 +35,7 @@ const Login = () => {
 
     try {
       // FIXED: Correct admin login endpoint
-      const response = await axios.post("http://192.168.1.45:5000/api/admin-login", {
+      const response = await axios.post("http://192.168.0.152:5000/api/admin-login", {
         email: email.trim().toLowerCase(),
         password,
       });
