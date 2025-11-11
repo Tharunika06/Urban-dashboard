@@ -65,15 +65,12 @@ const Login = () => {
         };
         
         storage.saveUser(userData);
-        console.log("💾 User data saved to localStorage:", userData);
 
         // Handle Remember Me
         if (rememberMe) {
           storage.saveRememberMe(email);
-          console.log("✅ Email saved for Remember Me");
         } else {
           storage.clearRememberMe();
-          console.log("🗑️ Remember Me cleared");
         }
 
         setSuccess(data.message || "Login successful! Redirecting...");
