@@ -1,11 +1,9 @@
-//AdminLogin.jsx - COMPLETE FIXED VERSION
-
+// src/pages/Auth/Login.jsx
 import React, { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import axios from "axios";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "../../styles/Auth.css";
-
+import authService, { handleAuthError, storage } from "../../services/authService";
 import logo from "/assets/logo.png";
 import userIcon from "/assets/user-icon.png";
 import lockIcon from "/assets/lock-icon.png";
@@ -22,73 +20,81 @@ const Login = () => {
   const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
 
+  // ✅ Clear any stale data on mount
   useEffect(() => {
-    setError("");
-    setSuccess("");
+    console.log("🔄 Login component mounted");
+    
+    // Load remembered email
+    const rememberedEmail = storage.getRememberedEmail();
+    if (rememberedEmail) {
+      setEmail(rememberedEmail);
+      setRememberMe(true);
+      console.log("📧 Loaded remembered email:", rememberedEmail);
+    }
   }, []);
 
+  // ✅ FIXED: Proper async handler with error handling
   const handleLogin = async (e) => {
-    e.preventDefault();
+    e.preventDefault(); // ✅ Prevent form default submission
+    e.stopPropagation(); // ✅ Stop event bubbling
+    
+    // Prevent multiple submissions
+    if (loading) {
+      console.log("⚠️ Already processing login, ignoring duplicate submission");
+      return;
+    }
+    
     setError("");
     setSuccess("");
     setLoading(true);
 
+    console.log("🔐 Starting admin login for:", email);
+
     try {
-      // FIXED: Correct admin login endpoint
-      const response = await axios.post("http://192.168.0.152:5000/api/admin-login", {
-        email: email.trim().toLowerCase(),
-        password,
-      });
+      const data = await authService.adminLogin(email, password);
+      console.log("✅ Login response:", data);
 
-      if (response.data.ok) {
-        // CRITICAL FIX: Store authentication token
-        localStorage.setItem("authToken", response.data.token);
+      if (data.ok) {
+        // ✅ Store only non-sensitive user data for UI display
+        const userData = {
+          email: data.user.email,
+          name: data.user.firstName || data.user.email.split('@')[0],
+          role: data.user.role,
+          firstName: data.user.firstName,
+          lastName: data.user.lastName
+        };
         
-        // Store user data
-        localStorage.setItem("user", JSON.stringify(response.data.user));
+        storage.saveUser(userData);
+        console.log("💾 User data saved to localStorage:", userData);
 
-        // Remember Me logic
+        // Handle Remember Me
         if (rememberMe) {
-          localStorage.setItem("rememberMe", "true");
-          localStorage.setItem("adminEmail", email);
+          storage.saveRememberMe(email);
+          console.log("✅ Email saved for Remember Me");
         } else {
-          localStorage.removeItem("rememberMe");
-          localStorage.removeItem("adminEmail");
+          storage.clearRememberMe();
+          console.log("🗑️ Remember Me cleared");
         }
 
-        setSuccess("Login successful! Redirecting to dashboard...");
-
+        setSuccess(data.message || "Login successful! Redirecting...");
+        
+        // ✅ Redirect after short delay
         setTimeout(() => {
-          navigate("/dashboard");
+          console.log("🚀 Redirecting to dashboard...");
+          navigate("/dashboard", { replace: true });
         }, 1200);
+      } else {
+        // Handle non-OK response
+        setError(data.error || "Login failed. Please try again.");
+        setLoading(false);
       }
     } catch (err) {
-      console.error("Admin login error:", err);
+      console.error("❌ Admin login error:", err);
+      console.error("Error details:", err.response?.data);
+      setError(handleAuthError(err));
       setLoading(false);
-
-      if (err.response?.status === 403) {
-        setError("Access denied. Admin privileges required. Your account does not have admin access.");
-      } else if (err.response?.status === 401) {
-        setError("Access denied.Please try again.");
-      } else if (err.response?.data?.error) {
-        setError(err.response.data.error);
-      } else if (err.message === "Network Error") {
-        setError("Cannot connect to server. Please check your connection.");
-      } else {
-        setError("Login failed. Please try again.");
-      }
     }
   };
-
-  useEffect(() => {
-    const remembered = localStorage.getItem("rememberMe");
-    const savedEmail = localStorage.getItem("adminEmail");
-    
-    if (remembered === "true" && savedEmail) {
-      setEmail(savedEmail);
-      setRememberMe(true);
-    }
-  }, []);
 
   return (
     <div className="container-fluid">
@@ -101,7 +107,8 @@ const Login = () => {
               Welcome back, Admin! Please log in with your admin credentials to access the dashboard.
             </p>
 
-            <form onSubmit={handleLogin}>
+            {/* ✅ CRITICAL FIX: Added onSubmit handler and prevented default */}
+            <form onSubmit={handleLogin} autoComplete="off" noValidate>
               <div className="mb-3 position-relative">
                 <img src={userIcon} alt="User Icon" className="input-icon" />
                 <input
@@ -127,6 +134,12 @@ const Login = () => {
                   onChange={(e) => setPassword(e.target.value)}
                   disabled={loading}
                   autoComplete="current-password"
+                  onKeyDown={(e) => {
+                    // ✅ Prevent Enter key from submitting if already loading
+                    if (e.key === 'Enter' && loading) {
+                      e.preventDefault();
+                    }
+                  }}
                 />
                 <img
                   src={eyeIcon}
@@ -139,12 +152,13 @@ const Login = () => {
 
               {error && (
                 <div className="alert alert-danger" role="alert">
-                  <strong>Error:</strong> {error}
+                  {error}
                 </div>
               )}
+              
               {success && (
                 <div className="alert alert-success" role="alert">
-                  <strong>Success!</strong> {success}
+                  {success}
                 </div>
               )}
 
@@ -156,7 +170,7 @@ const Login = () => {
                     role="switch"
                     id="rememberSwitch"
                     checked={rememberMe}
-                    onChange={() => setRememberMe(!rememberMe)}
+                    onChange={(e) => setRememberMe(e.target.checked)}
                     disabled={loading}
                   />
                   <label className="form-check-label" htmlFor="rememberSwitch">
@@ -168,15 +182,24 @@ const Login = () => {
                 </p>
               </div>
 
+              {/* ✅ CRITICAL: Button type="submit" to trigger form submission */}
               <button 
                 type="submit" 
                 className="btn btn-dark w-100 mb-3"
                 disabled={loading}
+                style={{
+                  opacity: loading ? 0.7 : 1,
+                  cursor: loading ? 'not-allowed' : 'pointer'
+                }}
               >
                 {loading ? (
                   <>
-                    <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-
+                    <span 
+                      className="spinner-border spinner-border-sm me-2" 
+                      role="status" 
+                      aria-hidden="true"
+                    />
+                    Logging in...
                   </>
                 ) : (
                   "Log In"
@@ -200,7 +223,7 @@ const Login = () => {
 
               <p className="signup">
                 Don't have admin access?{" "}
-                <a>Sign Up</a>
+                <a href="#" onClick={(e) => e.preventDefault()}>Contact Support</a>
               </p>
             </form>
           </div>

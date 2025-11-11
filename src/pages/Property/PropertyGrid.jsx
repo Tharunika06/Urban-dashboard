@@ -1,76 +1,13 @@
 // src/pages/Property/PropertyGrid.jsx
 import React from 'react';
 import { Link } from 'react-router-dom';
+import {
+  getStatusClass,
+  formatPrice,
+  getPropertyImageSrc,
+  handlePropertyImageError,
+} from '../../utils/propertyHelpers';
 import '../../styles/Property.css';
-
-// ✅ Status Badge - UPDATED to match PropertyList
-const getStatusClass = (status) => {
-  switch (status?.toLowerCase()) {
-    case 'rent':
-      return 'status-rent';
-    case 'sale':
-      return 'status-sale';
-    case 'both':
-      return 'status-both';
-    case 'sold':
-      return 'status-sold';
-    default:
-      return '';
-  }
-};
-
-// ✅ Price Formatter - UPDATED to match PropertyList exactly
-const formatPrice = (prop) => {
-  const status = prop.status?.toLowerCase();
-  
-  // Priority 1: Handle properties available for both rent and sale
-  if (status === 'both' && prop.rentPrice && prop.salePrice) {
-    return (
-      <div className="price-dual">
-        <span className="price-rent">{`Rent: $${Number(prop.rentPrice).toLocaleString()} /mo`}</span>
-        <br />
-        <span className="price-sale">{`Sale: $${Number(prop.salePrice).toLocaleString()}`}</span>
-      </div>
-    );
-  }
-
-  // Priority 2: Handle rent-only properties
-  if (status === 'rent' && prop.rentPrice) {
-    return `$${Number(prop.rentPrice).toLocaleString()} /month`;
-  } 
-  
-  // Priority 3: Handle sale-only properties
-  else if (status === 'sale' && prop.salePrice) {
-    return `$${Number(prop.salePrice).toLocaleString()}`;
-  } 
-  
-  // Priority 4: Fallback for older data with a generic 'price'
-  else if (prop.price) {
-    return `$${Number(prop.price).toLocaleString()}`;
-  } 
-  
-  // Final fallback
-  else {
-    return 'N/A';
-  }
-};
-
-// ✅ Handle Image Sources
-const getImageSrc = (photo) => {
-  if (photo && photo.startsWith('data:image/')) {
-    return photo;
-  }
-  if (photo && photo.startsWith('/uploads/')) {
-    return `http://192.168.0.152:5000${photo}`;
-  }
-  return '/assets/placeholder.png';
-};
-
-// ✅ Fallback Image Handler
-const handleImageError = (e) => {
-  e.target.src = '/assets/placeholder.png';
-  console.warn('Failed to load property image');
-};
 
 const PropertyGrid = ({ properties }) => {
   return (
@@ -80,10 +17,10 @@ const PropertyGrid = ({ properties }) => {
           {/* Image */}
           <div className="property-card-image">
             <img
-              src={getImageSrc(prop.photo)}
+              src={getPropertyImageSrc(prop.photo)}
               alt={prop.name || 'Property'}
               className="property-image"
-              onError={handleImageError}
+              onError={handlePropertyImageError}
             />
           </div>
 
@@ -101,7 +38,7 @@ const PropertyGrid = ({ properties }) => {
                   <p className="property-address">{prop.address || 'N/A'}</p>
                 </div>
               </div>
-              {/* Status Badge - Now matches PropertyList styling */}
+              {/* Status Badge */}
               <span className={`status-badge ${getStatusClass(prop.status)}`}>
                 {prop.status || 'N/A'}
               </span>
@@ -126,7 +63,7 @@ const PropertyGrid = ({ properties }) => {
               </div>
             </div>
 
-            {/* Price + View More - Now displays dual prices like PropertyList */}
+            {/* Price + View More */}
             <div className="property-footer">
               <div className="property-price">
                 {formatPrice(prop)}

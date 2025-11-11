@@ -7,20 +7,25 @@ import '../../styles/Orders.css';
 import { BsSearch } from 'react-icons/bs';
 import MonthDropdown from '../../components/common/MonthDropdown';
 import Header from '../../components/layout/Header';
-
-const months = [
-  'January', 'February', 'March', 'April', 'May', 'June',
-  'July', 'August', 'September', 'October', 'November', 'December'
-];
+import { 
+  MONTHS_FULL, 
+  API_CONFIG, 
+  API_ENDPOINTS, 
+  DEFAULTS, 
+  ASSET_PATHS,
+  UI_MESSAGES 
+} from '../../utils/constants';
+import { applyFilters } from '../../utils/filterUtils';
+import { fetchData, deleteResource, handleApiError } from '../../utils/apiHelpers';
 
 const Orders = () => {
-  const [view, setView] = useState('list');
-  const [searchTerm, setSearchTerm] = useState('');
+  const [view, setView] = useState(DEFAULTS.VIEW_MODE);
+  const [searchTerm, setSearchTerm] = useState(DEFAULTS.SEARCH_TERM);
   
   // --- STATE MANAGEMENT for live data ---
   const [allTransactions, setAllTransactions] = useState([]);
   const [filteredTransactions, setFilteredTransactions] = useState([]);
-  const [selectedMonth, setSelectedMonth] = useState('');
+  const [selectedMonth, setSelectedMonth] = useState(DEFAULTS.SELECTED_MONTH);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -31,19 +36,15 @@ const Orders = () => {
   // --- DATA FETCHING ---
   useEffect(() => {
     const fetchTransactions = async () => {
-      try {
-        const response = await fetch('http://192.168.0.152:5000/api/payment/transactions');
-        if (!response.ok) {
-          throw new Error('Network response was not ok');
-        }
-        const data = await response.json();
-        setAllTransactions(data);
-      } catch (err) {
-        setError(err.message);
-        console.error("Failed to fetch orders/transactions:", err);
-      } finally {
-        setIsLoading(false);
+      const result = await fetchData(`${API_CONFIG.BASE_URL}${API_ENDPOINTS.TRANSACTIONS}`);
+      
+      if (result.success) {
+        setAllTransactions(result.data);
+      } else {
+        setError(result.error);
       }
+      
+      setIsLoading(false);
     };
 
     fetchTransactions();
@@ -51,29 +52,11 @@ const Orders = () => {
 
   // --- FILTERING LOGIC for both month and search term ---
   useEffect(() => {
-    let results = allTransactions;
-
-    // 1. Filter by month
-    if (selectedMonth) {
-      const monthIndex = months.indexOf(selectedMonth);
-      if (monthIndex > -1) {
-        results = results.filter(transaction => {
-          const transactionDate = new Date(transaction.createdAt);
-          return transactionDate.getMonth() === monthIndex;
-        });
-      }
-    }
-
-    // 2. Filter by search term
-    if (searchTerm) {
-      const term = searchTerm.toLowerCase();
-      results = results.filter(transaction =>
-        (transaction.customerName && transaction.customerName.toLowerCase().includes(term)) ||
-        (transaction.property?.name && transaction.property.name.toLowerCase().includes(term)) ||
-        (transaction.status && transaction.status.toLowerCase().includes(term)) ||
-        (transaction.customerPhone && transaction.customerPhone.includes(term))
-      );
-    }
+    const results = applyFilters(allTransactions, {
+      searchTerm,
+      month: selectedMonth,
+      monthsArray: MONTHS_FULL
+    });
     
     setFilteredTransactions(results);
   }, [searchTerm, selectedMonth, allTransactions]);
@@ -93,41 +76,21 @@ const Orders = () => {
   const handleDelete = async () => {
     if (!orderToDelete) return;
     
-    try {
-      console.log('Attempting to delete order/transaction with ID:', orderToDelete);
-      
-      const encodedTransactionId = encodeURIComponent(orderToDelete);
-      const response = await fetch(
-        `http://192.168.0.152:5000/api/payment/transactions/${encodedTransactionId}`,
-        { 
-          method: 'DELETE',
-          headers: { 'Content-Type': 'application/json' }
-        }
-      );
-      
-      const data = await response.json();
-      
-      if (!response.ok || !data.success) {
-        throw new Error(data.message || 'Failed to delete transaction');
-      }
-      
-      console.log('Delete response:', data);
-      
+    const result = await deleteResource(
+      `${API_CONFIG.BASE_URL}${API_ENDPOINTS.TRANSACTIONS}`,
+      orderToDelete
+    );
+    
+    if (result.success) {
       // Update local state - remove from both arrays
-      const updatedTransactions = allTransactions.filter(t => t.customTransactionId !== orderToDelete);
-      setAllTransactions(updatedTransactions);
-      
-      const updatedFilteredTransactions = filteredTransactions.filter(t => t.customTransactionId !== orderToDelete);
-      setFilteredTransactions(updatedFilteredTransactions);
+      setAllTransactions(prev => prev.filter(t => t.customTransactionId !== orderToDelete));
+      setFilteredTransactions(prev => prev.filter(t => t.customTransactionId !== orderToDelete));
       
       setShowDeletePopup(false);
       setOrderToDelete(null);
-      
-      // No success alert - just like Transaction.jsx
-      
-    } catch (err) {
-      console.error('Failed to delete order:', err);
-      alert(`Failed to delete transaction: ${err.message}`);
+    } else {
+      alert(`Failed to delete transaction: ${result.error}`);
+      handleApiError(new Error(result.error), setError);
       setShowDeletePopup(false);
       setOrderToDelete(null);
     }
@@ -141,7 +104,7 @@ const Orders = () => {
 
   const renderContent = () => {
     if (isLoading) {
-      return <div className="loading-state">Loading orders...</div>;
+      return <div className="loading-state">{UI_MESSAGES.LOADING_ORDERS}</div>;
     }
     if (error) {
       return <div className="error-state">Error: {error}</div>;
@@ -172,13 +135,19 @@ const Orders = () => {
                   className={view === 'list' ? 'active' : ''}
                   onClick={() => setView('list')}
                 >
-                  <img src={view === 'list' ? '/assets/list-active.png' : '/assets/list-inactive.png'} alt="List View" />
+                  <img 
+                    src={view === 'list' ? ASSET_PATHS.LIST_ACTIVE : ASSET_PATHS.LIST_INACTIVE} 
+                    alt="List View" 
+                  />
                 </button>
                 <button
                   className={view === 'grid' ? 'active' : ''}
                   onClick={() => setView('grid')}
                 >
-                  <img src={view === 'grid' ? '/assets/grid-active.png' : '/assets/grid-inactive.png'} alt="Grid View" />
+                  <img 
+                    src={view === 'grid' ? ASSET_PATHS.GRID_ACTIVE : ASSET_PATHS.GRID_INACTIVE} 
+                    alt="Grid View" 
+                  />
                 </button>
               </div>
                 {/* <button className="add-button">Add Order</button> */}
@@ -187,7 +156,7 @@ const Orders = () => {
 
             <div className="content-card">
               <div className="card-header-flex">
-                <h2 className="page-title">All Order List</h2>
+                <h2 className="page-title">{UI_MESSAGES.ALL_ORDER_LIST}</h2>
                 <MonthDropdown onChange={handleMonthChange} />
               </div>
               

@@ -1,7 +1,22 @@
+// src/pages/Property/PropertyDetail.jsx
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import Header from '../../components/layout/Header';
 import Sidebar from '../../components/layout/Sidebar';
+import {
+  API_CONFIG,
+  API_ENDPOINTS,
+  DEFAULTS,
+  UI_MESSAGES,
+  BUTTON_LABELS,
+} from '../../utils/constants';
+import {
+  getImageSrc,
+  getOwnerInfo,
+  formatPriceForDetail,
+  getStatusPillClass,
+  handlePropertyImageError,
+} from '../../utils/propertyHelpers';
 import '../../styles/Property.css';
 
 const PropertyDetail = () => {
@@ -12,7 +27,7 @@ const PropertyDetail = () => {
   useEffect(() => {
     const fetchProperty = async () => {
       try {
-        const res = await fetch(`http://192.168.0.152:5000/api/property/${propertyId}`);
+        const res = await fetch(`${API_CONFIG.BASE_URL}${API_ENDPOINTS.PROPERTY}/${propertyId}`);
         if (!res.ok) {
           throw new Error('Property not found');
         }
@@ -28,113 +43,10 @@ const PropertyDetail = () => {
     fetchProperty();
   }, [propertyId]);
 
-  // NEW: Function to get the correct image source
-  const getImageSrc = (photo) => {
-    // If photo exists and is a base64 data URL, use it directly
-    if (photo && photo.startsWith('data:image/')) {
-      return photo;
-    }
-    
-    // If photo is a file path (for backward compatibility)
-    if (photo && photo.startsWith('/uploads/')) {
-      return `http://192.168.0.152:5000${photo}`;
-    }
-    
-    // Fallback to placeholder image
-    return '/assets/default-house.jpg';
-  };
-
-  // NEW: Function to get owner photo source
-  const getOwnerPhotoSrc = (photo) => {
-    // If photo exists and is a base64 data URL, use it directly
-    if (photo && photo.startsWith('data:image/')) {
-      return photo;
-    }
-    
-    // If photo is a file path (for backward compatibility)
-    if (photo && photo.startsWith('/uploads/')) {
-      return `http://192.168.0.152:5000${photo}`;
-    }
-    
-    // Fallback to placeholder image
-    return '/assets/placeholder.png';
-  };
-
-  // Helper function to format the price for the detail view
-  const formatPriceForDetail = () => {
-    if (!property) return 'N/A';
-
-    const status = property.status?.toLowerCase();
-
-    // Case 1: Property is for BOTH rent and sale
-    if (status === 'both' && property.rentPrice && property.salePrice) {
-      return (
-        <div className="price-detail-dual">
-          <span className="price-detail-rent">{`Rent: $${Number(property.rentPrice).toLocaleString()} /mo`}</span><br></br>
-          <span className="price-detail-sale">{`Sale: $${Number(property.salePrice).toLocaleString()}`}</span>
-        </div>
-      );
-    }
-    
-    // Case 2: Property is for RENT only
-    if (status === 'rent' && property.rentPrice) {
-      return `$${Number(property.rentPrice).toLocaleString()} /month`;
-    }
-
-    // Case 3: Property is for SALE only
-    if (status === 'sale' && property.salePrice) {
-      return `$${Number(property.salePrice).toLocaleString()}`;
-    }
-    
-    // Fallback for older data or unpriced properties
-    if (property.price) {
-      return `$${Number(property.price).toLocaleString()}`;
-    }
-
-    return 'N/A';
-  };
-
-  // Helper function to get the correct CSS class for the status pill
-  const getStatusPillClass = (status) => {
-    switch(status?.toLowerCase()) {
-        case 'rent': return 'rent';
-        case 'sale': return 'sale';
-        case 'both': return 'both';
-        case 'sold': return 'sold';
-        default: return '';
-    }
-  }
-
-  // UPDATED: Helper function to get owner information with base64 support
-  const getOwnerInfo = () => {
-    // First try to get from ownerDetails (populated by backend)
-    if (property.ownerDetails) {
-      return {
-        photo: getOwnerPhotoSrc(property.ownerDetails.photo),
-        name: property.ownerDetails.name || 'Owner Not Found',
-        phone: property.ownerDetails.phone
-      };
-    }
-    
-    // Fallback to property's stored owner data
-    return {
-      photo: getOwnerPhotoSrc(property.ownerPhoto),
-      name: property.ownerName || 'Owner Not Found',
-      email: null,
-      phone: null
-    };
-  };
-
-  // Function to handle image loading errors
-  const handleImageError = (e, fallbackSrc) => {
-    e.target.src = fallbackSrc;
-    console.warn('Failed to load image, using fallback');
-  };
-
-  if (loading) return <div className="loading-state">Loading...</div>;
+  if (loading) return <div className="loading-state">{UI_MESSAGES.LOADING_PROPERTIES}</div>;
   if (!property) return <div className="loading-state">Property not found</div>;
 
-  const ownerInfo = getOwnerInfo();
+  const ownerInfo = getOwnerInfo(property);
 
   return (
     <div className="dashboard-container">
@@ -153,7 +65,7 @@ const PropertyDetail = () => {
                   src={ownerInfo.photo}
                   alt={ownerInfo.name}
                   className="agent-avatar"
-                  onError={(e) => handleImageError(e, '/assets/placeholder.png')}
+                  onError={(e) => handlePropertyImageError(e, DEFAULTS.PLACEHOLDER_IMAGE)}
                   style={{
                     width: '80px',
                     height: '80px',
@@ -197,7 +109,7 @@ const PropertyDetail = () => {
                   src={getImageSrc(property.photo)}
                   alt={property.name || 'Property'}
                   className="detail-hero-img"
-                  onError={(e) => handleImageError(e, '/assets/default-house.jpg')}
+                  onError={(e) => handlePropertyImageError(e, '/assets/default-house.jpg')}
                   style={{
                     width: '100%',
                     height: '300px',
@@ -220,13 +132,13 @@ const PropertyDetail = () => {
                   {property.address || 'Address not available'}
                 </p>
 
-               <div className="detail-stats">
-                 <div className="stat-pill price-pill">
-                  <img src="/assets/price-icon.png" alt="Price" />
-                  <span className="price-text">
-                    {formatPriceForDetail()}
-                  </span>
-                </div>
+                <div className="detail-stats">
+                  <div className="stat-pill price-pill">
+                    <img src="/assets/price-icon.png" alt="Price" />
+                    <span className="price-text">
+                      {formatPriceForDetail(property)}
+                    </span>
+                  </div>
                  
                   <div className="stat-pill">
                     <img src="/assets/bed-icon.png" alt="Beds" />
@@ -294,7 +206,6 @@ const PropertyDetail = () => {
               ></iframe>
             </div>
           </div>
-
         </main>
       </div>
     </div>

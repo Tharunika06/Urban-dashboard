@@ -1,14 +1,16 @@
+// src/pages/Dashboard/SocialSource.jsx
 import React, { useState, useEffect } from "react";
 import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
 import api from "../../utils/api";
 import MonthDropdown from "../../components/common/MonthDropdown";
-
-const COLORS = ["url(#gradientColor)", "#f0f0f0"];
-const EMPTY_COLOR = "#E6E8F0";
+import { PIE_CHART_COLORS, CHART_COLORS, DEFAULTS } from "../../utils/constants";
+import { formatPieChartData } from "../../utils/chartUtils";
+import { calculateMonthlyTotal } from "../../utils/dataUtils";
+import { getPeriodDisplayText } from "../../utils/dateUtils";
 
 const SocialSource = () => {
   const [buyersData, setBuyersData] = useState({});
-  const [selectedMonth, setSelectedMonth] = useState("All");
+  const [selectedMonth, setSelectedMonth] = useState(DEFAULTS.MONTH);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -31,19 +33,9 @@ const SocialSource = () => {
     return <div className="card text-center p-3">Loading buyers data...</div>;
   }
 
-  // Calculate total value based on selected month
-  const totalValue = selectedMonth === "All" 
-    ? Object.values(buyersData).reduce((sum, count) => sum + count, 0)
-    : (buyersData[selectedMonth] || 0);
-
+  const totalValue = calculateMonthlyTotal(buyersData, selectedMonth, DEFAULTS.MONTH);
   const hasData = totalValue > 0;
-
-  const chartData = hasData
-    ? [
-        { name: "Buyers", value: 0.75 * totalValue },
-        { name: "Remaining", value: 0.25 * totalValue },
-      ]
-    : [{ name: "No Data", value: 100 }];
+  const chartData = formatPieChartData(totalValue);
 
   return (
     <div className="card text-center">
@@ -51,11 +43,11 @@ const SocialSource = () => {
         <h3 className="card-title">Social Source</h3>
         <MonthDropdown 
           onChange={(month) => setSelectedMonth(month)}
-          defaultValue="All"
+          defaultValue={DEFAULTS.MONTH}
         />
       </div>
       <span className="text-secondary" style={{ display: 'block', marginBottom: '1rem' }}>
-        Total traffic in <strong>{selectedMonth === "All" ? "All Months" : selectedMonth}</strong>
+        Total traffic in <strong>{getPeriodDisplayText(selectedMonth, DEFAULTS.MONTH)}</strong>
       </span>
       <div style={{ 
         position: 'relative', 
@@ -72,8 +64,8 @@ const SocialSource = () => {
               {hasData && (
                 <defs>
                   <linearGradient id="gradientColor" x1="0" y1="0" x2="1" y2="1">
-                    <stop offset="0%" stopColor="#FF4995" />
-                    <stop offset="100%" stopColor="#D6034F" />
+                    <stop offset="0%" stopColor={CHART_COLORS.GRADIENT_START} />
+                    <stop offset="100%" stopColor={CHART_COLORS.GRADIENT_END} />
                   </linearGradient>
                 </defs>
               )}
@@ -90,8 +82,8 @@ const SocialSource = () => {
                 {chartData.map((entry, index) => (
                   <Cell
                     key={`cell-${entry.name}-${index}`}
-                    fill={hasData ? COLORS[index % COLORS.length] : EMPTY_COLOR}
-                    stroke={hasData ? COLORS[index % COLORS.length] : EMPTY_COLOR}
+                    fill={hasData ? PIE_CHART_COLORS[index % PIE_CHART_COLORS.length] : CHART_COLORS.EMPTY}
+                    stroke={hasData ? PIE_CHART_COLORS[index % PIE_CHART_COLORS.length] : CHART_COLORS.EMPTY}
                   />
                 ))}
               </Pie>

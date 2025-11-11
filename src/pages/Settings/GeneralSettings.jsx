@@ -1,7 +1,12 @@
+// src/pages/Settings/GeneralSettings.jsx
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import authService, { storage } from "../../services/authService";
+import { saveProfile } from "../../services/profileService"; // ✅ ADD THIS
 import "../../styles/GeneralSettings.css";
 
 const GeneralSettings = () => {
+  const navigate = useNavigate();
   const [adminName, setAdminName] = useState("");
   const [phone, setPhone] = useState("");
   const [profilePhoto, setProfilePhoto] = useState("");
@@ -9,74 +14,78 @@ const GeneralSettings = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
-
-  const API_BASE_URL = "http://192.168.0.152:5000/api";
+  const [isNewProfile, setIsNewProfile] = useState(false);
 
   useEffect(() => {
     loadAdminProfile();
   }, []);
 
-  // ✅ FIXED: Get auth token helper
-  const getAuthHeaders = () => {
-    const token = localStorage.getItem('authToken');
-    return {
-      'Authorization': `Bearer ${token}`
-    };
+  const handleUnauthorized = () => {
+    console.log("❌ Session expired - redirecting to login");
+    setError('Session expired. Please login again.');
+    
+    storage.clearAll();
+    
+    setTimeout(() => {
+      navigate('/login', { replace: true });
+    }, 1500);
   };
 
-  // ✅ FIXED: Load admin profile with auth token
   const loadAdminProfile = async () => {
     try {
       setLoading(true);
-      console.log("Loading admin profile...");
-      
-      const token = localStorage.getItem('authToken');
-      if (!token) {
-        setError('Not authenticated. Please login again.');
-        return;
+      console.log("🔄 Loading admin profile...");
+
+      const data = await authService.getAdminProfile();
+      console.log("✅ Profile data received:", data);
+
+      // ✅ CRITICAL FIX: Check for success first
+      if (!data.success) {
+        throw new Error(data.message || 'Failed to load profile');
       }
 
-      const response = await fetch(`${API_BASE_URL}/admin/profile`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}` // ✅ Added token
-        }
-      });
-
-      console.log("Response status:", response.status);
-
-      if (response.status === 401) {
-        setError('Session expired. Please login again.');
-        localStorage.removeItem('authToken');
-        localStorage.removeItem('user');
-        window.location.href = '/login';
-        return;
-      }
-
-      const data = await response.json();
-      console.log("Response data:", data);
-
-      if (response.ok && data.success) {
+      // Check if this is a new profile or existing
+      if (data.isNewProfile) {
+        console.log("ℹ️ No profile found - ready to create new profile");
+        setIsNewProfile(true);
+        setAdminName("");
+        setPhone("");
+        setProfilePhoto("");
+        setError(""); // ✅ Clear any errors
+      } else {
+        console.log("✅ Loaded existing profile from database");
+        setIsNewProfile(false);
         setAdminName(data.profile.name || "");
         setPhone(data.profile.phone || "");
         setProfilePhoto(data.profile.photo || "");
-        setError("");
-      } else {
-        throw new Error(data.message || 'Failed to load profile');
+        setError(""); // ✅ Clear any errors
       }
-    } catch (err) {
-      console.error('Error loading profile:', err);
-      setError(`Failed to load profile: ${err.message}`);
       
-      // Fallback to localStorage
-      const savedProfile = localStorage.getItem("adminProfile");
-      if (savedProfile) {
-        const parsed = JSON.parse(savedProfile);
-        setAdminName(parsed.name || "");
-        setPhone(parsed.phone || "");
-        setProfilePhoto(parsed.photo || "");
+    } catch (err) {
+      console.error('❌ Error loading profile:', err);
+      console.error('Error details:', err.response?.data);
+      
+      // ✅ CRITICAL FIX: Only redirect on 401 Unauthorized
+      if (err.response?.status === 401) {
+        handleUnauthorized();
+        return; // ✅ Stop execution here
       }
+      
+      // ✅ For other errors (like network issues), show as new profile
+      // This prevents automatic logout on profile load errors
+      console.log("⚠️ Profile load error, treating as new profile...");
+      setIsNewProfile(true);
+      setAdminName("");
+      setPhone("");
+      setProfilePhoto("");
+      
+      // Only show error if it's not a "profile not found" scenario
+      if (err.response?.status !== 404) {
+        setError("Could not load profile. You can create a new one below.");
+      } else {
+        setError(""); // Don't show error for new profiles
+      }
+      
     } finally {
       setLoading(false);
     }
@@ -106,34 +115,31 @@ const GeneralSettings = () => {
     }
   };
 
-  // ✅ FIXED: Save profile with auth token
   const handleSaveProfile = async () => {
     try {
       setLoading(true);
       setError('');
       setSuccess('');
 
-      console.log("Starting profile save...");
+      console.log(`💾 ${isNewProfile ? 'Creating new' : 'Updating'} profile...`);
 
+      // ✅ Validate inputs
       if (!adminName.trim()) {
         setError('Admin name is required');
+        setLoading(false);
         return;
       }
 
       if (!phone.trim()) {
         setError('Phone number is required');
+        setLoading(false);
         return;
       }
 
       const cleanPhone = phone.replace(/\D/g, '');
       if (!/^[0-9]{10}$/.test(cleanPhone)) {
         setError('Please enter a valid 10-digit phone number');
-        return;
-      }
-
-      const token = localStorage.getItem('authToken');
-      if (!token) {
-        setError('Not authenticated. Please login again.');
+        setLoading(false);
         return;
       }
 
@@ -142,93 +148,67 @@ const GeneralSettings = () => {
       formData.append('phone', cleanPhone);
       
       if (profilePhotoFile) {
-        console.log("Adding photo file to form data");
+        console.log("📸 Adding photo file to form data");
         formData.append('profilePhoto', profilePhotoFile);
       }
 
-      console.log("Sending request with auth token");
-
-      const response = await fetch(`${API_BASE_URL}/admin/profile`, {
-        method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${token}` // ✅ Added token (no Content-Type for FormData)
-        },
-        body: formData
-      });
-
-      console.log("Response status:", response.status);
-
-      if (response.status === 401) {
-        setError('Session expired. Please login again.');
-        localStorage.removeItem('authToken');
-        localStorage.removeItem('user');
-        setTimeout(() => {
-          window.location.href = '/login';
-        }, 2000);
-        return;
+      // Log form data for debugging
+      console.log("📤 Sending data:");
+      for (let pair of formData.entries()) {
+        console.log(pair[0] + ': ' + (pair[1] instanceof File ? pair[1].name : pair[1]));
       }
 
-      const data = await response.json();
-      console.log("Response data:", data);
+      const data = await authService.updateAdminProfile(formData);
+      console.log("✅ Save response:", data);
 
-      if (response.ok && data.success) {
+      if (data.success) {
         setProfilePhoto(data.profile.photo || "");
+        setIsNewProfile(false); // ✅ Mark as no longer new
         
-        const profileData = {
-          name: adminName.trim(),
-          phone: cleanPhone,
-          photo: data.profile.photo
-        };
-        localStorage.setItem("adminProfile", JSON.stringify(profileData));
-        
+        // Dispatch event for other components (like navbar) to update
         window.dispatchEvent(new CustomEvent("profileUpdated", {
-          detail: profileData
+          detail: {
+            name: adminName.trim(),
+            phone: cleanPhone,
+            photo: data.profile.photo
+          }
         }));
         
-        setSuccess("Profile updated successfully!");
+        setSuccess(data.message || "Profile saved successfully!");
         setError('');
         setProfilePhotoFile(null);
         
         const fileInput = document.getElementById('upload-photo');
         if (fileInput) fileInput.value = '';
         
+        setTimeout(() => setSuccess(''), 3000);
+        
       } else {
         throw new Error(data.message || 'Failed to save profile');
       }
     } catch (err) {
-      console.error('Error saving profile:', err);
-      setError(`Failed to save profile: ${err.message}`);
+      console.error('❌ Error saving profile:', err);
+      console.error('Error response:', err.response?.data);
+      
+      // ✅ Only redirect on 401
+      if (err.response?.status === 401) {
+        handleUnauthorized();
+        return;
+      }
+      
+      setError(`Failed to save profile: ${err.response?.data?.error || err.message}`);
       setSuccess('');
     } finally {
       setLoading(false);
     }
   };
 
-  // ✅ FIXED: Remove photo with auth token
   const handleRemovePhoto = async () => {
     try {
       setLoading(true);
-      
-      const token = localStorage.getItem('authToken');
-      if (!token) {
-        setError('Not authenticated. Please login again.');
-        return;
-      }
+      setError('');
 
-      const response = await fetch(`${API_BASE_URL}/admin/profile/photo`, {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}` // ✅ Added token
-        }
-      });
-
-      if (response.status === 401) {
-        setError('Session expired. Please login again.');
-        return;
-      }
-
-      const data = await response.json();
+      const data = await authService.deleteAdminPhoto();
 
       if (data.success) {
         setProfilePhoto("");
@@ -237,18 +217,29 @@ const GeneralSettings = () => {
         const fileInput = document.getElementById('upload-photo');
         if (fileInput) fileInput.value = '';
         
+        // Dispatch event for navbar update
+        window.dispatchEvent(new CustomEvent("profileUpdated", {
+          detail: {
+            name: adminName,
+            phone: phone,
+            photo: ""
+          }
+        }));
+        
         setSuccess("Profile photo removed successfully!");
         setTimeout(() => setSuccess(''), 3000);
-        
-        const savedProfile = JSON.parse(localStorage.getItem("adminProfile") || '{}');
-        savedProfile.photo = "";
-        localStorage.setItem("adminProfile", JSON.stringify(savedProfile));
         
       } else {
         setError(data.message || 'Failed to remove photo');
       }
     } catch (err) {
-      console.error('Error removing photo:', err);
+      console.error('❌ Error removing photo:', err);
+      
+      if (err.response?.status === 401) {
+        handleUnauthorized();
+        return;
+      }
+      
       setError('Failed to remove photo');
     } finally {
       setLoading(false);
@@ -262,7 +253,9 @@ const GeneralSettings = () => {
         <div className="section">
           <h3>Admin Profile</h3>
           <p className="section-subtitle">
-            Update your profile details and contact information
+            {isNewProfile 
+              ? "Create your admin profile to get started" 
+              : "Update your profile details and contact information"}
           </p>
 
           {error && (
@@ -290,6 +283,20 @@ const GeneralSettings = () => {
               fontSize: '14px'
             }}>
               {success}
+            </div>
+          )}
+
+          {isNewProfile && !loading && !error && (
+            <div style={{ 
+              color: '#856404', 
+              backgroundColor: '#fff3cd', 
+              border: '1px solid #ffeaa7',
+              borderRadius: '4px',
+              padding: '10px',
+              marginBottom: '20px',
+              fontSize: '14px'
+            }}>
+              ℹ️ Welcome! Please create your admin profile below.
             </div>
           )}
 
@@ -388,7 +395,7 @@ const GeneralSettings = () => {
             </div>
 
             <div className="form-group">
-              <label>Admin Name</label>
+              <label>Admin Name *</label>
               <input
                 type="text"
                 placeholder="John Doe"
@@ -399,7 +406,7 @@ const GeneralSettings = () => {
             </div>
 
             <div className="form-group">
-              <label>Phone Number</label>
+              <label>Phone Number *</label>
               <input
                 type="tel"
                 placeholder="9876543210"
@@ -410,7 +417,6 @@ const GeneralSettings = () => {
             </div>
           </div>
 
-          {/* Save only Admin Info */}
           <div className="save-btn-container">
             <button 
               className="save-btn" 
@@ -421,12 +427,16 @@ const GeneralSettings = () => {
                 cursor: loading ? 'not-allowed' : 'pointer'
               }}
             >
-              {loading ? 'Saving...' : 'Save Profile'}
+              {loading 
+                ? 'Saving...' 
+                : isNewProfile 
+                  ? 'Create Profile' 
+                  : 'Save Profile'}
             </button>
           </div>
         </div>
       </div>
-      <br></br>
+      <br />
       
       {/* === Company Information Card === */}
       <div className="settings-card">
@@ -467,7 +477,7 @@ const GeneralSettings = () => {
           </div>
         </div>
       </div>
-      <br></br>
+      <br />
       
       {/* === Preferences Card === */}
       <div className="settings-card">
@@ -507,7 +517,6 @@ const GeneralSettings = () => {
           </div>
         </div>
 
-        {/* Save Company + Preferences */}
         <div className="save-btn-container">
           <button className="save-btn">Save Changes</button>
         </div>

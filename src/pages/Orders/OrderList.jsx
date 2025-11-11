@@ -1,23 +1,82 @@
 // src/pages/OrderList.jsx
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { DEFAULTS, ASSET_PATHS, UI_MESSAGES } from '../../utils/constants';
+import { 
+  calculatePagination, 
+  getPaginatedItems, 
+  validatePageNumber 
+} from '../../utils/paginationUtils';
+import { 
+  formatCurrency, 
+  formatTableDate, 
+  getNestedValue 
+} from '../../utils/tableUtils';
 
 const OrderList = ({ orders, onDelete }) => {
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 7;
+  const itemsPerPage = 5;
 
-  const getStatusClass = (status) => {
-    return status ? status.toLowerCase().replace(' ', '-') : '';
-  };
+  // Table headers configuration
+  const tableHeaders = [
+    'Customer Photo & Name',
+    'Purchase Date',
+    'Contact',
+    'Property Type',
+    'Amount',
+    'Purchase Properties',
+    'Action'
+  ];
 
-  // Pagination calculations
-  const totalPages = Math.ceil(orders.length / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const currentOrders = orders.slice(startIndex, startIndex + itemsPerPage);
+  // Pagination calculations using utility
+  const { totalPages } = calculatePagination(orders.length, currentPage, itemsPerPage);
+  const currentOrders = getPaginatedItems(orders, currentPage, itemsPerPage);
 
   const handlePageChange = (page) => {
-    if (page >= 1 && page <= totalPages) {
-      setCurrentPage(page);
+    const validPage = validatePageNumber(page, totalPages);
+    setCurrentPage(validPage);
+  };
+
+  // Render cell content based on column using utilities
+  const renderCell = (order, header) => {
+    switch (header) {
+      case 'Customer Photo & Name':
+        return (
+          <div className="customer-info-cell">
+            <img 
+              src={order.customerPhoto || DEFAULTS.PLACEHOLDER_IMAGE}
+              alt={order.customerName || 'Customer'} 
+              className="customer-photo" 
+            />
+            <span>{order.customerName}</span>
+          </div>
+        );
+      case 'Purchase Date':
+        return formatTableDate(order.createdAt);
+      case 'Contact':
+        return order.customerPhone || 'N/A';
+      case 'Property Type':
+        return getNestedValue(order, 'property.type');
+      case 'Amount':
+        return formatCurrency(order.amount);
+      case 'Purchase Properties':
+        return getNestedValue(order, 'property.name');
+      case 'Action':
+        return (
+          <div className="action-icons">
+            <Link to={`/transaction/${order.customTransactionId}`}>
+              <img src={ASSET_PATHS.VIEW_ICON} alt="View" />
+            </Link>
+            <img
+              src={ASSET_PATHS.DELETE_ICON}
+              alt="Delete"
+              onClick={() => onDelete(order.customTransactionId)}
+              style={{ cursor: 'pointer' }}
+            />
+          </div>
+        );
+      default:
+        return null;
     }
   };
 
@@ -26,51 +85,27 @@ const OrderList = ({ orders, onDelete }) => {
       <table className="order-list-table">
         <thead>
           <tr>
-            <th>Customer Photo & Name</th>
-            <th>Purchase Date</th>
-            <th>Contact</th>
-            <th>Property Type</th>
-            <th>Amount</th>
-            <th>Purchase Properties</th>
-            <th>Action</th>
+            {tableHeaders.map((header) => (
+              <th key={header}>{header}</th>
+            ))}
           </tr>
         </thead>
         <tbody>
           {currentOrders.length > 0 ? (
             currentOrders.map((order) => (
               <tr key={order._id}>
-                <td>
-                  <div className="customer-info-cell">
-                    <img 
-                      src={order.customerPhoto || '/assets/placeholder.png'}
-                      alt={order.customerName || 'Customer'} 
-                      className="customer-photo" 
-                    />
-                    <span>{order.customerName}</span>
-                  </div>
-                </td>
-                <td>{new Date(order.createdAt).toLocaleDateString()}</td>
-                <td>{order.customerPhone || 'N/A'}</td>
-                <td>{order.property?.type || 'N/A'}</td> 
-                <td>{`₹${order.amount.toLocaleString('en-IN')}`}</td>
-                <td>{order.property?.name || 'N/A'}</td>
-                <td className="action-icons">
-                  <Link to={`/transaction/${order.customTransactionId}`}>
-                    <img src="/assets/view-icon.png" alt="View" />
-                  </Link>
-                  <img
-                    src="/assets/delete-icon.png"
-                    alt="Delete"
-                    onClick={() => onDelete(order.customTransactionId)}
-                    style={{ cursor: 'pointer' }}
-                  />
-                  {/* <img src="/assets/edit-icon.png" alt="Edit" /> */}
-                </td>
+                {tableHeaders.map((header) => (
+                  <td key={`${order._id}-${header}`}>
+                    {renderCell(order, header)}
+                  </td>
+                ))}
               </tr>
             ))
           ) : (
             <tr>
-              <td colSpan="7" className="no-data-cell">No orders found.</td>
+              <td colSpan={tableHeaders.length} className="no-data-cell">
+                {UI_MESSAGES.NO_ORDERS_FOUND}
+              </td>
             </tr>
           )}
         </tbody>
@@ -86,7 +121,6 @@ const OrderList = ({ orders, onDelete }) => {
           >
             ‹ Back
           </button>
-
           {Array.from({ length: totalPages }, (_, i) => (
             <button
               key={i + 1}
@@ -96,7 +130,6 @@ const OrderList = ({ orders, onDelete }) => {
               {i + 1}
             </button>
           ))}
-
           <button
             className="page-link"
             onClick={() => handlePageChange(currentPage + 1)}

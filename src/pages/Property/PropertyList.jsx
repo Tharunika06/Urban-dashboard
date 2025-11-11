@@ -2,23 +2,20 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import Checkbox from '../../components/common/Checkbox';
+import PopupMessage from '../../components/common/PopupMessage';
+import {
+  ASSET_PATHS,
+  UI_MESSAGES,
+  BUTTON_LABELS,
+} from '../../utils/constants';
+import {
+  getStatusClass,
+  formatPrice,
+  getPropertyImageSrc,
+  handlePropertyImageError,
+} from '../../utils/propertyHelpers';
+import { calculatePagination, getPaginatedItems } from '../../utils/paginationUtils';
 import '../../styles/Property.css';
-
-// ✅ UPDATED: Added 'sold' status class
-const getStatusClass = (status) => {
-  switch (status?.toLowerCase()) {
-    case 'rent':
-      return 'status-rent';
-    case 'sale':
-      return 'status-sale';
-    case 'both':
-      return 'status-both';
-    case 'sold':
-      return 'status-sold';
-    default:
-      return '';
-  }
-};
 
 const ITEMS_PER_PAGE = 6;
 
@@ -26,34 +23,55 @@ const PropertyList = ({ properties, handleDelete, handleBulkDelete }) => {
   const [selectAll, setSelectAll] = useState(false);
   const [checkedRows, setCheckedRows] = useState({});
   const [currentPage, setCurrentPage] = useState(1);
+  const [showDeletePopup, setShowDeletePopup] = useState(false);
+  const [showBulkDeletePopup, setShowBulkDeletePopup] = useState(false);
+  const [selectedIds, setSelectedIds] = useState([]);
+  const [deleteMode, setDeleteMode] = useState('single');
 
-  const totalPages = Math.ceil(properties.length / ITEMS_PER_PAGE);
-  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-  const currentItems = properties.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+  const tableHeaders = [
+    { 
+      label: <Checkbox
+        checked={selectAll}
+        onChange={handleSelectAll}
+        id="select-all-checkbox"
+      />,
+      key: 'checkbox'
+    },
+    { label: 'Properties Photo & Name', key: 'propertyName' },
+    { label: 'Owner', key: 'owner' },
+    { label: 'Size', key: 'size' },
+    { label: 'Property Type', key: 'propertyType' },
+    { label: 'Status', key: 'status' },
+    { label: 'Bedrooms', key: 'bedrooms' },
+    { label: 'Location', key: 'location' },
+    { label: 'Price', key: 'price' },
+    { label: 'Action', key: 'action' }
+  ];
 
-  // Reset checkboxes when page changes or properties change
+  // Pagination using paginationUtils
+  const pagination = calculatePagination(properties.length, currentPage, ITEMS_PER_PAGE);
+  const currentItems = getPaginatedItems(properties, currentPage, ITEMS_PER_PAGE);
+  const { totalPages, hasNextPage, hasPreviousPage: hasPrevPage } = pagination;
+
   useEffect(() => {
     setSelectAll(false);
     setCheckedRows({});
   }, [currentPage, properties]);
 
-  const handleSelectAll = () => {
+  function handleSelectAll() {
     const updated = {};
     currentItems.forEach((p) => {
       updated[p._id] = !selectAll;
     });
     setCheckedRows(updated);
     setSelectAll(!selectAll);
-  };
+  }
 
   const toggleCheckbox = (id) => {
     setCheckedRows((prev) => {
       const newChecked = { ...prev, [id]: !prev[id] };
-
-      // Check if all current page items are selected
       const allSelected = currentItems.every((p) => newChecked[p._id]);
       setSelectAll(allSelected);
-
       return newChecked;
     });
   };
@@ -65,76 +83,49 @@ const PropertyList = ({ properties, handleDelete, handleBulkDelete }) => {
   };
 
   const handleDeleteClick = (id) => {
-    handleDelete(id);
+    setSelectedIds([id]);
+    setDeleteMode('single');
+    setShowDeletePopup(true);
   };
 
-  // Get selected property IDs
+  const handleBulkDeleteClick = () => {
+    const ids = getSelectedIds();
+    if (ids.length > 0) {
+      setSelectedIds(ids);
+      setDeleteMode('bulk');
+      setShowBulkDeletePopup(true);
+    }
+  };
+
+  const confirmDelete = () => {
+    if (deleteMode === 'single' && selectedIds.length === 1) {
+      handleDelete(selectedIds[0]);
+      setShowDeletePopup(false);
+    } else if (deleteMode === 'bulk' && selectedIds.length > 0) {
+      handleBulkDelete(selectedIds);
+      setShowBulkDeletePopup(false);
+    }
+    setSelectedIds([]);
+  };
+
+  const cancelDelete = () => {
+    setShowDeletePopup(false);
+    setShowBulkDeletePopup(false);
+    setSelectedIds([]);
+  };
+
   const getSelectedIds = () => {
     return Object.keys(checkedRows).filter((id) => checkedRows[id]);
   };
 
   const selectedCount = getSelectedIds().length;
 
-  const handleBulkDeleteClick = () => {
-    const selectedIds = getSelectedIds();
-    if (selectedIds.length > 0) {
-      handleBulkDelete(selectedIds);
-    }
+  const nextPage = () => {
+    if (hasNextPage) handlePageChange(currentPage + 1);
   };
 
-  // ✅ UPDATED: Format price based on status (including 'sold')
-  const formatPrice = (prop) => {
-    const status = prop.status?.toLowerCase();
-
-    // If property is sold, show "SOLD" instead of price
-    if (status === 'sold') {
-      return (
-        <span className="sold-badge-inline" style={{ 
-          color: '#ef4444', 
-          fontWeight: 'bold',
-          fontSize: '14px'
-        }}>
-          SOLD
-        </span>
-      );
-    }
-
-    if (status === 'both' && prop.rentPrice && prop.salePrice) {
-      return (
-        <div className="price-dual">
-          <span className="price-rent">{`Rent: $${Number(prop.rentPrice).toLocaleString()} /mo`}</span>
-          <br />
-          <span className="price-sale">{`Sale: $${Number(prop.salePrice).toLocaleString()}`}</span>
-        </div>
-      );
-    }
-
-    if (status === 'rent' && prop.rentPrice) {
-      return `$${Number(prop.rentPrice).toLocaleString()} /month`;
-    } else if (status === 'sale' && prop.salePrice) {
-      return `$${Number(prop.salePrice).toLocaleString()}`;
-    } else if (prop.price) {
-      return `$${Number(prop.price).toLocaleString()}`;
-    } else {
-      return 'N/A';
-    }
-  };
-
-  const getImageSrc = (photo) => {
-    if (photo && photo.startsWith('data:image/')) {
-      return photo;
-    }
-
-    if (photo && photo.startsWith('/uploads/')) {
-      return `http://192.168.0.152:5000${photo}`;
-    }
-
-    return '/assets/placeholder.png';
-  };
-
-  const handleImageError = (e) => {
-    e.target.src = '/assets/placeholder.png';
-    console.warn('Failed to load property image');
+  const prevPage = () => {
+    if (hasPrevPage) handlePageChange(currentPage - 1);
   };
 
   return (
@@ -148,33 +139,42 @@ const PropertyList = ({ properties, handleDelete, handleBulkDelete }) => {
         </div>
       )}
 
+      {showDeletePopup && deleteMode === 'single' && (
+        <PopupMessage
+          title={UI_MESSAGES.DELETE_SINGLE_TITLE}
+          message={UI_MESSAGES.DELETE_SINGLE_MESSAGE}
+          icon={ASSET_PATHS.REMOVE_ICON}
+          confirmLabel={BUTTON_LABELS.DELETE}
+          cancelLabel={BUTTON_LABELS.CANCEL}
+          onConfirm={confirmDelete}
+          onCancel={cancelDelete}
+        />
+      )}
+
+      {showBulkDeletePopup && deleteMode === 'bulk' && (
+        <PopupMessage
+          title={UI_MESSAGES.DELETE_BULK_TITLE}
+          message={`${UI_MESSAGES.DELETE_BULK_MESSAGE_PREFIX} ${selectedIds.length} ${UI_MESSAGES.DELETE_BULK_MESSAGE_SUFFIX}`}
+          icon={ASSET_PATHS.REMOVE_ICON}
+          confirmLabel="Delete All"
+          cancelLabel={BUTTON_LABELS.CANCEL}
+          onConfirm={confirmDelete}
+          onCancel={cancelDelete}
+        />
+      )}
+
       <div className="table-container">
         <table className="property-table">
           <thead>
             <tr>
-              <th>
-                <Checkbox
-                  checked={selectAll}
-                  onChange={handleSelectAll}
-                  id="select-all-checkbox"
-                />
-              </th>
-              <th>Properties Photo & Name</th>
-              <th>Owner</th>
-              <th>Size</th>
-              <th>Property Type</th>
-              <th>Status</th>
-              <th>Bedrooms</th>
-              <th>Location</th>
-              <th>Price</th>
-              <th>Action</th>
+              {tableHeaders.map((header) => (
+                <th key={header.key}>{header.label}</th>
+              ))}
             </tr>
           </thead>
           <tbody>
             {currentItems.map((prop) => {
-              // ✅ Check if property is sold
               const isSold = prop.status?.toLowerCase() === 'sold';
-              
               return (
                 <tr key={prop._id} className={isSold ? 'sold-row' : ''}>
                   <td>
@@ -189,28 +189,19 @@ const PropertyList = ({ properties, handleDelete, handleBulkDelete }) => {
                     <Link to={`/property/${prop._id}`}>
                       <div className="prop-name-cell">
                         <img
-                          src={getImageSrc(prop.photo)}
+                          src={getPropertyImageSrc(prop.photo)}
                           alt={prop.name || 'Property'}
                           className="prop-photo"
-                          onError={handleImageError}
+                          onError={handlePropertyImageError}
                           style={{
                             width: '50px',
                             height: '50px',
                             objectFit: 'cover',
                             borderRadius: '4px',
                             marginRight: '10px',
-                            // opacity: isSold ? 0.6 : 1
                           }}
                         />
-                        <span >
-                          {prop.name}
-                          {/* {isSold && <span style={{ 
-                            marginLeft: '8px', 
-                            color: '#ef4444',
-                            fontSize: '12px',
-                            fontWeight: 'bold'
-                          }}>● SOLD</span>} */}
-                        </span>
+                        <span>{prop.name}</span>
                       </div>
                     </Link>
                   </td>
@@ -226,7 +217,7 @@ const PropertyList = ({ properties, handleDelete, handleBulkDelete }) => {
                   </td>
 
                   <td>
-                    <Link to={`/property/${prop._id}`}>{prop.size || 'N/A'}sq ft</Link>
+                    <Link to={`/property/${prop._id}`}>{prop.size || 'N/A'} sq ft</Link>
                   </td>
 
                   <td>
@@ -271,32 +262,35 @@ const PropertyList = ({ properties, handleDelete, handleBulkDelete }) => {
         </table>
       </div>
 
-      {/* Pagination */}
-      <div className="pagination">
-        <button
-          className="page-link"
-          onClick={() => handlePageChange(currentPage - 1)}
-          disabled={currentPage === 1}
-        >
-          « Back
-        </button>
-        {Array.from({ length: totalPages }, (_, index) => (
+      {totalPages > 1 && (
+        <div className="pagination">
           <button
-            key={index + 1}
-            className={`page-link ${currentPage === index + 1 ? 'active' : ''}`}
-            onClick={() => handlePageChange(index + 1)}
+            className="page-link"
+            onClick={prevPage}
+            disabled={!hasPrevPage}
           >
-            {index + 1}
+            « Back
           </button>
-        ))}
-        <button
-          className="page-link"
-          onClick={() => handlePageChange(currentPage + 1)}
-          disabled={currentPage === totalPages}
-        >
-          Next »
-        </button>
-      </div>
+
+          {Array.from({ length: totalPages }, (_, i) => (
+            <button
+              key={i}
+              className={`page-link ${currentPage === i + 1 ? 'active' : ''}`}
+              onClick={() => handlePageChange(i + 1)}
+            >
+              {i + 1}
+            </button>
+          ))}
+
+          <button
+            className="page-link"
+            onClick={nextPage}
+            disabled={!hasNextPage}
+          >
+            Next »
+          </button>
+        </div>
+      )}
     </>
   );
 };

@@ -1,83 +1,79 @@
 // AddProperty.jsx
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import PopupMessage from '../../components/common/PopupMessage';
+import {
+  API_CONFIG,API_ENDPOINTS,PROPERTY_TYPES,PROPERTY_STATUS,PROPERTY_STATUS_OPTIONS,BEDROOM_OPTIONS,BATHROOM_OPTIONS,
+  COUNTRIES,CITIES,STATIC_FACILITIES,IMAGE_CONFIG,VALIDATION_MESSAGES,POPUP_MESSAGES,ICONS,PLACEHOLDERS,FORM_LABELS,
+  BUTTON_LABELS,FORM_STEPS,convertToBase64,
+} from '../../utils/constants';
 
-// ---------------- Popup Styles ----------------
-const popupStyles = {
-  overlay: { position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 10000 },
-  container: { backgroundColor: 'white', borderRadius: '12px', padding: '40px 60px', textAlign: 'center', boxShadow: '0 10px 40px rgba(0,0,0,0.2)', minWidth: '400px', maxWidth: '500px', position: 'relative', animation: 'slideIn 0.3s ease-out' },
-  closeBtn: { position: 'absolute', top: '15px', right: '20px', background: 'none', border: 'none', fontSize: '24px', color: '#666', cursor: 'pointer', padding: '5px' },
-  icon: { width: '60px', height: '60px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px auto' },
-  title: { fontSize: '28px', fontWeight: '600', color: '#333', margin: '0 0 15px 0', lineHeight: '1.2' },
-  message: { fontSize: '16px', color: '#666', margin: '0 0 30px 0', lineHeight: '1.4' },
-  button: { border: 'none', borderRadius: '8px', padding: '12px 40px', fontSize: '16px', fontWeight: '500', cursor: 'pointer', minWidth: '120px', transition: 'background-color 0.2s ease' }
-};
-
-// ---------------- Popup Component ----------------
-const Popup = ({ isOpen, onClose, type, title, message }) => {
-  if (!isOpen) return null;
-  const isError = type === 'error';
-  const iconColor = isError ? '#f44336' : '#4CAF50';
-  const buttonColor = isError ? '#f44336' : '#4285f4';
-  const buttonHoverColor = isError ? '#d32f2f' : '#3367d6';
-  const icon = isError ? '✕' : '✓';
-
-  return (
-    <div style={popupStyles.overlay}>
-      <div style={popupStyles.container}>
-        <button onClick={onClose} style={popupStyles.closeBtn}>×</button>
-        <div style={{ ...popupStyles.icon, backgroundColor: iconColor }}>
-          <span style={{ fontSize: '30px', color: 'white' }}>{icon}</span>
-        </div>
-        <h2 style={popupStyles.title}>{title}</h2>
-        {message && <p style={popupStyles.message}>{message}</p>}
-        <button
-          onClick={onClose}
-          style={{ ...popupStyles.button, backgroundColor: buttonColor, color: 'white' }}
-          onMouseOver={(e) => e.target.style.backgroundColor = buttonHoverColor}
-          onMouseOut={(e) => e.target.style.backgroundColor = buttonColor}
-        >
-          OK
-        </button>
-        <style>{`@keyframes slideIn { from { opacity: 0; transform: scale(0.9) translateY(-20px); } to { opacity: 1; transform: scale(1) translateY(0); } }`}</style>
-      </div>
-    </div>
-  );
-};
-
-// ---------------- Price Input ----------------
+// ---------------- Price Input Component ----------------
 const PriceInput = ({ label, name, value, onChange, required, placeholder }) => (
   <div className="form-group">
-    <label>{label} {required && '*'}</label>
+    <label>
+      {label} {required && '*'}
+    </label>
     <div style={{ position: 'relative' }}>
-      <span style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: '#666' }}>₹</span>
-      <input 
-        type="text" 
-        name={name} 
-        value={value} 
-        onChange={onChange} 
-        placeholder={placeholder} 
-        style={{ paddingLeft: '25px' }} 
-        required={required} 
+      <span
+        style={{
+          position: 'absolute',
+          left: '10px',
+          top: '50%',
+          transform: 'translateY(-50%)',
+          color: '#666',
+        }}
+      >
+        ₹
+      </span>
+      <input
+        type="text"
+        name={name}
+        value={value}
+        onChange={onChange}
+        placeholder={placeholder}
+        style={{ paddingLeft: '25px' }}
+        required={required}
       />
     </div>
   </div>
 );
 
-// ---------------- Facilities Section ----------------
-const FacilitiesSection = ({ facilities, onToggle, onAdd, onRemove, customFacility, setCustomFacility }) => {
-  const staticFacilities = ['Big Swimming Pool', 'Near Airport', 'Car Parking', '24/7 Electricity'];
+// ---------------- Facilities Section Component ----------------
+const FacilitiesSection = ({
+  facilities,
+  onToggle,
+  onAdd,
+  onRemove,
+  customFacility,
+  setCustomFacility,
+}) => {
   return (
     <div className="form-group">
-      <label>Property Facilities</label>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '10px', marginBottom: '15px' }}>
-        {staticFacilities.map((facility) => (
-          <label key={facility} style={{ display: 'flex', alignItems: 'center', padding: '5px', cursor: 'pointer' }}>
-            <input 
-              type="checkbox" 
-              checked={facilities.includes(facility)} 
-              onChange={() => onToggle(facility)} 
-              style={{ marginRight: '8px' }} 
+      <label>{FORM_LABELS.FACILITIES}</label>
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+          gap: '10px',
+          marginBottom: '15px',
+        }}
+      >
+        {STATIC_FACILITIES.map((facility) => (
+          <label
+            key={facility}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              padding: '5px',
+              cursor: 'pointer',
+            }}
+          >
+            <input
+              type="checkbox"
+              checked={facilities.includes(facility)}
+              onChange={() => onToggle(facility)}
+              style={{ marginRight: '8px' }}
             />
             {facility}
           </label>
@@ -86,31 +82,75 @@ const FacilitiesSection = ({ facilities, onToggle, onAdd, onRemove, customFacili
       <div style={{ marginTop: '15px', position: 'relative', width: '100%' }}>
         <input
           type="text"
-          placeholder="Add custom facility"
+          placeholder={PLACEHOLDERS.CUSTOM_FACILITY}
           value={customFacility}
           onChange={(e) => setCustomFacility(e.target.value)}
-          style={{ padding: '10px 50px 10px 10px', width: '100%', boxSizing: 'border-box', border: '1px solid #ddd', borderRadius: '4px' }}
+          style={{
+            padding: '10px 50px 10px 10px',
+            width: '100%',
+            boxSizing: 'border-box',
+            border: '1px solid #ddd',
+            borderRadius: '4px',
+          }}
           onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), onAdd())}
         />
-        <button 
-          type="button" 
-          onClick={onAdd} 
-          style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', padding: '6px 12px', border: 'none', backgroundColor: '#0a74da', color: 'white', borderRadius: '4px', cursor: 'pointer' }}
+        <button
+          type="button"
+          onClick={onAdd}
+          style={{
+            position: 'absolute',
+            right: '8px',
+            top: '50%',
+            transform: 'translateY(-50%)',
+            padding: '6px 12px',
+            border: 'none',
+            backgroundColor: '#0a74da',
+            color: 'white',
+            borderRadius: '4px',
+            cursor: 'pointer',
+          }}
         >
-          Add
+          {BUTTON_LABELS.ADD}
         </button>
       </div>
       {facilities.length > 0 && (
         <div style={{ marginTop: '15px' }}>
           <strong>Selected Facilities:</strong>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '8px' }}>
+          <div
+            style={{
+              display: 'flex',
+              flexWrap: 'wrap',
+              gap: '8px',
+              marginTop: '8px',
+            }}
+          >
             {facilities.map((facility, idx) => (
-              <span key={idx} style={{ display: 'inline-flex', alignItems: 'center', backgroundColor: '#e3f2fd', color: '#1976d2', padding: '4px 8px', borderRadius: '16px', fontSize: '14px', border: '1px solid #bbdefb' }}>
+              <span
+                key={idx}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  backgroundColor: '#e3f2fd',
+                  color: '#1976d2',
+                  padding: '4px 8px',
+                  borderRadius: '16px',
+                  fontSize: '14px',
+                  border: '1px solid #bbdefb',
+                }}
+              >
                 {facility}
-                <button 
-                  type="button" 
-                  onClick={() => onRemove(facility)} 
-                  style={{ marginLeft: '6px', background: 'none', border: 'none', color: '#1976d2', cursor: 'pointer', fontSize: '16px', fontWeight: 'bold' }}
+                <button
+                  type="button"
+                  onClick={() => onRemove(facility)}
+                  style={{
+                    marginLeft: '6px',
+                    background: 'none',
+                    border: 'none',
+                    color: '#1976d2',
+                    cursor: 'pointer',
+                    fontSize: '16px',
+                    fontWeight: 'bold',
+                  }}
                 >
                   ×
                 </button>
@@ -123,57 +163,58 @@ const FacilitiesSection = ({ facilities, onToggle, onAdd, onRemove, customFacili
   );
 };
 
-// ---------------- Helper function to convert file to base64 ----------------
-const convertToBase64 = (file) => {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result);
-    reader.onerror = error => reject(error);
-    reader.readAsDataURL(file);
-  });
-};
-
-// ---------------- Main AddProperty ----------------
+// ---------------- Main AddProperty Component ----------------
 const AddProperty = ({ isOpen, onClose }) => {
-  const initialForm = { 
-    name: '', 
-    type: 'Villas', 
-    rentPrice: '', 
-    salePrice: '', 
-    status: 'sale', 
-    bedrooms: '', 
-    bath: '', 
-    size: '', 
-    floor: '', 
-    address: '', 
-    zip: '', 
-    country: '', 
-    city: '', 
-    ownerId: '', 
-    ownerName: '', 
-    facilities: [], 
-    about: '' 
+  const initialForm = {
+    name: '',
+    type: PROPERTY_TYPES[0],
+    rentPrice: '',
+    salePrice: '',
+    status: PROPERTY_STATUS.SALE,
+    bedrooms: '',
+    bath: '',
+    size: '',
+    floor: '',
+    address: '',
+    zip: '',
+    country: '',
+    city: '',
+    ownerId: '',
+    ownerName: '',
+    facilities: [],
+    about: '',
   };
-  
+
   const [form, setForm] = useState(initialForm);
   const [photoFile, setPhotoFile] = useState(null);
   const [loading, setLoading] = useState(false);
   const [owners, setOwners] = useState([]);
   const [customFacility, setCustomFacility] = useState('');
   const [step, setStep] = useState(1);
-  const [popup, setPopup] = useState({ show: false, type: '', title: '', message: '' });
+  const [popup, setPopup] = useState({
+    show: false,
+    type: '',
+    title: '',
+    message: '',
+  });
 
-  const showPopup = (type, title, message = '') => setPopup({ show: true, type, title, message });
-  const hidePopup = () => setPopup({ show: false, type: '', title: '', message: '' });
+  const showPopup = (type, title, message = '') =>
+    setPopup({ show: true, type, title, message });
+  const hidePopup = () =>
+    setPopup({ show: false, type: '', title: '', message: '' });
 
   useEffect(() => {
     const fetchOwners = async () => {
       try {
-        const res = await axios.get('http://192.168.0.152:5000/api/owners');
+        const res = await axios.get(`${API_CONFIG.BASE_URL}${API_ENDPOINTS.OWNERS}`);
         setOwners(res.data.owners || []);
       } catch (err) {
         console.error('Failed to fetch owners:', err);
-        showPopup('error', 'Failed to Load Owners', 'Please refresh and try again.');
+        showPopup(
+          POPUP_MESSAGES.FAILED_TO_LOAD_OWNERS.type,
+          POPUP_MESSAGES.FAILED_TO_LOAD_OWNERS.title,
+          POPUP_MESSAGES.FAILED_TO_LOAD_OWNERS.message
+        );
       }
     };
     if (isOpen) fetchOwners();
@@ -182,22 +223,73 @@ const AddProperty = ({ isOpen, onClose }) => {
   const handleChange = (e) => {
     const { name, value } = e.target;
     if (name === 'ownerId') {
-      const selectedOwner = Array.isArray(owners) ? owners.find(o => String(o.ownerId) === value) : null;
-      setForm(prev => ({ ...prev, ownerId: value, ownerName: selectedOwner ? selectedOwner.name : '' }));
+      const selectedOwner = Array.isArray(owners)
+        ? owners.find((o) => String(o.ownerId) === value)
+        : null;
+      setForm((prev) => ({
+        ...prev,
+        ownerId: value,
+        ownerName: selectedOwner ? selectedOwner.name : '',
+      }));
     } else if (name === 'status') {
-      setForm(prev => ({ ...prev, [name]: value.toLowerCase(), rentPrice: '', salePrice: '' }));
+      setForm((prev) => ({
+        ...prev,
+        [name]: value.toLowerCase(),
+        rentPrice: '',
+        salePrice: '',
+      }));
     } else {
-      setForm(prev => ({ ...prev, [name]: value }));
+      setForm((prev) => ({ ...prev, [name]: value }));
     }
   };
 
   const validateForm = () => {
     const { name, ownerId, status, rentPrice, salePrice } = form;
-    if (!name.trim()) return showPopup('error', 'Validation Error', 'Property name is required'), false;
-    if (!ownerId) return showPopup('error', 'Validation Error', 'Owner ID is required'), false;
-    if (status === 'rent' && !rentPrice.trim()) return showPopup('error', 'Validation Error', 'Rent price is required for rental properties'), false;
-    if (status === 'sale' && !salePrice.trim()) return showPopup('error', 'Validation Error', 'Sale price is required for sale properties'), false;
-    if (status === 'both' && (!rentPrice.trim() || !salePrice.trim())) return showPopup('error', 'Validation Error', 'Both rent and sale prices are required'), false;
+
+    if (!name.trim()) {
+      showPopup(
+        POPUP_MESSAGES.VALIDATION_ERROR.type,POPUP_MESSAGES.VALIDATION_ERROR.title,VALIDATION_MESSAGES.PROPERTY_NAME_REQUIRED
+      );
+      return false;
+    }
+
+    if (!ownerId) {
+      showPopup(
+        POPUP_MESSAGES.VALIDATION_ERROR.type,POPUP_MESSAGES.VALIDATION_ERROR.title,VALIDATION_MESSAGES.OWNER_ID_REQUIRED
+      );
+      return false;
+    }
+
+    if (status === PROPERTY_STATUS.RENT && !rentPrice.trim()) {
+      showPopup(
+        POPUP_MESSAGES.VALIDATION_ERROR.type,
+        POPUP_MESSAGES.VALIDATION_ERROR.title,
+        VALIDATION_MESSAGES.RENT_PRICE_REQUIRED
+      );
+      return false;
+    }
+
+    if (status === PROPERTY_STATUS.SALE && !salePrice.trim()) {
+      showPopup(
+        POPUP_MESSAGES.VALIDATION_ERROR.type,
+        POPUP_MESSAGES.VALIDATION_ERROR.title,
+        VALIDATION_MESSAGES.SALE_PRICE_REQUIRED
+      );
+      return false;
+    }
+
+    if (
+      status === PROPERTY_STATUS.BOTH &&
+      (!rentPrice.trim() || !salePrice.trim())
+    ) {
+      showPopup(
+        POPUP_MESSAGES.VALIDATION_ERROR.type,
+        POPUP_MESSAGES.VALIDATION_ERROR.title,
+        VALIDATION_MESSAGES.BOTH_PRICES_REQUIRED
+      );
+      return false;
+    }
+
     return true;
   };
 
@@ -207,7 +299,6 @@ const AddProperty = ({ isOpen, onClose }) => {
     setLoading(true);
 
     try {
-      // Prepare the request payload as JSON
       const payload = {
         name: form.name,
         type: form.type,
@@ -225,103 +316,101 @@ const AddProperty = ({ isOpen, onClose }) => {
         ownerId: form.ownerId,
         ownerName: form.ownerName,
         about: form.about,
-        facility: form.facilities
+        facility: form.facilities,
       };
 
-      // Convert photo to base64 if present
       if (photoFile) {
         try {
-          // Validate file size (max 5MB)
-          const maxSize = 5 * 1024 * 1024; // 5MB in bytes
-          if (photoFile.size > maxSize) {
-            showPopup('error', 'Image Too Large', 'Please select an image smaller than 5MB.');
+          // Validate file size
+          if (photoFile.size > IMAGE_CONFIG.MAX_SIZE) {
+            showPopup(
+              POPUP_MESSAGES.IMAGE_TOO_LARGE.type,
+              POPUP_MESSAGES.IMAGE_TOO_LARGE.title,
+              POPUP_MESSAGES.IMAGE_TOO_LARGE.message
+            );
             setLoading(false);
             return;
           }
 
           // Validate file type
-          const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
-          if (!validTypes.includes(photoFile.type)) {
-            showPopup('error', 'Invalid Image Type', 'Please select a valid image file (JPEG, PNG, GIF, or WebP).');
+          if (!IMAGE_CONFIG.VALID_TYPES.includes(photoFile.type)) {
+            showPopup(
+              POPUP_MESSAGES.INVALID_IMAGE_TYPE.type,
+              POPUP_MESSAGES.INVALID_IMAGE_TYPE.title,
+              POPUP_MESSAGES.INVALID_IMAGE_TYPE.message
+            );
             setLoading(false);
             return;
           }
 
           const base64Photo = await convertToBase64(photoFile);
-          
+
           // Validate base64 format
-          if (!base64Photo || !base64Photo.startsWith('data:image/') || !base64Photo.includes('base64,')) {
-            showPopup('error', 'Image Processing Error', 'Failed to process the image correctly. Please try another image.');
+          if (
+            !base64Photo ||
+            !base64Photo.startsWith('data:image/') ||
+            !base64Photo.includes('base64,')
+          ) {
+            showPopup(
+              POPUP_MESSAGES.IMAGE_FORMAT_ERROR.type,
+              POPUP_MESSAGES.IMAGE_FORMAT_ERROR.title,
+              POPUP_MESSAGES.IMAGE_FORMAT_ERROR.message
+            );
             setLoading(false);
             return;
           }
 
           payload.photo = base64Photo;
-          console.log('Photo converted to base64, size:', base64Photo.length, 'type:', photoFile.type);
         } catch (photoError) {
           console.error('Error converting photo to base64:', photoError);
-          showPopup('error', 'Image Processing Error', 'Failed to process the selected image. Please try a different image.');
+          showPopup(
+            POPUP_MESSAGES.IMAGE_PROCESSING_ERROR.type,
+            POPUP_MESSAGES.IMAGE_PROCESSING_ERROR.title,
+            POPUP_MESSAGES.IMAGE_PROCESSING_ERROR.message
+          );
           setLoading(false);
           return;
         }
       }
 
-      console.log('Sending payload:', {
-        ...payload,
-        photo: payload.photo ? `[Base64 data - ${payload.photo.length} chars]` : 'No photo'
-      });
+      const response = await axios.post(
+        `${API_CONFIG.BASE_URL}${API_ENDPOINTS.PROPERTY}`,
+        payload,
+        {
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          timeout: API_CONFIG.TIMEOUT,
+          maxContentLength: API_CONFIG.MAX_CONTENT_LENGTH,
+          maxBodyLength: API_CONFIG.MAX_BODY_LENGTH,
+        }
+      );
 
-      // Send as JSON with increased timeout
-      const response = await axios.post('http://192.168.0.152:5000/api/property', payload, {
-        headers: { 
-          'Content-Type': 'application/json'
-        },
-        timeout: 30000, // 30 seconds timeout for large images
-        maxContentLength: Infinity,
-        maxBodyLength: Infinity
-      });
-      
       console.log('✅ Property created successfully:', response.data);
-      showPopup('success', 'Property Added Successfully', 'The property has been added to the database.');
+      showPopup(
+        POPUP_MESSAGES.PROPERTY_ADDED.type,
+        POPUP_MESSAGES.PROPERTY_ADDED.title,
+        POPUP_MESSAGES.PROPERTY_ADDED.message
+      );
     } catch (err) {
       console.error('❌ Failed to add property:', err);
-      console.error('📋 Full error object:', err);
-      console.error('📋 Error details:', {
-        message: err.message,
-        response: err.response?.data,
-        status: err.response?.status,
-        statusText: err.response?.statusText,
-        code: err.code,
-        config: {
-          url: err.config?.url,
-          method: err.config?.method,
-          headers: err.config?.headers
-        }
-      });
-      
-      // Log the actual response if available
-      if (err.response) {
-        console.error('📋 Response data:', err.response.data);
-        console.error('📋 Response status:', err.response.status);
-        console.error('📋 Response headers:', err.response.headers);
-      }
-      
-      let errorMsg = 'Failed to add property. Please try again.';
-      let errorTitle = 'Failed to Add Property';
-      
+
+      let errorMsg = POPUP_MESSAGES.PROPERTY_ADD_FAILED.message;
+      let errorTitle = POPUP_MESSAGES.PROPERTY_ADD_FAILED.title;
+
       if (err.code === 'ECONNABORTED') {
-        errorMsg = 'Request timeout. The image might be too large or the server is slow. Try a smaller image.';
-        errorTitle = 'Request Timeout';
+        errorMsg = POPUP_MESSAGES.REQUEST_TIMEOUT.message;
+        errorTitle = POPUP_MESSAGES.REQUEST_TIMEOUT.title;
       } else if (err.response?.data) {
         errorMsg = err.response.data.error || err.response.data.message || errorMsg;
         if (err.response.data.details) {
           errorMsg += `\n\nDetails: ${err.response.data.details}`;
         }
       } else if (err.request) {
-        errorMsg = 'Network error. Please check:\n• Your internet connection\n• Server is running on http://192.168.0.152:5000\n• CORS is properly configured';
-        errorTitle = 'Network Error';
+        errorMsg = POPUP_MESSAGES.NETWORK_ERROR.message;
+        errorTitle = POPUP_MESSAGES.NETWORK_ERROR.title;
       }
-      
+
       showPopup('error', errorTitle, errorMsg);
     } finally {
       setLoading(false);
@@ -329,23 +418,40 @@ const AddProperty = ({ isOpen, onClose }) => {
   };
 
   const handleFacilityToggle = (facility) => {
-    setForm(prev => ({ 
-      ...prev, 
-      facilities: prev.facilities.includes(facility) 
-        ? prev.facilities.filter(f => f !== facility) 
-        : [...prev.facilities, facility] 
+    setForm((prev) => ({
+      ...prev,
+      facilities: prev.facilities.includes(facility)
+        ? prev.facilities.filter((f) => f !== facility)
+        : [...prev.facilities, facility],
     }));
   };
 
   const handleAddCustomFacility = () => {
-    if (customFacility.trim() && !form.facilities.includes(customFacility.trim())) {
-      setForm(prev => ({ ...prev, facilities: [...prev.facilities, customFacility.trim()] }));
+    if (
+      customFacility.trim() &&
+      !form.facilities.includes(customFacility.trim())
+    ) {
+      setForm((prev) => ({
+        ...prev,
+        facilities: [...prev.facilities, customFacility.trim()],
+      }));
       setCustomFacility('');
     }
   };
 
-  const handleRemoveFacility = (facility) => setForm(prev => ({ ...prev, facilities: prev.facilities.filter(f => f !== facility) }));
-  const resetForm = () => { setForm(initialForm); setPhotoFile(null); setStep(1); hidePopup(); onClose(); };
+  const handleRemoveFacility = (facility) =>
+    setForm((prev) => ({
+      ...prev,
+      facilities: prev.facilities.filter((f) => f !== facility),
+    }));
+
+  const resetForm = () => {
+    setForm(initialForm);
+    setPhotoFile(null);
+    setStep(1);
+    hidePopup();
+    onClose();
+  };
 
   if (!isOpen) return null;
 
@@ -353,175 +459,237 @@ const AddProperty = ({ isOpen, onClose }) => {
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-content" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
-          <h3>{step === 1 ? 'Add Property - Basic Info' : 'Add Property - Facilities & About'}</h3>
-          <button className="close-btn" onClick={onClose}>✖</button>
+          <h3>{step === 1 ? FORM_STEPS.BASIC_INFO : FORM_STEPS.FACILITIES_ABOUT}</h3>
+          <button className="close-btn" onClick={onClose}>
+            {BUTTON_LABELS.CLOSE}
+          </button>
         </div>
 
         <form onSubmit={handleSubmit}>
           <div className="modal-body">
             {step === 1 ? (
               <>
-                {/* Property Details */}
+                {/* Property Name & Type */}
                 <div className="form-row">
                   <div className="form-group">
-                    <label>Property Name *</label>
-                    <input 
-                      type="text" 
-                      name="name" 
-                      value={form.name} 
-                      onChange={handleChange} 
-                      required 
-                      placeholder="Enter property name" 
+                    <label>{FORM_LABELS.PROPERTY_NAME} *</label>
+                    <input
+                      type="text"
+                      name="name"
+                      value={form.name}
+                      onChange={handleChange}
+                      required
+                      placeholder={PLACEHOLDERS.PROPERTY_NAME}
                     />
                   </div>
                   <div className="form-group">
-                    <label>Property Type</label>
+                    <label>{FORM_LABELS.PROPERTY_TYPE}</label>
                     <select name="type" value={form.type} onChange={handleChange}>
-                      <option value="Villas">Villas</option>
-                      <option value="Apartment">Apartment</option>
-                      <option value="Residences">Residences</option>
-                      <option value="Guest House">Guest House</option>
-                      <option value="House">House</option>
+                      {PROPERTY_TYPES.map((type) => (
+                        <option key={type} value={type}>
+                          {type}
+                        </option>
+                      ))}
                     </select>
                   </div>
                 </div>
 
+                {/* Property Status */}
                 <div className="form-row">
                   <div className="form-group">
-                    <label>Property Available For *</label>
-                    <select name="status" value={form.status} onChange={handleChange} required>
-                      <option value="sale">Sale</option>
-                      <option value="rent">Rent</option>
-                      <option value="both">Both (Rent & Sale)</option>
+                    <label>{FORM_LABELS.PROPERTY_STATUS} *</label>
+                    <select
+                      name="status"
+                      value={form.status}
+                      onChange={handleChange}
+                      required
+                    >
+                      {PROPERTY_STATUS_OPTIONS.map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
                     </select>
                   </div>
                 </div>
 
+                {/* Prices */}
                 <div className="form-row">
-                  {(form.status === 'rent' || form.status === 'both') && (
-                    <PriceInput 
-                      label="Rent Price (Monthly)" 
-                      name="rentPrice" 
-                      value={form.rentPrice} 
-                      onChange={handleChange} 
-                      required={form.status === 'rent' || form.status === 'both'} 
-                      placeholder="25,000" 
+                  {(form.status === PROPERTY_STATUS.RENT ||
+                    form.status === PROPERTY_STATUS.BOTH) && (
+                    <PriceInput
+                      label={FORM_LABELS.RENT_PRICE}
+                      name="rentPrice"
+                      value={form.rentPrice}
+                      onChange={handleChange}
+                      required={
+                        form.status === PROPERTY_STATUS.RENT ||
+                        form.status === PROPERTY_STATUS.BOTH
+                      }
+                      placeholder={PLACEHOLDERS.RENT_PRICE}
                     />
                   )}
-                  {(form.status === 'sale' || form.status === 'both') && (
-                    <PriceInput 
-                      label="Sale Price" 
-                      name="salePrice" 
-                      value={form.salePrice} 
-                      onChange={handleChange} 
-                      required={form.status === 'sale' || form.status === 'both'} 
-                      placeholder="50,00,000" 
+                  {(form.status === PROPERTY_STATUS.SALE ||
+                    form.status === PROPERTY_STATUS.BOTH) && (
+                    <PriceInput
+                      label={FORM_LABELS.SALE_PRICE}
+                      name="salePrice"
+                      value={form.salePrice}
+                      onChange={handleChange}
+                      required={
+                        form.status === PROPERTY_STATUS.SALE ||
+                        form.status === PROPERTY_STATUS.BOTH
+                      }
+                      placeholder={PLACEHOLDERS.SALE_PRICE}
                     />
                   )}
                 </div>
 
+                {/* Bedrooms & Bathrooms */}
                 <div className="form-row">
                   <div className="form-group">
-                    <label>Bedrooms</label>
-                    <select name="bedrooms" value={form.bedrooms} onChange={handleChange}>
+                    <label>{FORM_LABELS.BEDROOMS}</label>
+                    <select
+                      name="bedrooms"
+                      value={form.bedrooms}
+                      onChange={handleChange}
+                    >
                       <option value="">Select</option>
-                      {[1,2,3,4,5].map(n => <option key={n} value={n}>{n} BHK</option>)}
+                      {BEDROOM_OPTIONS.map((n) => (
+                        <option key={n} value={n}>
+                          {n} BHK
+                        </option>
+                      ))}
                     </select>
                   </div>
                   <div className="form-group">
-                    <label>Bathrooms</label>
+                    <label>{FORM_LABELS.BATHROOMS}</label>
                     <select name="bath" value={form.bath} onChange={handleChange}>
                       <option value="">Select</option>
-                      {[1,2,3,4,5].map(n => <option key={n} value={n}>{n}{n === 5 ? '+' : ''}</option>)}
+                      {BATHROOM_OPTIONS.map((n) => (
+                        <option key={n} value={n}>
+                          {n}
+                          {n === 5 ? '+' : ''}
+                        </option>
+                      ))}
                     </select>
                   </div>
                 </div>
 
+                {/* Size & Floor */}
                 <div className="form-row">
                   <div className="form-group">
-                    <label>Area (Square Feet)</label>
-                    <input 
-                      type="text" 
-                      name="size" 
-                      value={form.size} 
-                      onChange={handleChange} 
-                      placeholder="1200 sq ft" 
+                    <label>{FORM_LABELS.SIZE}</label>
+                    <input
+                      type="text"
+                      name="size"
+                      value={form.size}
+                      onChange={handleChange}
+                      placeholder={PLACEHOLDERS.SIZE}
                     />
                   </div>
                   <div className="form-group">
-                    <label>Floor</label>
-                    <input 
-                      type="text" 
-                      name="floor" 
-                      value={form.floor} 
-                      onChange={handleChange} 
-                      placeholder="Ground Floor / 2nd Floor" 
+                    <label>{FORM_LABELS.FLOOR}</label>
+                    <input
+                      type="text"
+                      name="floor"
+                      value={form.floor}
+                      onChange={handleChange}
+                      placeholder={PLACEHOLDERS.FLOOR}
                     />
                   </div>
                 </div>
 
+                {/* Address */}
                 <div className="form-group full-width">
-                  <label>Property Address</label>
-                  <textarea 
-                    name="address" 
-                    value={form.address} 
-                    onChange={handleChange} 
-                    placeholder="Enter complete address" 
-                    rows="3" 
+                  <label>{FORM_LABELS.ADDRESS}</label>
+                  <textarea
+                    name="address"
+                    value={form.address}
+                    onChange={handleChange}
+                    placeholder={PLACEHOLDERS.ADDRESS}
+                    rows="3"
                   />
                 </div>
 
+                {/* Country & City */}
                 <div className="form-row">
                   <div className="form-group">
-                    <label>Country</label>
-                    <select name="country" value={form.country} onChange={handleChange}>
+                    <label>{FORM_LABELS.COUNTRY}</label>
+                    <select
+                      name="country"
+                      value={form.country}
+                      onChange={handleChange}
+                    >
                       <option value="">Choose a Country</option>
-                      {['India', 'USA', 'UK', 'Canada'].map(c => <option key={c} value={c}>{c}</option>)}
+                      {COUNTRIES.map((c) => (
+                        <option key={c} value={c}>
+                          {c}
+                        </option>
+                      ))}
                     </select>
                   </div>
                   <div className="form-group">
-                    <label>City</label>
+                    <label>{FORM_LABELS.CITY}</label>
                     <select name="city" value={form.city} onChange={handleChange}>
                       <option value="">Choose a City</option>
-                      {['Chennai', 'Mumbai', 'Delhi', 'Bangalore', 'Pune', 'New York', 'London','Austin'].map(c => <option key={c} value={c}>{c}</option>)}
+                      {CITIES.map((c) => (
+                        <option key={c} value={c}>
+                          {c}
+                        </option>
+                      ))}
                     </select>
                   </div>
                 </div>
 
+                {/* Zip & Image */}
                 <div className="form-row">
                   <div className="form-group">
-                    <label>Zip Code</label>
-                    <input 
-                      type="text" 
-                      name="zip" 
-                      value={form.zip} 
-                      onChange={handleChange} 
-                      placeholder="600001" 
+                    <label>{FORM_LABELS.ZIP}</label>
+                    <input
+                      type="text"
+                      name="zip"
+                      value={form.zip}
+                      onChange={handleChange}
+                      placeholder={PLACEHOLDERS.ZIP}
                     />
                   </div>
                   <div className="form-group">
-                    <label>Property Image</label>
-                    <input 
-                      type="file" 
-                      accept="image/jpeg,image/jpg,image/png,image/gif,image/webp" 
-                      onChange={(e) => setPhotoFile(e.target.files[0])} 
-                      style={{ padding: '8px' }} 
+                    <label>{FORM_LABELS.PROPERTY_IMAGE}</label>
+                    <input
+                      type="file"
+                      accept={IMAGE_CONFIG.ACCEPT_STRING}
+                      onChange={(e) => setPhotoFile(e.target.files[0])}
+                      style={{ padding: '8px' }}
                     />
                     {photoFile && (
-                      <small style={{ color: '#666', marginTop: '4px', display: 'block' }}>
-                        Selected: {photoFile.name} ({(photoFile.size / 1024).toFixed(2)} KB)
+                      <small
+                        style={{
+                          color: '#666',
+                          marginTop: '4px',
+                          display: 'block',
+                        }}
+                      >
+                        Selected: {photoFile.name} (
+                        {(photoFile.size / 1024).toFixed(2)} KB)
                       </small>
                     )}
                   </div>
                 </div>
 
+                {/* Owner ID & Name */}
                 <div className="form-row">
                   <div className="form-group">
-                    <label>Owner ID *</label>
-                    <select name="ownerId" value={form.ownerId} onChange={handleChange} required>
+                    <label>{FORM_LABELS.OWNER_ID} *</label>
+                    <select
+                      name="ownerId"
+                      value={form.ownerId}
+                      onChange={handleChange}
+                      required
+                    >
                       <option value="">Select Owner ID</option>
                       {Array.isArray(owners) && owners.length > 0 ? (
-                        owners.map(owner => (
+                        owners.map((owner) => (
                           <option key={owner._id} value={owner.ownerId}>
                             {owner.ownerId} - {owner.name}
                           </option>
@@ -532,63 +700,88 @@ const AddProperty = ({ isOpen, onClose }) => {
                     </select>
                   </div>
                   <div className="form-group">
-                    <label>Owner Name</label>
-                    <input 
-                      type="text" 
-                      name="ownerName" 
-                      value={form.ownerName} 
-                      readOnly 
-                      style={{ backgroundColor: '#f5f5f5' }} 
+                    <label>{FORM_LABELS.OWNER_NAME}</label>
+                    <input
+                      type="text"
+                      name="ownerName"
+                      value={form.ownerName}
+                      readOnly
+                      style={{ backgroundColor: '#f5f5f5' }}
                     />
                   </div>
                 </div>
               </>
             ) : (
               <>
-                <FacilitiesSection 
-                  facilities={form.facilities} 
-                  onToggle={handleFacilityToggle} 
-                  onAdd={handleAddCustomFacility} 
-                  onRemove={handleRemoveFacility} 
-                  customFacility={customFacility} 
-                  setCustomFacility={setCustomFacility} 
+                {/* Facilities */}
+                <FacilitiesSection
+                  facilities={form.facilities}
+                  onToggle={handleFacilityToggle}
+                  onAdd={handleAddCustomFacility}
+                  onRemove={handleRemoveFacility}
+                  customFacility={customFacility}
+                  setCustomFacility={setCustomFacility}
                 />
+
+                {/* About Property */}
                 <div className="form-group">
-                  <label>About Property</label>
-                  <textarea 
-                    name="about" 
-                    value={form.about} 
-                    onChange={handleChange} 
-                    placeholder="Describe the property in detail" 
-                    rows="5" 
-                    style={{ width: '100%', minHeight: '100px' }} 
+                  <label>{FORM_LABELS.ABOUT}</label>
+                  <textarea
+                    name="about"
+                    value={form.about}
+                    onChange={handleChange}
+                    placeholder={PLACEHOLDERS.ABOUT}
+                    rows="5"
+                    style={{ width: '100%', minHeight: '100px' }}
                   />
                 </div>
               </>
             )}
           </div>
 
+          {/* Footer Buttons */}
           <div className="modal-footer">
             {step === 2 ? (
               <>
-                <button type="button" onClick={() => setStep(1)} className="btn btn-back">← Back</button>
-                <button type="submit" disabled={loading} className="btn btn-save">
-                  {loading ? 'Saving...' : 'Save Property'}
+                <button
+                  type="button"
+                  onClick={() => setStep(1)}
+                  className="btn btn-back"
+                >
+                  {BUTTON_LABELS.BACK}
+                </button>
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="btn btn-save"
+                >
+                  {loading ? BUTTON_LABELS.SAVING : BUTTON_LABELS.SAVE}
                 </button>
               </>
             ) : (
-              <button type="button" onClick={() => setStep(2)} className="btn btn-next">Next →</button>
+              <button
+                type="button"
+                onClick={() => setStep(2)}
+                className="btn btn-next"
+              >
+                {BUTTON_LABELS.NEXT}
+              </button>
             )}
           </div>
         </form>
 
-        <Popup 
-          isOpen={popup.show} 
-          onClose={popup.type === 'success' ? resetForm : hidePopup} 
-          type={popup.type} 
-          title={popup.title} 
-          message={popup.message} 
-        />
+        {/* Reusable Popup Component */}
+        {popup.show && (
+          <PopupMessage
+            title={popup.title}
+            message={popup.message}
+            icon={popup.type === 'error' ? ICONS.ERROR : ICONS.SUCCESS}
+            confirmLabel={BUTTON_LABELS.OK}
+            cancelLabel=""
+            onConfirm={popup.type === 'success' ? resetForm : hidePopup}
+            onCancel={popup.type === 'success' ? resetForm : hidePopup}
+          />
+        )}
       </div>
     </div>
   );

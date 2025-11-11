@@ -1,5 +1,6 @@
+// src/App.jsx
 import React from "react";
-import { Routes, Route, Navigate } from "react-router-dom"; // ✅ FIXED
+import { Routes, Route, Navigate } from "react-router-dom";
 
 // Layout + Context
 import Sidebar from "./components/layout/Sidebar";
@@ -8,7 +9,7 @@ import { useSidebar } from "./components/context/SidebarContext";
 // Pages
 import Signup from "./pages/Auth/Signup";
 import Login from "./pages/Auth/Login";
-import ForgetPassword from "./pages/Auth/ForgetPassword";
+import ForgotPassword from "./pages/Auth/ForgotPassword";
 import ResetPassword from './pages/Auth/ResetPassword';
 import Verification from './pages/Verification';
 import Congratulations from './pages/Congratulations';
@@ -24,11 +25,15 @@ import Transaction from "./pages/Transaction/Transaction";
 import Reviews from "./pages/Reviews/Reviews";
 import Settings from "./pages/Settings/SettingsPage";
 
-// ✅ IMPROVED: Check for authToken (not just "token")
+// ✅ FIXED: Check for user data instead of authToken (since token is in httpOnly cookie)
 const PrivateRoute = ({ children }) => {
-  const isLoggedIn = Boolean(localStorage.getItem("authToken")); // Changed from "token" to "authToken"
+  const user = localStorage.getItem("user");
+  const isLoggedIn = Boolean(user);
+
+  console.log("🔐 PrivateRoute check:", { isLoggedIn, user: user ? JSON.parse(user) : null });
 
   if (!isLoggedIn) {
+    console.log("❌ No user found, redirecting to login");
     return <Navigate to="/login" replace />;
   }
 
@@ -55,7 +60,7 @@ function App() {
       {/* Public Routes */}
       <Route path="/" element={<Login />} />
       <Route path="/login" element={<Login />} />
-      <Route path="/forgot-password" element={<ForgetPassword />} />
+      <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/reset-password" element={<ResetPassword />} />
       <Route path="/signup" element={<Signup />} />
       <Route path="/verify" element={<Verification />} />

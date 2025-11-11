@@ -1,3 +1,4 @@
+// src/pages/Dashboard/SalesLocation.jsx
 import React from 'react';
 
 const SalesLocation = () => {

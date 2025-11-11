@@ -1,125 +1,101 @@
 // src/pages/Owners/Owners.jsx
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import axios from 'axios';
-import io from 'socket.io-client';
 import MonthDropdown from '../../components/common/MonthDropdown';
 import Header from '../../components/layout/Header';
 import AddOwnerModal from '../Owners/AddOwnerModal';
 import PopupMessage from '../../components/common/PopupMessage';
+import { 
+  API_CONFIG, 
+  MONTHS_FULL,
+  DEFAULTS,
+  ASSET_PATHS,
+  STYLES 
+} from '../../utils/constants';
+import { 
+  getOwnerPhotoSrc, 
+  handleImageError, 
+  getAvailableProperties,
+  filterOwnersByMonth,
+  filterOwnersBySearch,
+  formatDate
+} from '../../utils/ownerHelpers';
+import { fetchOwners, deleteOwner } from '../../utils/apiHelpers';
+import { calculatePagination, getPaginatedItems } from '../../utils/paginationUtils';
+import { initializeSocket, cleanupSocket } from '../../utils/socketHelpers';
 
 import '../../styles/Dashboard.css';
 import '../../styles/Owners.css';
-
-const API_BASE_URL = 'http://192.168.0.152:5000';
-
-const months = [
-  'January', 'February', 'March', 'April', 'May', 'June',
-  'July', 'August', 'September', 'October', 'November', 'December'
-];
 
 const Owners = () => {
   const [owners, setOwners] = useState([]);
   const [filteredOwners, setFilteredOwners] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedMonth, setSelectedMonth] = useState('');
+  const [searchTerm, setSearchTerm] = useState(DEFAULTS.SEARCH_TERM);
+  const [selectedMonth, setSelectedMonth] = useState(DEFAULTS.SELECTED_MONTH);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [showDeletePopup, setShowDeletePopup] = useState(false);
   const [ownerToDelete, setOwnerToDelete] = useState(null);
-
-  // pagination state
   const [currentPage, setCurrentPage] = useState(1);
+  
   const ownersPerPage = 6;
+
+  const tableHeaders = [
+    'Owner Photo & Name',
+    'Address',
+    'Email',
+    'Contact',
+    'Properties',
+    'Date',
+    'Status',
+    'Action'
+  ];
 
   // Socket.io for real-time updates
   useEffect(() => {
-    const socket = io(API_BASE_URL);
-
-    // Listen for owner-stats-updated events
-    socket.on('update-analytics', (data) => {
-      if (data.type === 'owner-stats-updated' || 
-          data.type === 'property-sold' || 
-          data.type === 'owner-added' ||
-          data.type === 'owner-updated' ||
-          data.type === 'owner-deleted' ||
-          data.type === 'all-owners-stats-updated') {
-        console.log(`🔔 Received ${data.type} event`);
-        fetchOwners(true); // Silent refresh
-      }
+    const socket = initializeSocket(() => {
+      loadOwners(true);
     });
 
-    return () => {
-      socket.disconnect();
-      console.log('🔌 Socket.io disconnected');
-    };
+    return () => cleanupSocket(socket);
   }, []);
 
+  // Initial fetch and auto-refresh
   useEffect(() => {
-    fetchOwners();
+    loadOwners();
     const refreshInterval = setInterval(() => {
-      fetchOwners(true);
-    }, 30000);
+      loadOwners(true);
+    }, API_CONFIG.AUTO_REFRESH_INTERVAL);
     return () => clearInterval(refreshInterval);
   }, []);
 
-  const fetchOwners = async (silent = false) => {
-    try {
-      if (!silent) setIsLoading(true);
-      const res = await axios.get(`${API_BASE_URL}/api/owners`);
-      const ownersArray = Array.isArray(res.data.owners) ? res.data.owners : [];
-      setOwners(ownersArray);
-      setFilteredOwners(ownersArray);
+  // Load owners data
+  const loadOwners = async (silent = false) => {
+    if (!silent) setIsLoading(true);
+    
+    const result = await fetchOwners();
+    
+    if (result.success) {
+      setOwners(result.data);
+      setFilteredOwners(result.data);
       setError(null);
-    } catch (err) {
-      setError(err.message);
-      console.error('❌ Failed to fetch owners:', err);
-    } finally {
-      if (!silent) setIsLoading(false);
+    } else {
+      setError(result.error);
     }
+    
+    if (!silent) setIsLoading(false);
   };
 
-  const getOwnerPhotoSrc = (photo) => {
-    if (photo && photo.startsWith('data:image/')) return photo;
-    if (photo && photo.startsWith('/uploads/')) return `${API_BASE_URL}${photo}`;
-    return '/assets/placeholder.png';
-  };
-
-  const handleImageError = (e) => {
-    e.target.src = '/assets/default-avatar.png';
-  };
-
-  // Calculate available properties (total - sold)
-  const getAvailableProperties = (owner) => {
-    const total = owner.propertyOwned || 0;
-    const sold = owner.propertySold || 0;
-    return Math.max(0, total - sold); // Ensure it doesn't go negative
-  };
-
+  // Filter owners when search or month changes
   useEffect(() => {
     let ownersToFilter = Array.isArray(owners) ? owners : [];
 
-    if (selectedMonth && selectedMonth !== '') {
-      const monthIndex = months.indexOf(selectedMonth);
-      if (monthIndex > -1) {
-        ownersToFilter = ownersToFilter.filter(owner => {
-          const ownerDate = new Date(owner.doj || owner.createdAt);
-          return ownerDate.getMonth() === monthIndex;
-        });
-      }
-    }
+    // Filter by month
+    ownersToFilter = filterOwnersByMonth(ownersToFilter, selectedMonth, MONTHS_FULL);
 
-    if (searchTerm) {
-      const term = searchTerm.toLowerCase();
-      ownersToFilter = ownersToFilter.filter(
-        (owner) =>
-          owner.name?.toLowerCase().includes(term) ||
-          owner.email?.toLowerCase().includes(term) ||
-          owner.address?.toLowerCase().includes(term) ||
-          owner.contact?.toLowerCase().includes(term)
-      );
-    }
+    // Filter by search term
+    ownersToFilter = filterOwnersBySearch(ownersToFilter, searchTerm);
 
     setFilteredOwners(ownersToFilter);
     setCurrentPage(1);
@@ -130,7 +106,7 @@ const Owners = () => {
   };
 
   const handleSaveOwner = () => {
-    fetchOwners();
+    loadOwners();
   };
 
   const handleConfirmDelete = (ownerId) => {
@@ -140,18 +116,18 @@ const Owners = () => {
 
   const handleDelete = async () => {
     if (!ownerToDelete) return;
-    try {
-      await axios.delete(`${API_BASE_URL}/api/owners/${ownerToDelete}`);
+    
+    const result = await deleteOwner(ownerToDelete);
+    
+    if (result.success) {
       setOwners((prev) => prev.filter((owner) => owner.ownerId !== ownerToDelete));
       setFilteredOwners((prev) => prev.filter((owner) => owner.ownerId !== ownerToDelete));
-      setShowDeletePopup(false);
-      setOwnerToDelete(null);
-    } catch (err) {
-      console.error('❌ Failed to delete owner:', err);
-      alert(err.response?.data?.message || 'Failed to delete owner');
-      setShowDeletePopup(false);
-      setOwnerToDelete(null);
+    } else {
+      alert(result.error);
     }
+    
+    setShowDeletePopup(false);
+    setOwnerToDelete(null);
   };
 
   const handleCancelDelete = () => {
@@ -159,37 +135,39 @@ const Owners = () => {
     setOwnerToDelete(null);
   };
 
-  // Pagination logic
-  const indexOfLastOwner = currentPage * ownersPerPage;
-  const indexOfFirstOwner = indexOfLastOwner - ownersPerPage;
-  const currentOwners = filteredOwners.slice(indexOfFirstOwner, indexOfLastOwner);
-  const totalPages = Math.ceil(filteredOwners.length / ownersPerPage);
+  // Pagination using paginationUtils
+  const pagination = calculatePagination(filteredOwners.length, currentPage, ownersPerPage);
+  const currentOwners = getPaginatedItems(filteredOwners, currentPage, ownersPerPage);
+  const { totalPages, hasNextPage, hasPreviousPage: hasPrevPage } = pagination;
 
   const nextPage = () => {
-    if (currentPage < totalPages) setCurrentPage(prev => prev + 1);
+    if (hasNextPage) setCurrentPage(prev => prev + 1);
   };
+
   const prevPage = () => {
-    if (currentPage > 1) setCurrentPage(prev => prev - 1);
+    if (hasPrevPage) setCurrentPage(prev => prev - 1);
   };
 
   const renderTableContent = () => {
     if (isLoading) return (
-      <tr><td colSpan="8" className="loading-state">Loading owners...</td></tr>
+      <tr><td colSpan={tableHeaders.length} className="loading-state">Loading owners...</td></tr>
     );
 
     if (error) return (
       <tr>
-        <td colSpan="8" className="error-state">
-          <div style={{ textAlign: 'center', padding: '20px', color: '#f44336' }}>
+        <td colSpan={tableHeaders.length} className="error-state">
+          <div style={STYLES.ERROR_STATE}>
             <p>Error: {error}</p>
-            <button onClick={() => fetchOwners()} className="retry-btn">Retry</button>
+            <button onClick={() => loadOwners()} style={STYLES.RETRY_BUTTON}>
+              Retry
+            </button>
           </div>
         </td>
       </tr>
     );
 
     if (!Array.isArray(filteredOwners) || filteredOwners.length === 0)
-      return <tr><td colSpan="8" style={{ textAlign: 'center' }}>No owners found</td></tr>;
+      return <tr><td colSpan={tableHeaders.length} style={{ textAlign: 'center' }}>No owners found</td></tr>;
 
     return currentOwners.map((owner) => {
       const availableProps = getAvailableProperties(owner);
@@ -203,7 +181,7 @@ const Owners = () => {
                 src={getOwnerPhotoSrc(owner.photo)}
                 alt={owner.name || 'No Name'}
                 className="owner-photo"
-                onError={handleImageError}
+                onError={(e) => handleImageError(e, '/assets/default-avatar.png')}
               />
               {owner?.name ? (
                 <Link to={`/owners/${owner.ownerId}`} className="owner-link">
@@ -230,7 +208,7 @@ const Owners = () => {
               )}
             </div>
           </td>
-          <td>{owner.doj ? new Date(owner.doj).toLocaleDateString() : '-'}</td>
+          <td>{formatDate(owner.doj)}</td>
           <td><span className={`status ${owner.status?.toLowerCase()}`}>{owner.status || 'Active'}</span></td>
           <td className="action-icons">
             <Link to={`/owners/${owner.ownerId}`}>
@@ -257,7 +235,7 @@ const Owners = () => {
         <main className="dashboard-body p-4">
           <div className="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4 gap-3">
             <div className="search-bar w-100 w-md-50 d-flex align-items-center">
-              <img src="/assets/search-icon.png" alt="search" />
+              <img src={ASSET_PATHS.SEARCH_ICON} alt="search" />
               <input
                 type="text"
                 placeholder="Search"
@@ -294,27 +272,21 @@ const Owners = () => {
               <table>
                 <thead>
                   <tr>
-                    <th>Owner Photo & Name</th>
-                    <th>Address</th>
-                    <th>Email</th>
-                    <th>Contact</th>
-                    <th>Properties</th>
-                    <th>Date</th>
-                    <th>Status</th>
-                    <th>Action</th>
+                    {tableHeaders.map((header, index) => (
+                      <th key={index}>{header}</th>
+                    ))}
                   </tr>
                 </thead>
                 <tbody>{renderTableContent()}</tbody>
               </table>
             </div>
 
-            {/* Pagination Section */}
             {totalPages > 1 && (
               <div className="pagination">
                 <button
                   className="page-link"
                   onClick={prevPage}
-                  disabled={currentPage === 1}
+                  disabled={!hasPrevPage}
                 >
                   « Back
                 </button>
@@ -332,7 +304,7 @@ const Owners = () => {
                 <button
                   className="page-link"
                   onClick={nextPage}
-                  disabled={currentPage === totalPages}
+                  disabled={!hasNextPage}
                 >
                   Next »
                 </button>

@@ -1,15 +1,16 @@
+// src/pages/Dashboard/Transactions.jsx
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../../utils/api';
 import MonthDropdown from '/src/components/common/MonthDropdown.jsx';
+import { 
+  MONTHS_FULL, 
+  getStatusClass, 
+  formatters,
+  DEFAULTS,
+  ASSET_PATHS
+} from '../../utils/constants';
 import '../../styles/Dashboard.css';
-
-const months = [
-  'January', 'February', 'March', 'April', 'May', 'June',
-  'July', 'August', 'September', 'October', 'November', 'December'
-];
-
-const getStatusClass = (status) => (status ? status.toLowerCase() : '');
 
 const TransactionsTable = () => {
   const [allTransactions, setAllTransactions] = useState([]);
@@ -18,6 +19,19 @@ const TransactionsTable = () => {
   const [selectedRows, setSelectedRows] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  // Table headers configuration
+  const tableHeaders = [
+    { key: 'checkbox', label: '', isCheckbox: true },
+    { key: 'transactionId', label: 'Transaction ID' },
+    { key: 'customer', label: 'Customer' },
+    { key: 'phone', label: 'Phone' },
+    { key: 'propertyName', label: 'Property Name' },
+    { key: 'date', label: 'Date' },
+    { key: 'amount', label: 'Amount' },
+    { key: 'status', label: 'Status' },
+    { key: 'action', label: 'Action' }
+  ];
 
   useEffect(() => {
     const fetchTransactions = async () => {
@@ -39,7 +53,7 @@ const TransactionsTable = () => {
     let results = allTransactions;
 
     if (selectedMonth) {
-      const monthIndex = months.indexOf(selectedMonth);
+      const monthIndex = MONTHS_FULL.indexOf(selectedMonth);
       if (monthIndex > -1) {
         results = results.filter(transaction => {
           const transactionDate = new Date(transaction.createdAt);
@@ -48,7 +62,7 @@ const TransactionsTable = () => {
       }
     }
 
-    setFilteredTransactions(results.slice(0, 3));
+    setFilteredTransactions(results.slice(0, DEFAULTS.TRANSACTION_LIMIT));
   }, [selectedMonth, allTransactions]);
 
   const handleMonthChange = (month) => {
@@ -73,6 +87,80 @@ const TransactionsTable = () => {
     setSelectedRows(prev => prev.filter(rowId => rowId !== id));
   };
 
+  // Get customer photo with fallback
+  const getCustomerPhoto = (photo) => {
+    if (photo && photo.startsWith('data:image/')) return photo;
+    if (photo && photo.startsWith('/uploads/')) return `${api.defaults.baseURL}${photo}`;
+    return DEFAULTS.PLACEHOLDER_IMAGE;
+  };
+
+  // Render table cell content based on key
+  const renderCellContent = (tx, headerKey) => {
+    switch (headerKey) {
+      case 'checkbox':
+        return (
+          <input
+            type="checkbox"
+            checked={selectedRows.includes(tx.customTransactionId)}
+            onChange={() => handleSelectRow(tx.customTransactionId)}
+          />
+        );
+      
+      case 'transactionId':
+        return tx.customTransactionId;
+      
+      case 'customer':
+        return (
+          <div className="customer-info-cell">
+            <img
+              src={getCustomerPhoto(tx.customerPhoto)}
+              alt={tx.customerName || 'Customer'}
+              className="customer-photo"
+              onError={(e) => { e.target.src = DEFAULTS.PLACEHOLDER_IMAGE; }}
+            />        
+            <span>{tx.customerName}</span>
+          </div>
+        );
+      
+      case 'phone':
+        return tx.customerPhone || 'N/A';
+      
+      case 'propertyName':
+        return tx.property?.name || 'N/A';
+      
+      case 'date':
+        return formatters.date(tx.createdAt);
+      
+      case 'amount':
+        return formatters.amount(tx.amount);
+      
+      case 'status':
+        return (
+          <span className={`status-badge ${getStatusClass(tx.status)}`}>
+            {tx.status}
+          </span>
+        );
+      
+      case 'action':
+        return (
+          <div className="dash-action-icons">
+            <Link to={`/transaction/${tx.customTransactionId}`}>
+              <img src="/assets/view-icon.png" alt="View" />
+            </Link>
+            <img
+              src="/assets/delete-icon.png"
+              alt="Delete"
+              onClick={() => handleDelete(tx.customTransactionId)}
+              style={{ cursor: 'pointer' }}
+            />
+          </div>
+        );
+      
+      default:
+        return null;
+    }
+  };
+
   if (isLoading) {
     return <div className="card"><div className="loading-state">Loading transactions...</div></div>;
   }
@@ -92,70 +180,38 @@ const TransactionsTable = () => {
         <table className="transactions-table">
           <thead>
             <tr>
-              <th>
-                <input
-                  type="checkbox"
-                  checked={allChecked}
-                  onChange={(e) => handleSelectAll(e.target.checked)}
-                  disabled={filteredTransactions.length === 0}
-                />
-              </th>
-              <th>Transaction ID</th>
-              <th>Customer</th>
-              <th>Phone</th>
-              <th>Property Name</th>
-              <th>Date</th>
-              <th>Amount</th>
-              <th>Status</th>
-              <th>Action</th>
+              {tableHeaders.map((header) => (
+                <th key={header.key}>
+                  {header.isCheckbox ? (
+                    <input
+                      type="checkbox"
+                      checked={allChecked}
+                      onChange={(e) => handleSelectAll(e.target.checked)}
+                      disabled={filteredTransactions.length === 0}
+                    />
+                  ) : (
+                    header.label
+                  )}
+                </th>
+              ))}
             </tr>
           </thead>
           <tbody>
             {filteredTransactions.length > 0 ? (
               filteredTransactions.map(tx => (
                 <tr key={tx._id}>
-                  <td>
-                    <input
-                      type="checkbox"
-                      checked={selectedRows.includes(tx.customTransactionId)}
-                      onChange={() => handleSelectRow(tx.customTransactionId)}
-                    />
-                  </td>
-                  <td>{tx.customTransactionId}</td>
-                  <td className="customer-info-cell">
-                    <img
-                      src={tx.customerPhoto || '/assets/placeholder.png'}
-                      alt={tx.customerName || 'Customer'}
-                      className="customer-photo"
-                    />        
-                    <span>{tx.customerName}</span>
-                  </td>
-                  <td>{tx.customerPhone || 'N/A'}</td>
-                  <td>{tx.property?.name || 'N/A'}</td>
-                  <td>{new Date(tx.createdAt).toLocaleDateString()}</td>
-                  <td>{`$${tx.amount.toLocaleString('en-IN')}`}</td>
-                  <td>
-                    <span className={`status-badge ${getStatusClass(tx.status)}`}>
-                      {tx.status}
-                    </span>
-                  </td>
-                  <td className="dash-action-icons">
-                    <Link to={`/transaction/${tx.customTransactionId}`}>
-                      <img src="/assets/view-icon.png" alt="View" />
-                    </Link>
-                    <img
-                      src="/assets/delete-icon.png"
-                      alt="Delete"
-                      onClick={() => handleDelete(tx.customTransactionId)}
-                      style={{ cursor: 'pointer'}}
-                    />
-                    {/* <img src="/assets/edit-icon.png" alt="Edit" style={{ cursor: 'pointer' }} /> */}
-                  </td>
+                  {tableHeaders.map((header) => (
+                    <td key={`${tx._id}-${header.key}`}>
+                      {renderCellContent(tx, header.key)}
+                    </td>
+                  ))}
                 </tr>
               ))
             ) : (
               <tr>
-                <td colSpan="9" className="no-data-cell">No transactions found for this period.</td>
+                <td colSpan={tableHeaders.length} className="no-data-cell">
+                  No transactions found for this period.
+                </td>
               </tr>
             )}
           </tbody>

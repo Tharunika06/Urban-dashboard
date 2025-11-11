@@ -3,23 +3,26 @@ import React, { useState, useEffect } from 'react';
 import io from 'socket.io-client';
 import TransactionList from './TransactionList';
 import PopupMessage from '../../components/common/PopupMessage';
-import '../../styles/Transaction.css';
-import { BsSearch } from 'react-icons/bs';
 import MonthDropdown from '../../components/common/MonthDropdown';
 import Header from '../../components/layout/Header';
+import { BsSearch } from 'react-icons/bs';
+import { 
+  API_CONFIG, 
+  DEFAULTS,
+  UI_MESSAGES,
+  ASSET_PATHS,
+  BUTTON_LABELS
+} from '../../utils/constants';
+import { applyTransactionFilters } from '../../utils/transactionHelpers';
+import '../../styles/Transaction.css';
 
-const API_BASE_URL = 'http://192.168.0.152:5000';
-
-const months = [
-  'January', 'February', 'March', 'April', 'May', 'June',
-  'July', 'August', 'September', 'October', 'November', 'December'
-];
+const ITEMS_PER_PAGE = 5;
 
 const Transaction = () => {
   const [allTransactions, setAllTransactions] = useState([]);
   const [filteredTransactions, setFilteredTransactions] = useState([]);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedMonth, setSelectedMonth] = useState('');
+  const [searchTerm, setSearchTerm] = useState(DEFAULTS.SEARCH_TERM);
+  const [selectedMonth, setSelectedMonth] = useState(DEFAULTS.SELECTED_MONTH);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
@@ -32,7 +35,7 @@ const Transaction = () => {
 
   // Initialize Socket.io client
   useEffect(() => {
-    const socket = io(API_BASE_URL);
+    const socket = io(API_CONFIG.BASE_URL);
 
     // Listen for transaction updates
     socket.on('update-analytics', (data) => {
@@ -54,14 +57,14 @@ const Transaction = () => {
     // Optional: Add polling as fallback
     const refreshInterval = setInterval(() => {
       fetchTransactions(true);
-    }, 30000); // Refresh every 30 seconds
+    }, API_CONFIG.AUTO_REFRESH_INTERVAL);
     return () => clearInterval(refreshInterval);
   }, []);
 
   const fetchTransactions = async (silent = false) => {
     try {
       if (!silent) setIsLoading(true);
-      const response = await fetch(`${API_BASE_URL}/api/payment/transactions`);
+      const response = await fetch(`${API_CONFIG.BASE_URL}/api/payment/transactions`);
       if (!response.ok) throw new Error('Network response was not ok');
       const data = await response.json();
       setAllTransactions(data);
@@ -76,26 +79,11 @@ const Transaction = () => {
 
   // Filter transactions by search and month
   useEffect(() => {
-    let results = allTransactions;
-
-    if (selectedMonth) {
-      const monthIndex = months.indexOf(selectedMonth);
-      if (monthIndex > -1) {
-        results = results.filter(t => new Date(t.createdAt).getMonth() === monthIndex);
-      }
-    }
-
-    if (searchTerm) {
-      const term = searchTerm.toLowerCase();
-      results = results.filter(t =>
-        (t.customTransactionId && t.customTransactionId.toLowerCase().includes(term)) ||
-        (t.customerName && t.customerName.toLowerCase().includes(term)) ||
-        (t.customerPhone && t.customerPhone.includes(term)) ||
-        (t.ownerName && t.ownerName.toLowerCase().includes(term))
-      );
-    }
-
-    setFilteredTransactions(results);
+    const filtered = applyTransactionFilters(allTransactions, {
+      searchTerm,
+      month: selectedMonth
+    });
+    setFilteredTransactions(filtered);
     setCurrentPage(1); // Reset page when filter changes
   }, [searchTerm, selectedMonth, allTransactions]);
 
@@ -125,7 +113,7 @@ const Transaction = () => {
         const deletePromises = bulkDeleteIds.map(async (transactionId) => {
           const encodedTransactionId = encodeURIComponent(transactionId);
           const response = await fetch(
-            `${API_BASE_URL}/api/payment/transactions/${encodedTransactionId}`,
+            `${API_CONFIG.BASE_URL}/api/payment/transactions/${encodedTransactionId}`,
             { method: 'DELETE', headers: { 'Content-Type': 'application/json' } }
           );
           const data = await response.json();
@@ -147,8 +135,8 @@ const Transaction = () => {
           t => !deletedIds.includes(t.customTransactionId)
         );
         setFilteredTransactions(updatedFilteredTransactions);
-       // Reset pagination if current page becomes empty
-        const ITEMS_PER_PAGE = 7;
+        
+        // Reset pagination if current page becomes empty
         const totalPages = Math.ceil(updatedFilteredTransactions.length / ITEMS_PER_PAGE);
         if (currentPage > totalPages) setCurrentPage(totalPages > 0 ? totalPages : 1);
 
@@ -163,13 +151,13 @@ const Transaction = () => {
 
         const encodedTransactionId = encodeURIComponent(transactionToDelete);
         const response = await fetch(
-          `${API_BASE_URL}/api/payment/transactions/${encodedTransactionId}`,
+          `${API_CONFIG.BASE_URL}/api/payment/transactions/${encodedTransactionId}`,
           { method: 'DELETE', headers: { 'Content-Type': 'application/json' } }
         );
         const data = await response.json();
 
         if (!response.ok || !data.success) {
-          throw new Error(data.message || 'Failed to delete transaction');
+          throw new Error(data.message || UI_MESSAGES.DELETE_FAILED);
         }
 
         // Update frontend state
@@ -184,7 +172,6 @@ const Transaction = () => {
         setFilteredTransactions(updatedFilteredTransactions);
 
         // Reset pagination if current page becomes empty
-        const ITEMS_PER_PAGE = 7;
         const totalPages = Math.ceil(updatedFilteredTransactions.length / ITEMS_PER_PAGE);
         if (currentPage > totalPages) setCurrentPage(totalPages > 0 ? totalPages : 1);
 
@@ -193,7 +180,7 @@ const Transaction = () => {
       }
     } catch (err) {
       console.error('Failed to delete transaction(s):', err);
-      alert(`Failed to delete transaction(s): ${err.message}`);
+      alert(`${UI_MESSAGES.DELETE_FAILED}: ${err.message}`);
       setShowDeletePopup(false);
       setTransactionToDelete(null);
       setBulkDeleteIds([]);
@@ -234,7 +221,7 @@ const Transaction = () => {
                 <BsSearch className="search-icon" />
                 <input
                   type="search"
-                  placeholder="Search"
+                  placeholder={DEFAULTS.SEARCH_TERM || "Search"}
                   className="search-input"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
@@ -256,11 +243,15 @@ const Transaction = () => {
 
       {showDeletePopup && (
         <PopupMessage
+          title={isBulkDelete ? UI_MESSAGES.DELETE_BULK_TITLE : UI_MESSAGES.DELETE_SINGLE_TITLE}
           message={
             isBulkDelete
-              ? `Are you sure you want to delete ${bulkDeleteIds.length} selected transaction(s)?`
-              : 'Are you sure you want to delete this transaction?'
+              ? `${UI_MESSAGES.DELETE_BULK_MESSAGE_PREFIX} ${bulkDeleteIds.length} selected transaction(s)? ${UI_MESSAGES.DELETE_BULK_MESSAGE_SUFFIX}`
+              : UI_MESSAGES.DELETE_SINGLE_MESSAGE
           }
+          icon={ASSET_PATHS.REMOVE_ICON}
+          confirmLabel={BUTTON_LABELS.DELETE}
+          cancelLabel={BUTTON_LABELS.CANCEL}
           onConfirm={confirmDelete}
           onCancel={handleCancelDelete}
         />

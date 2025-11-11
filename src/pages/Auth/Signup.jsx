@@ -1,8 +1,9 @@
+// src/pages/Auth/Signup.jsx
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import "../../styles/Auth.css";
 import "bootstrap/dist/css/bootstrap.min.css";
-
+import authService, { handleAuthError, validatePassword } from "../../services/authService";
 import logo from "/assets/logo.png";
 import userIcon from "/assets/user-icon.png";
 import lockIcon from "/assets/lock-icon.png";
@@ -16,38 +17,36 @@ const Signup = () => {
   const [agreeTerms, setAgreeTerms] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
-
-  const isValidPassword = (pass) => {
-    const regex = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&]).{8,}$/;
-    return regex.test(pass);
-  };
+  const [loading, setLoading] = useState(false);
 
   const handleSignup = async (e) => {
     e.preventDefault();
-    if (!agreeTerms) return setError("You must agree to the terms.");
-    if (!isValidPassword(password)) {
-      return setError("Password must be at least 8 characters, include a symbol and a number.");
+    setError("");
+
+    if (!agreeTerms) {
+      return setError("You must agree to the terms.");
     }
 
+    // Validate password
+    const passwordValidation = validatePassword(password);
+    if (!passwordValidation.isValid) {
+      return setError(passwordValidation.message);
+    }
+
+    setLoading(true);
+
     try {
-      const res = await fetch("http://192.168.0.152:5000/api/signup", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password })
-      });
+      const data = await authService.signup(email, password);
 
-      const data = await res.json();
-
-      if (res.ok) {
+      if (data.ok) {
         setError("");
         alert("OTP sent to your email.");
         navigate("/verify", { state: { email } });
-      } else {
-        setError(data.error || "Signup failed");
       }
     } catch (err) {
-      console.error(err);
-      setError("Server error. Please try again.");
+      console.error("Signup error:", err);
+      setError(handleAuthError(err));
+      setLoading(false);
     }
   };
 
@@ -72,6 +71,8 @@ const Signup = () => {
                   placeholder="Email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
+                  disabled={loading}
+                  autoComplete="email"
                   required
                 />
               </div>
@@ -84,6 +85,8 @@ const Signup = () => {
                   placeholder="Password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
+                  disabled={loading}
+                  autoComplete="new-password"
                   required
                 />
                 <img
@@ -95,7 +98,11 @@ const Signup = () => {
                 />
               </div>
 
-              {error && <div className="alert alert-danger">{error}</div>}
+              {error && (
+                <div className="alert alert-danger" role="alert">
+                  {error}
+                </div>
+              )}
 
               <div className="form-check mb-4">
                 <input
@@ -104,14 +111,30 @@ const Signup = () => {
                   id="agreeTerms"
                   checked={agreeTerms}
                   onChange={() => setAgreeTerms(!agreeTerms)}
+                  disabled={loading}
                 />
                 <label htmlFor="agreeTerms" className="form-check-label">
                   By clicking the Register button, you agree to the public offer
                 </label>
               </div>
 
-              <button type="submit" className="btn btn-dark w-100 mb-3">
-                Sign Up
+              <button 
+                type="submit" 
+                className="btn btn-dark w-100 mb-3"
+                disabled={loading}
+              >
+                {loading ? (
+                  <>
+                    <span 
+                      className="spinner-border spinner-border-sm me-2" 
+                      role="status" 
+                      aria-hidden="true"
+                    />
+                    Signing up...
+                  </>
+                ) : (
+                  "Sign Up"
+                )}
               </button>
 
               <div className="divider d-flex align-items-center">
@@ -120,7 +143,11 @@ const Signup = () => {
                 <hr />
               </div>
 
-              <button type="button" className="btn google-button w-100 mb-3">
+              <button 
+                type="button" 
+                className="btn google-button w-100 mb-3"
+                disabled={loading}
+              >
                 <img src={googleIcon} alt="Google" />
                 Continue With Google
               </button>

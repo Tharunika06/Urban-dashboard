@@ -5,6 +5,27 @@ const UserRoles = () => {
   const [showRoleModal, setShowRoleModal] = useState(false);
   const [newRole, setNewRole] = useState({ name: "", desc: "", permissions: [] });
 
+  // Table headers configuration
+  const tableHeaders = [
+    { key: "checkbox", label: "", width: "50px" },
+    { key: "role", label: "Role" },
+    { key: "description", label: "Description" },
+    { key: "permissions", label: "Permissions" },
+    { key: "actions", label: "" }
+  ];
+
+  // Available permissions list
+  const availablePermissions = [
+    "Dashboard",
+    "Property",
+    "Agents",
+    "Customers",
+    "Orders",
+    "Transactions",
+    "Reviews",
+    "Settings"
+  ];
+
   const roles = [
     {
       id: 1,
@@ -47,6 +68,44 @@ const UserRoles = () => {
     setNewRole({ ...newRole, permissions: perms });
   };
 
+  // Render table cell content based on column key
+  const renderCell = (role, header) => {
+    switch (header.key) {
+      case "checkbox":
+        return <input type="checkbox" className="form-check-input" />;
+      case "role":
+        return <span className="ur-role-name">{role.name}</span>;
+      case "description":
+        return <span className="ur-role-desc">{role.description}</span>;
+      case "permissions":
+        return (
+          <div className="d-flex flex-wrap gap-1">
+            {role.permissions.map((permission, idx) => {
+              const { background, color } = getPermissionStyle(permission);
+              return (
+                <span
+                  key={idx}
+                  className="ur-permission"
+                  style={{ backgroundColor: background, color }}
+                >
+                  {permission}
+                </span>
+              );
+            })}
+          </div>
+        );
+      case "actions":
+        return (
+          <div className="d-flex gap-2">
+            <button className="btn-edit">Edit</button>
+            <button className="btn-delete">Delete</button>
+          </div>
+        );
+      default:
+        return null;
+    }
+  };
+
   return (
     <div>
       <div className="ur-header d-flex justify-content-between align-items-center mb-3">
@@ -69,41 +128,25 @@ const UserRoles = () => {
         <table className="table ur-table">
           <thead>
             <tr>
-              <th><input type="checkbox" className="form-check-input" /></th>
-              <th>Role</th>
-              <th>Description</th>
-              <th>Permissions</th>
-              <th></th>
+              {tableHeaders.map((header) => (
+                <th key={header.key} style={header.width ? { width: header.width } : {}}>
+                  {header.key === "checkbox" ? (
+                    <input type="checkbox" className="form-check-input" />
+                  ) : (
+                    header.label
+                  )}
+                </th>
+              ))}
             </tr>
           </thead>
           <tbody>
             {roles.map((role) => (
               <tr key={role.id}>
-                <td><input type="checkbox" className="form-check-input" /></td>
-                <td className="ur-role-name">{role.name}</td>
-                <td className="ur-role-desc">{role.description}</td>
-                <td>
-                  <div className="d-flex flex-wrap gap-1">
-                    {role.permissions.map((permission, idx) => {
-                      const { background, color } = getPermissionStyle(permission);
-                      return (
-                        <span
-                          key={idx}
-                          className="ur-permission"
-                          style={{ backgroundColor: background, color }}
-                        >
-                          {permission}
-                        </span>
-                      );
-                    })}
-                  </div>
-                </td>
-                <td>
-                  <div className="d-flex gap-2">
-                    <button className="btn-edit">Edit</button>
-                    <button className="btn-delete">Delete</button>
-                  </div>
-                </td>
+                {tableHeaders.map((header) => (
+                  <td key={`${role.id}-${header.key}`}>
+                    {renderCell(role, header)}
+                  </td>
+                ))}
               </tr>
             ))}
           </tbody>
@@ -165,102 +208,20 @@ const UserRoles = () => {
                 <div className="mb-4">
                   <label className="ur-form-label">Permissions</label>
                   <div className="ur-permission-list">
-                    <div className="ur-permission-item">
-                      <input
-                        type="checkbox"
-                        className="form-check-input"
-                        id="dashboard"
-                        checked={newRole.permissions.includes("Dashboard")}
-                        onChange={(e) => handlePermissionChange("Dashboard", e.target.checked)}
-                      />
-                      <label className="form-check-label" htmlFor="dashboard">
-                        Dashboard
-                      </label>
-                    </div>
-                    <div className="ur-permission-item">
-                      <input
-                        type="checkbox"
-                        className="form-check-input"
-                        id="property"
-                        checked={newRole.permissions.includes("Property")}
-                        onChange={(e) => handlePermissionChange("Property", e.target.checked)}
-                      />
-                      <label className="form-check-label" htmlFor="property">
-                        Property
-                      </label>
-                    </div>
-                    <div className="ur-permission-item">
-                      <input
-                        type="checkbox"
-                        className="form-check-input"
-                        id="agents"
-                        checked={newRole.permissions.includes("Agents")}
-                        onChange={(e) => handlePermissionChange("Agents", e.target.checked)}
-                      />
-                      <label className="form-check-label" htmlFor="agents">
-                        Agents
-                      </label>
-                    </div>
-                    <div className="ur-permission-item">
-                      <input
-                        type="checkbox"
-                        className="form-check-input"
-                        id="customers"
-                        checked={newRole.permissions.includes("Customers")}
-                        onChange={(e) => handlePermissionChange("Customers", e.target.checked)}
-                      />
-                      <label className="form-check-label" htmlFor="customers">
-                        Customers
-                      </label>
-                    </div>
-                    <div className="ur-permission-item">
-                      <input
-                        type="checkbox"
-                        className="form-check-input"
-                        id="orders"
-                        checked={newRole.permissions.includes("Orders")}
-                        onChange={(e) => handlePermissionChange("Orders", e.target.checked)}
-                      />
-                      <label className="form-check-label" htmlFor="orders">
-                        Orders
-                      </label>
-                    </div>
-                    <div className="ur-permission-item">
-                      <input
-                        type="checkbox"
-                        className="form-check-input"
-                        id="transactions"
-                        checked={newRole.permissions.includes("Transactions")}
-                        onChange={(e) => handlePermissionChange("Transactions", e.target.checked)}
-                      />
-                      <label className="form-check-label" htmlFor="transactions">
-                        Transactions
-                      </label>
-                    </div>
-                    <div className="ur-permission-item">
-                      <input
-                        type="checkbox"
-                        className="form-check-input"
-                        id="reviews"
-                        checked={newRole.permissions.includes("Reviews")}
-                        onChange={(e) => handlePermissionChange("Reviews", e.target.checked)}
-                      />
-                      <label className="form-check-label" htmlFor="reviews">
-                        Reviews
-                      </label>
-                    </div>
-                    <div className="ur-permission-item">
-                      <input
-                        type="checkbox"
-                        className="form-check-input"
-                        id="settings"
-                        checked={newRole.permissions.includes("Settings")}
-                        onChange={(e) => handlePermissionChange("Settings", e.target.checked)}
-                      />
-                      <label className="form-check-label" htmlFor="settings">
-                        Settings
-                      </label>
-                    </div>
+                    {availablePermissions.map((permission) => (
+                      <div key={permission} className="ur-permission-item">
+                        <input
+                          type="checkbox"
+                          className="form-check-input"
+                          id={permission.toLowerCase()}
+                          checked={newRole.permissions.includes(permission)}
+                          onChange={(e) => handlePermissionChange(permission, e.target.checked)}
+                        />
+                        <label className="form-check-label" htmlFor={permission.toLowerCase()}>
+                          {permission}
+                        </label>
+                      </div>
+                    ))}
                   </div>
                 </div>
               </div>

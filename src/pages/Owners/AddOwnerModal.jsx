@@ -1,6 +1,15 @@
-// AddOwnerModal.jsx
+// src/pages/Owners/AddOwnerModal.jsx
 import React, { useState } from 'react';
 import axios from 'axios';
+import { 
+  API_CONFIG, 
+  BUTTON_LABELS, 
+  FORM_LABELS,
+  PLACEHOLDERS,
+  CITIES,
+  convertToBase64,
+  POPUP_MESSAGES 
+} from '../../utils/constants';
 
 // Success Popup Component
 const SuccessPopup = ({ isOpen, onClose, title = "Owner Added Successfully" }) => {
@@ -43,7 +52,7 @@ const SuccessPopup = ({ isOpen, onClose, title = "Owner Added Successfully" }) =
             padding: '5px'
           }}
         >
-          ×
+          {BUTTON_LABELS.CLOSE}
         </button>
 
         <div style={{
@@ -89,7 +98,7 @@ const SuccessPopup = ({ isOpen, onClose, title = "Owner Added Successfully" }) =
           onMouseOver={(e) => e.target.style.backgroundColor = '#3367d6'}
           onMouseOut={(e) => e.target.style.backgroundColor = '#4285f4'}
         >
-          OK
+          {BUTTON_LABELS.OK}
         </button>
 
         <style>{`
@@ -151,7 +160,7 @@ const ErrorPopup = ({ isOpen, onClose, title = "Error", message = "Something wen
             padding: '5px'
           }}
         >
-          ×
+          {BUTTON_LABELS.CLOSE}
         </button>
 
         <div style={{
@@ -206,7 +215,7 @@ const ErrorPopup = ({ isOpen, onClose, title = "Error", message = "Something wen
           onMouseOver={(e) => e.target.style.backgroundColor = '#d32f2f'}
           onMouseOut={(e) => e.target.style.backgroundColor = '#f44336'}
         >
-          OK
+          {BUTTON_LABELS.OK}
         </button>
 
         <style>{`
@@ -240,7 +249,6 @@ const AddOwnerModal = ({ isOpen, onClose, onSave }) => {
     textNumber: '',
     servicesArea: '',
     about: ''
-    // REMOVED: propertySold and propertyRent - these are auto-calculated
   };
 
   const [form, setForm] = useState(initialForm);
@@ -259,15 +267,11 @@ const AddOwnerModal = ({ isOpen, onClose, onSave }) => {
     
     // Phone number validation for contact field
     if (name === 'contact') {
-      // Only allow digits
       const digitsOnly = value.replace(/\D/g, '');
-      
-      // Limit to 10 digits
       const limitedValue = digitsOnly.slice(0, 10);
       
       setForm((prev) => ({ ...prev, [name]: limitedValue }));
       
-      // Show error if length is not 10 and field is not empty
       if (limitedValue.length > 0 && limitedValue.length < 10) {
         setPhoneError('Phone number must be exactly 10 digits');
       } else {
@@ -290,17 +294,7 @@ const AddOwnerModal = ({ isOpen, onClose, onSave }) => {
     }
   };
 
-  const convertToBase64 = (file) => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve(reader.result);
-      reader.onerror = (error) => reject(error);
-      reader.readAsDataURL(file);
-    });
-  };
-
   const validateForm = () => {
-    // Check if phone number is provided and is exactly 10 digits
     if (form.contact && form.contact.length !== 10) {
       setErrorMessage('Phone number must be exactly 10 digits');
       setShowErrorPopup(true);
@@ -312,7 +306,6 @@ const AddOwnerModal = ({ isOpen, onClose, onSave }) => {
   const handleFormSubmit = async (e) => {
     e.preventDefault();
     
-    // Validate form before submission
     if (!validateForm()) {
       return;
     }
@@ -332,15 +325,12 @@ const AddOwnerModal = ({ isOpen, onClose, onSave }) => {
         };
       }
 
-      // NOTE: Property stats are NOT included - they will be auto-calculated
       const payload = {
         ...form,
         photo: photoBase64,
         photoInfo: photoInfo
-        // propertySold and propertyRent are auto-calculated from properties
       };
 
-      // Debug logs
       console.log('=== FORM SUBMISSION DEBUG ===');
       console.log('Full form state:', form);
       console.log('DOJ value:', form.doj, '| Type:', typeof form.doj, '| Is empty?', form.doj === '');
@@ -350,12 +340,13 @@ const AddOwnerModal = ({ isOpen, onClose, onSave }) => {
       console.log('============================');
 
       const response = await axios.post(
-        'http://192.168.0.152:5000/api/owners/add-owner',
+        `${API_CONFIG.BASE_URL}/api/owners/add-owner`,
         payload,
         {
           headers: { 
             'Content-Type': 'application/json'
-          }
+          },
+          timeout: API_CONFIG.TIMEOUT
         }
       );
 
@@ -372,7 +363,7 @@ const AddOwnerModal = ({ isOpen, onClose, onSave }) => {
     } catch (error) {
       console.error('Error saving owner:', error.response ? error.response.data : error.message);
       
-      let errorMsg = 'Failed to save owner. Please try again.';
+      let errorMsg = POPUP_MESSAGES.PROPERTY_ADD_FAILED.message;
       
       if (error.response?.data?.error) {
         errorMsg = error.response.data.error;
@@ -381,7 +372,7 @@ const AddOwnerModal = ({ isOpen, onClose, onSave }) => {
       } else if (error.response?.status) {
         errorMsg = `Server Error: ${error.response.status}`;
       } else if (error.request) {
-        errorMsg = 'Network error. Please check your connection and try again.';
+        errorMsg = POPUP_MESSAGES.NETWORK_ERROR.message;
       }
       
       setErrorMessage(errorMsg);
@@ -399,7 +390,9 @@ const AddOwnerModal = ({ isOpen, onClose, onSave }) => {
       <div className="modal-content" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
           <h3>{step === 1 ? 'Add Owner - Basic Info' : 'Add Owner - Professional Details'}</h3>
-          <button onClick={onClose} className="close-btn" style={{ fontSize: '16px' }}> ✖ </button>
+          <button onClick={onClose} className="close-btn" style={{ fontSize: '16px' }}> 
+            {BUTTON_LABELS.CLOSE} 
+          </button>
         </div>
 
         <form onSubmit={handleFormSubmit}>
@@ -408,12 +401,26 @@ const AddOwnerModal = ({ isOpen, onClose, onSave }) => {
               <>
                 <div className="form-row">
                   <div className="form-group">
-                    <label htmlFor="ownerName">Owner Name</label>
-                    <input type="text" id="ownerName" name="name" value={form.name} onChange={handleChange} required />
+                    <label htmlFor="ownerName">{FORM_LABELS.OWNER_NAME}</label>
+                    <input 
+                      type="text" 
+                      id="ownerName" 
+                      name="name" 
+                      value={form.name} 
+                      onChange={handleChange} 
+                      required 
+                    />
                   </div>
                   <div className="form-group">
                     <label htmlFor="ownerEmail">Owner Email</label>
-                    <input type="email" id="ownerEmail" name="email" value={form.email} onChange={handleChange} required />
+                    <input 
+                      type="email" 
+                      id="ownerEmail" 
+                      name="email" 
+                      value={form.email} 
+                      onChange={handleChange} 
+                      required 
+                    />
                   </div>
                 </div>
                 <div className="form-row">
@@ -454,19 +461,36 @@ const AddOwnerModal = ({ isOpen, onClose, onSave }) => {
                 </div>
                 <div className="form-group">
                   <label htmlFor="ownerAddress">Owner Address</label>
-                  <textarea id="ownerAddress" name="address" value={form.address} onChange={handleChange}></textarea>
+                  <textarea 
+                    id="ownerAddress" 
+                    name="address" 
+                    value={form.address} 
+                    onChange={handleChange}
+                  ></textarea>
                 </div>
                 <div className="form-row">
                   <div className="form-group">
                     <label htmlFor="ownerImage">Owner Image</label>
                     <div className="custom-file-input">
-                      <input type="file" id="ownerImage" name="photo" accept="image/*" onChange={handleOwnerFileChange} required />
+                      <input 
+                        type="file" 
+                        id="ownerImage" 
+                        name="photo" 
+                        accept="image/*" 
+                        onChange={handleOwnerFileChange} 
+                        required 
+                      />
                       <span>{ownerPhotoName}</span>
                     </div>
                   </div>
                   <div className="form-group">
                     <label htmlFor="status">Status</label>
-                    <select id="status" name="status" value={form.status} onChange={handleChange}>
+                    <select 
+                      id="status" 
+                      name="status" 
+                      value={form.status} 
+                      onChange={handleChange}
+                    >
                       <option value="Active">Active</option>
                       <option value="Inactive">Inactive</option>
                     </select>
@@ -474,12 +498,17 @@ const AddOwnerModal = ({ isOpen, onClose, onSave }) => {
                 </div>
                 <div className="form-row">
                   <div className="form-group">
-                    <label htmlFor="city">City</label>
-                    <select id="city" name="city" value={form.city} onChange={handleChange}>
+                    <label htmlFor="city">{FORM_LABELS.CITY}</label>
+                    <select 
+                      id="city" 
+                      name="city" 
+                      value={form.city} 
+                      onChange={handleChange}
+                    >
                       <option value="">Choose a City</option>
-                      <option value="Chennai">Chennai</option>
-                      <option value="Delhi">Delhi</option>
-                      <option value="New York">New York</option>
+                      {CITIES.map(city => (
+                        <option key={city} value={city}>{city}</option>
+                      ))}
                     </select>
                   </div>
                 </div>
@@ -487,27 +516,61 @@ const AddOwnerModal = ({ isOpen, onClose, onSave }) => {
             ) : (
               <>
                 <div className="form-group full-width">
-                  <label htmlFor="about">About Owner</label>
-                  <textarea id="about" name="about" value={form.about} onChange={handleChange} placeholder="Tell us about the owner/agent..."></textarea>
+                  <label htmlFor="about">{FORM_LABELS.ABOUT}</label>
+                  <textarea 
+                    id="about" 
+                    name="about" 
+                    value={form.about} 
+                    onChange={handleChange} 
+                    placeholder="Tell us about the owner/agent..."
+                  ></textarea>
                 </div>
                 <div className="form-row">
                   <div className="form-group">
                     <label htmlFor="agency">Agency</label>
-                    <input type="text" id="agency" name="agency" value={form.agency} onChange={handleChange} placeholder="e.g., Universo Realtors" />
+                    <input 
+                      type="text" 
+                      id="agency" 
+                      name="agency" 
+                      value={form.agency} 
+                      onChange={handleChange} 
+                      placeholder="e.g., Universo Realtors" 
+                    />
                   </div>
                   <div className="form-group">
                     <label htmlFor="licenseNumber">Agent License</label>
-                    <input type="text" id="licenseNumber" name="licenseNumber" value={form.licenseNumber} onChange={handleChange} placeholder="e.g., LC-5758-2048-3944" />
+                    <input 
+                      type="text" 
+                      id="licenseNumber" 
+                      name="licenseNumber" 
+                      value={form.licenseNumber} 
+                      onChange={handleChange} 
+                      placeholder="e.g., LC-5758-2048-3944" 
+                    />
                   </div>
                 </div>
                 <div className="form-row">
                   <div className="form-group">
                     <label htmlFor="textNumber">Text Number</label>
-                    <input type="text" id="textNumber" name="textNumber" value={form.textNumber} onChange={handleChange} placeholder="e.g., TC-9275-PC-55685" />
+                    <input 
+                      type="text" 
+                      id="textNumber" 
+                      name="textNumber" 
+                      value={form.textNumber} 
+                      onChange={handleChange} 
+                      placeholder="e.g., TC-9275-PC-55685" 
+                    />
                   </div>
                   <div className="form-group">
                     <label htmlFor="servicesArea">Services Area</label>
-                    <input type="text" id="servicesArea" name="servicesArea" value={form.servicesArea} onChange={handleChange} placeholder="e.g., Lincoln Drive Harrisburg" />
+                    <input 
+                      type="text" 
+                      id="servicesArea" 
+                      name="servicesArea" 
+                      value={form.servicesArea} 
+                      onChange={handleChange} 
+                      placeholder="e.g., Lincoln Drive Harrisburg" 
+                    />
                   </div>
                 </div>
                 
@@ -535,15 +598,15 @@ const AddOwnerModal = ({ isOpen, onClose, onSave }) => {
           <div className="modal-footer">
             {step === 1 ? (
               <button type="button" className="btn btn-next" onClick={() => setStep(2)}>
-                Next
+                {BUTTON_LABELS.NEXT}
               </button>
             ) : (
               <>
                 <button type="button" className="btn btn-back" onClick={() => setStep(1)}>
-                  Back
+                  {BUTTON_LABELS.BACK}
                 </button>
                 <button type="submit" className="btn btn-save" disabled={loading}>
-                  {loading ? 'Saving...' : 'Save Owner'}
+                  {loading ? BUTTON_LABELS.SAVING : BUTTON_LABELS.SAVE}
                 </button>
               </>
             )}

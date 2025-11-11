@@ -78,7 +78,7 @@ const Dashboard = () => {
     <div className="dashboard-container">
       <div className="main-content">
         <Header title="Dashboard" onToggleSidebar={toggleSidebar} />
-        <Sidebar isOpen={isSidebarOpen} onClose={toggleSidebar} />
+       {/*<Sidebar isOpen={isSidebarOpen} onClose={toggleSidebar} />*/}
         <main className="dashboard-body">
           <div className="dashboard-content">
             {/* Row 1: Analytics Stat Cards */}

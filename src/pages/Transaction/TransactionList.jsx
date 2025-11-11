@@ -2,78 +2,83 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import Checkbox from '../../components/common/Checkbox';
+import PopupMessage from '../../components/common/PopupMessage';
+import { 
+  API_CONFIG, 
+  DEFAULTS,
+  ASSET_PATHS,
+  UI_MESSAGES,
+  BUTTON_LABELS,
+  getStatusClass 
+} from '../../utils/constants';
+import {
+  calculateTransactionPagination,
+  getPurchaseTypeClass,
+  formatPurchaseType,
+  getSelectedIds,
+  toggleAllItems,
+  toggleSingleItem,
+  getImageSrc,
+  handleImageError as getImageErrorHandler,
+  formatTransactionDate,
+  formatAmount
+} from '../../utils/transactionHelpers';
 
-const ITEMS_PER_PAGE = 7;
+const ITEMS_PER_PAGE = 5;
 
-const TransactionList = ({ 
-  transactions, 
-  handleDelete, 
-  handleBulkDelete, 
-  currentPage, 
-  setCurrentPage 
+const TransactionList = ({
+  transactions,
+  handleDelete,
+  handleBulkDelete,
+  currentPage,
+  setCurrentPage,
 }) => {
   const [selectAll, setSelectAll] = useState(false);
   const [checkedRows, setCheckedRows] = useState({});
+  const [showBulkDeletePopup, setShowBulkDeletePopup] = useState(false);
+  const [selectedIds, setSelectedIds] = useState([]);
 
-  const totalPages = Math.ceil(transactions.length / ITEMS_PER_PAGE);
-  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-  const currentTransactions = transactions.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+  const tableHeaders = [
+    { 
+      label: <Checkbox checked={selectAll} onChange={handleSelectAll} id="select-all-checkbox" />,
+      key: 'checkbox'
+    },
+    { label: 'Transaction ID', key: 'transactionId' },
+    { label: 'Customer Photo & Name', key: 'customerName' },
+    { label: 'Phone', key: 'phone' },
+    { label: 'Date', key: 'date' },
+    { label: 'Payment Method', key: 'paymentMethod' },
+    { label: 'Amount', key: 'amount' },
+    { label: 'Purchase Type', key: 'purchaseType' },
+    { label: 'Property Name', key: 'propertyName' },
+    { label: 'Owner Name', key: 'ownerName' },
+    { label: 'Status', key: 'status' },
+    { label: 'Action', key: 'action' }
+  ];
 
-  // Reset checkboxes when page changes or transactions change
+  const pagination = calculateTransactionPagination(transactions, currentPage, ITEMS_PER_PAGE);
+  const { totalPages, currentItems: currentTransactions } = pagination;
+
   useEffect(() => {
     setSelectAll(false);
     setCheckedRows({});
   }, [currentPage, transactions]);
 
-  const getStatusClass = (status) => (status ? status.toLowerCase() : '');
-  
-  // Function to get purchase type badge class
-  const getPurchaseTypeClass = (purchaseType) => {
-    switch (purchaseType?.toLowerCase()) {
-      case 'buy':
-      case 'sale': // Handle both 'buy' and 'sale' for backward compatibility
-        return 'purchase-type-buy';
-      case 'rent':
-        return 'purchase-type-rent';
-      default:
-        return 'purchase-type-unknown';
-    }
-  };
-
-  // Function to format purchase type for display
-  const formatPurchaseType = (purchaseType) => {
-    switch (purchaseType?.toLowerCase()) {
-      case 'buy':
-      case 'sale': // Handle both 'buy' and 'sale' for backward compatibility
-        return 'Buy';
-      case 'rent':
-        return 'Rent';
-      default:
-        return 'N/A';
-    }
-  };
-
-  const handleSelectAll = () => {
-    const updated = {};
-    currentTransactions.forEach((t) => {
-      updated[t.customTransactionId] = !selectAll;
-    });
+  function handleSelectAll() {
+    const updated = toggleAllItems(currentTransactions, selectAll, 'customTransactionId');
     setCheckedRows(updated);
     setSelectAll(!selectAll);
-  };
+  }
 
   const toggleCheckbox = (id) => {
-    setCheckedRows(prev => {
-      const newChecked = { ...prev, [id]: !prev[id] };
-      
-      // Check if all current page items are selected
-      const allSelected = currentTransactions.every(
-        t => newChecked[t.customTransactionId]
-      );
-      setSelectAll(allSelected);
-      
-      return newChecked;
-    });
+    const result = toggleSingleItem(
+      checkedRows, 
+      id, 
+      currentTransactions, 
+      'customTransactionId'
+    );
+    setCheckedRows(result.checkedRows);
+    setSelectAll(result.selectAll);
   };
 
   const handlePageChange = (page) => {
@@ -83,28 +88,29 @@ const TransactionList = ({
     setCheckedRows({});
   };
 
-  const getImageSrc = (photo) => {
-    if (photo && photo.startsWith('data:image/')) return photo;
-    if (photo && photo.startsWith('/uploads/')) return `http://192.168.0.152:5000${photo}`;
-    return '/assets/placeholder.png';
+  const handleImageErrorWrapper = (e) => {
+    getImageErrorHandler(e, DEFAULTS.PLACEHOLDER_IMAGE);
   };
 
-  const handleImageError = (e) => {
-    e.target.src = '/assets/placeholder.png';
-  };
-
-  // Get selected transaction IDs
-  const getSelectedIds = () => {
-    return Object.keys(checkedRows).filter(id => checkedRows[id]);
-  };
-
-  const selectedCount = getSelectedIds().length;
+  const selectedCount = getSelectedIds(checkedRows).length;
 
   const handleBulkDeleteClick = () => {
-    const selectedIds = getSelectedIds();
-    if (selectedIds.length > 0) {
-      handleBulkDelete(selectedIds);
+    const ids = getSelectedIds(checkedRows);
+    if (ids.length > 0) {
+      setSelectedIds(ids);
+      setShowBulkDeletePopup(true);
     }
+  };
+
+  const confirmBulkDelete = () => {
+    handleBulkDelete(selectedIds);
+    setShowBulkDeletePopup(false);
+    setSelectedIds([]);
+  };
+
+  const cancelBulkDelete = () => {
+    setShowBulkDeletePopup(false);
+    setSelectedIds([]);
   };
 
   return (
@@ -112,45 +118,38 @@ const TransactionList = ({
       {selectedCount > 0 && (
         <div className="bulk-actions-bar">
           <span className="selected-count">{selectedCount} selected</span>
-          <button 
-            className="bulk-delete-btn"
-            onClick={handleBulkDeleteClick}
-          >
+          <button className="bulk-delete-btn" onClick={handleBulkDeleteClick}>
             Delete Selected
           </button>
         </div>
+      )}
+
+      {showBulkDeletePopup && (
+        <PopupMessage
+          title={UI_MESSAGES.DELETE_BULK_TITLE}
+          message={`${UI_MESSAGES.DELETE_BULK_MESSAGE_PREFIX} ${selectedIds.length} transaction(s)? ${UI_MESSAGES.DELETE_BULK_MESSAGE_SUFFIX}`}
+          icon={ASSET_PATHS.REMOVE_ICON}
+          confirmLabel={BUTTON_LABELS.DELETE}
+          cancelLabel={BUTTON_LABELS.CANCEL}
+          onConfirm={confirmBulkDelete}
+          onCancel={cancelBulkDelete}
+        />
       )}
 
       <div className="table-container">
         <table className="transaction-list-table">
           <thead>
             <tr>
-              <th>
-                <Checkbox 
-                  checked={selectAll} 
-                  onChange={handleSelectAll}
-                  id="select-all-checkbox"
-                />
-              </th>
-              <th>Transaction ID</th>
-              <th>Customer Photo & Name</th>
-              <th>Phone</th>
-              <th>Date</th>
-              <th>Payment Method</th>
-              <th>Amount</th>
-              <th>Purchase Type</th>
-              <th>Property Name</th>
-              <th>Owner Name</th>
-              <th>Status</th>
-              <th>Action</th>
+              {tableHeaders.map((header) => (
+                <th key={header.key}>{header.label}</th>
+              ))}
             </tr>
           </thead>
           <tbody>
             {currentTransactions.length > 0 ? (
               currentTransactions.map((transaction) => {
-                // Get purchase type from either field for backward compatibility
                 const purchaseType = transaction.purchaseType || transaction.transactionType || 'buy';
-                
+
                 return (
                   <tr key={transaction._id}>
                     <td>
@@ -164,18 +163,22 @@ const TransactionList = ({
                     <td>
                       <div className="customer-info-cell">
                         <img
-                          src={getImageSrc(transaction.customerPhoto)}
+                          src={getImageSrc(
+                            transaction.customerPhoto,
+                            API_CONFIG.BASE_URL,
+                            DEFAULTS.PLACEHOLDER_IMAGE
+                          )}
                           alt={transaction.customerName || 'Customer'}
                           className="customer-photo"
-                          onError={handleImageError}
+                          onError={handleImageErrorWrapper}
                         />
                         <span>{transaction.customerName}</span>
                       </div>
                     </td>
                     <td>{transaction.customerPhone || 'N/A'}</td>
-                    <td>{new Date(transaction.createdAt).toLocaleDateString()}</td>
+                    <td>{formatTransactionDate(transaction.createdAt)}</td>
                     <td>{transaction.paymentMethod}</td>
-                    <td>{`₹${transaction.amount.toLocaleString('en-IN')}`}</td>
+                    <td>{formatAmount(transaction.amount)}</td>
                     <td>
                       <span className={`purchase-type-badge ${getPurchaseTypeClass(purchaseType)}`}>
                         {formatPurchaseType(purchaseType)}
@@ -198,16 +201,15 @@ const TransactionList = ({
                         onClick={() => handleDelete(transaction.customTransactionId)}
                         style={{ cursor: 'pointer' }}
                       />
-                      {/* <Link to={`/transaction/edit/${transaction.customTransactionId}`}>
-                        <img src="/assets/edit-icon.png" alt="Edit" />
-                      </Link> */}
                     </td>
                   </tr>
                 );
               })
             ) : (
               <tr>
-                <td colSpan="12" className="no-data-cell">No transactions found.</td>
+                <td colSpan={tableHeaders.length} className="no-data-cell">
+                  No transactions found.
+                </td>
               </tr>
             )}
           </tbody>

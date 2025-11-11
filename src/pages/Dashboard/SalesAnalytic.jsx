@@ -1,3 +1,4 @@
+// src/pages/Dashboard/SalesAnalytic.jsx
 import React, { useEffect, useState } from "react";
 import {
   LineChart,
@@ -9,65 +10,36 @@ import {
 } from "recharts";
 import api from "../../utils/api";
 import MonthDropdown from "../../components/common/MonthDropdown";
-
-const MONTH_NAMES = [
-  "Jan","Feb","Mar","Apr","May","Jun",
-  "Jul","Aug","Sept","Oct","Nov","Dec"
-];
-const MONTH_SHORT = MONTH_NAMES.map(m => m.slice(0,3).toLowerCase());
-
-const yAxisTickFormatter = (value) => {
-  if (value >= 1000000) {
-    return `$${(value / 1000000).toFixed(1)}M`;
-  } else if (value >= 1000) {
-    return `$${(value / 1000).toFixed(1)}K`;
-  } else {
-    return `$${value.toFixed(0)}`;
-  }
-};
-
-const toFullMonthName = (raw) => {
-  if (raw === null || raw === undefined) return null;
-  if (typeof raw === "number" || (/^\d+$/.test(String(raw).trim()))) {
-    const idx = Number(raw) - 1;
-    if (idx >= 0 && idx < 12) return MONTH_NAMES[idx];
-    return null;
-  }
-  const s = String(raw).trim().toLowerCase();
-  const full = MONTH_NAMES.find(m => m.toLowerCase() === s);
-  if (full) return full;
-  const shortIdx = MONTH_SHORT.indexOf(s.length >= 3 ? s.slice(0,3) : s);
-  if (shortIdx !== -1) return MONTH_NAMES[shortIdx];
-  return null;
-};
+import { 
+  MONTHS_FULL, 
+  toFullMonthName, 
+  formatters,
+  CHART_COLORS,
+  DEFAULTS 
+} from "../../utils/constants";
+import { 
+  getYAxisDomain, 
+  createCustomDotRenderer,
+  calculateTotal,
+  getMonthData,
+  currencyTooltipFormatter,
+  tooltipLabelFormatter 
+} from "../../utils/chartUtils";
+import { formatSalesData } from "../../utils/dataUtils";
 
 const SalesAnalytic = () => {
   const [data, setData] = useState([]);
   const [total, setTotal] = useState(0);
-  const [selectedMonth, setSelectedMonth] = useState("All");
+  const [selectedMonth, setSelectedMonth] = useState(DEFAULTS.MONTH);
 
   useEffect(() => {
     const fetchSales = async () => {
       try {
         const res = await api.get("/sales/monthly");
-
-        const formattedData = res.data.map((item) => {
-          let name = item.month;
-          const full = toFullMonthName(name);
-          if (full) name = full;
-          name = String(name).trim();
-
-          const earnings = parseFloat(item.earnings) || 0;
-          return { name, earnings };
-        });
-
-        const validData = formattedData.filter(item => 
-          item.name && !isNaN(item.earnings)
-        );
-
-        setData(validData);
-
-        const totalEarnings = validData.reduce((sum, it) => sum + it.earnings, 0);
+        const formattedData = formatSalesData(res.data, toFullMonthName);
+        
+        setData(formattedData);
+        const totalEarnings = calculateTotal(formattedData, 'earnings');
         setTotal(totalEarnings);
       } catch (err) {
         console.error("Error fetching sales analytics:", err);
@@ -80,78 +52,25 @@ const SalesAnalytic = () => {
   }, []);
 
   const handleMonthChange = (monthValue) => {
-    setSelectedMonth(monthValue || "All");
+    setSelectedMonth(monthValue || DEFAULTS.MONTH);
 
-    if (!monthValue || String(monthValue).toLowerCase() === "all") {
-      const yearlyTotal = data.reduce((sum, item) => sum + item.earnings, 0);
+    if (!monthValue || String(monthValue).toLowerCase() === 'all') {
+      const yearlyTotal = calculateTotal(data, 'earnings');
       setTotal(yearlyTotal);
       return;
     }
 
-    const monthFull = toFullMonthName(monthValue);
-    let monthData = null;
-    if (monthFull) {
-      monthData = data.find(d => String(d.name).toLowerCase() === monthFull.toLowerCase());
-    } else {
-      const s = String(monthValue).trim().toLowerCase();
-      monthData = data.find(d => String(d.name).trim().toLowerCase() === s);
-    }
-
-    if (monthData) {
-      setTotal(monthData.earnings);
-    } else {
-      setTotal(0);
-    }
+    const monthData = getMonthData(data, monthValue, toFullMonthName);
+    setTotal(monthData ? monthData.earnings : 0);
   };
 
-  const getYAxisDomain = () => {
-    if (!data.length) return [0, 100];
-    
-    const maxValue = Math.max(...data.map(d => d.earnings));
-    const minValue = Math.min(...data.map(d => d.earnings));
-    
-    const padding = (maxValue - minValue) * 0.1 || maxValue * 0.1 || 10;
-    
-    return [
-      Math.max(0, minValue - padding),
-      maxValue + padding
-    ];
-  };
-
-  const renderCustomDot = (props) => {
-    const { cx, cy, payload } = props;
-    if (cx === undefined || cy === undefined) return null;
-
-    const sel = selectedMonth && String(selectedMonth).toLowerCase();
-    const payloadName = String(payload?.name || "").trim().toLowerCase();
-
-    const selFull = toFullMonthName(selectedMonth);
-    const selCompare = selFull ? selFull.toLowerCase() : sel;
-
-    if (selectedMonth && selectedMonth !== "All" && payloadName === selCompare) {
-      return (
-        <circle
-          cx={cx}
-          cy={cy}
-          r={7}
-          stroke="#e52c82ff"
-          strokeWidth={2.5}
-          fill="#fff"
-        />
-      );
-    }
-
-    return (
-      <circle
-        cx={cx}
-        cy={cy}
-        r={4}
-        stroke="var(--chart-line-1)"
-        strokeWidth={2}
-        fill="#fff"
-      />
-    );
-  };
+  const renderCustomDot = createCustomDotRenderer(
+    selectedMonth,
+    toFullMonthName,
+    CHART_COLORS.HIGHLIGHT,
+    'var(--chart-line-1)',
+    DEFAULTS.MONTH
+  );
 
   return (
     <div className="card sales-analytic-card">
@@ -182,17 +101,17 @@ const SalesAnalytic = () => {
             <YAxis
               axisLine
               tickLine
-              tickFormatter={yAxisTickFormatter}
-              domain={getYAxisDomain()}
+              tickFormatter={formatters.currency}
+              domain={getYAxisDomain(data, 'earnings')}
             />
             <Tooltip
-              formatter={(val) => [`$${Number(val).toLocaleString()}`, 'Earnings']}
-              labelFormatter={(label) => `Month: ${label}`}
+              formatter={currencyTooltipFormatter}
+              labelFormatter={tooltipLabelFormatter}
             />
             <Line
               type="monotone"
               dataKey="earnings"
-              stroke="#0075FF"
+              stroke={CHART_COLORS.PRIMARY}
               strokeWidth={3}
               dot={renderCustomDot}
               activeDot={renderCustomDot}

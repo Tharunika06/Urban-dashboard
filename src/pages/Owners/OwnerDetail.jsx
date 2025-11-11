@@ -2,132 +2,83 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import Header from '../../components/layout/Header';
+import { API_CONFIG, STYLES } from '../../utils/constants';
+import { 
+  getOwnerPhotoSrc, 
+  getPropertyPhotoSrc, 
+  handleImageError,
+  formatPropertyPrice 
+} from '../../utils/ownerHelpers';
+import { fetchOwnerById, fetchOwnerProperties } from '../../utils/apiHelpers';
 import '../../styles/Owners.css';
-
-// Backend API base URL
-const API_BASE_URL = 'http://192.168.0.152:5000';
 
 const OwnerDetail = () => {
   const { ownerId } = useParams();
   const [owner, setOwner] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-
-  const [selectedProperties, setSelectedProperties] = useState([]); // carousel data
-  const [availableProperties, setAvailableProperties] = useState([]); // modal data
+  const [selectedProperties, setSelectedProperties] = useState([]);
+  const [availableProperties, setAvailableProperties] = useState([]);
   const [showPropertyModal, setShowPropertyModal] = useState(false);
   const [loadingProperties, setLoadingProperties] = useState(false);
 
-  // Function to get the correct owner photo source
-  const getOwnerPhotoSrc = (photo) => {
-    if (photo && photo.startsWith('data:image/')) {
-      return photo;
-    }
-    return '/assets/placeholder.png';
-  };
-
-  // Function to get the correct property photo source
-  const getPropertyPhotoSrc = (photo) => {
-    if (photo && photo.startsWith('data:image/')) {
-      return photo;
-    }
-    if (photo && photo.startsWith('/uploads/')) {
-      return `${API_BASE_URL}${photo}`;
-    }
-    return '/assets/default-property.png';
-  };
-
-  // Function to handle image loading errors
-  const handleImageError = (e, fallbackSrc) => {
-    e.target.src = fallbackSrc;
-    console.warn('Failed to load image, using fallback');
-  };
-
-  // Fetch owner details - THIS WILL GET FRESH AUTO-CALCULATED STATS
-  const fetchOwnerDetails = async () => {
+  // Fetch owner details
+  const loadOwnerDetails = async () => {
     setLoading(true);
     setError(null);
-    try {
-      console.log(`📥 Fetching owner details for ID: ${ownerId}`);
-      const response = await fetch(`${API_BASE_URL}/api/owners/${ownerId}`);
-      
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        const errorMessage = errorData.error || `Request failed with status: ${response.status}`;
-        throw new Error(errorMessage);
-      }
-      
-      const data = await response.json();
-      console.log('✅ Owner data received:', data);
-      console.log('📊 Auto-calculated stats:', {
-        propertyOwned: data.propertyOwned,
-        propertyRent: data.propertyRent,
-        propertySold: data.propertySold,
-        totalListing: data.totalListing
-      });
-      
-      setOwner(data);
-    } catch (err) {
-      console.error('❌ Error fetching owner:', err);
-      setError(err.message);
-    } finally {
-      setLoading(false);
+    
+    const result = await fetchOwnerById(ownerId);
+    
+    if (result.success) {
+      setOwner(result.data);
+    } else {
+      setError(result.error);
     }
+    
+    setLoading(false);
   };
 
   // Fetch owner properties
-  const fetchOwnerProperties = async () => {
-    try {
-      console.log(`📥 Fetching properties for owner ID: ${ownerId}`);
-      const res = await fetch(`${API_BASE_URL}/api/property/owner/${ownerId}`);
-      
-      if (!res.ok) throw new Error("Failed to fetch owner properties");
-      
-      const data = await res.json();
-      console.log(`✅ Found ${data.length} properties for this owner`);
-      
-      setSelectedProperties(data);
-      setAvailableProperties(data);
-    } catch (err) {
-      console.error("❌ Error fetching owner properties:", err);
+  const loadOwnerProperties = async () => {
+    const result = await fetchOwnerProperties(ownerId);
+    
+    if (result.success) {
+      setSelectedProperties(result.data);
+      setAvailableProperties(result.data);
     }
   };
 
   // Initial data fetch on mount
   useEffect(() => {
     if (ownerId) {
-      fetchOwnerDetails();
-      fetchOwnerProperties();
+      loadOwnerDetails();
+      loadOwnerProperties();
     }
   }, [ownerId]);
 
   // Refresh owner stats when properties change
   useEffect(() => {
     if (ownerId && selectedProperties.length > 0) {
-      // Refetch owner details to get updated auto-calculated stats
       console.log('🔄 Properties changed, refreshing owner stats...');
-      fetchOwnerDetails();
+      loadOwnerDetails();
     }
-  }, [selectedProperties.length]); // Trigger when property count changes
+  }, [selectedProperties.length]);
 
   // Fetch available properties for modal
-  const fetchAvailableProperties = async () => {
+  const fetchAvailablePropertiesForModal = async () => {
     setLoadingProperties(true);
-    try {
-      const response = await fetch(`${API_BASE_URL}/api/property/owner/${ownerId}`);
-      if (!response.ok) throw new Error('Failed to fetch properties');
-      const properties = await response.json();
-      setAvailableProperties(properties);
-    } catch (err) {
-      console.error('Error fetching properties:', err);
-    } finally {
-      setLoadingProperties(false);
+    const result = await fetchOwnerProperties(ownerId);
+    
+    if (result.success) {
+      setAvailableProperties(result.data);
     }
+    
+    setLoadingProperties(false);
   };
 
   const handlePlusClick = () => {
     setShowPropertyModal(true);
-    fetchAvailableProperties();
+    fetchAvailablePropertiesForModal();
   };
 
   const handlePropertySelect = (property) => {
@@ -148,13 +99,13 @@ const OwnerDetail = () => {
     container.scrollBy({ left: direction === 'left' ? -slideWidth : slideWidth, behavior: 'smooth' });
   };
 
-  // Loading / Error states
+  // Loading state
   if (loading) {
     return (
       <div className="main-content">
         <Header title="Owner Detail" />
         <main className="dashboard-body">
-          <div style={{ textAlign: 'center', padding: '40px' }}>
+          <div style={STYLES.LOADING_STATE}>
             <p>Loading owner details...</p>
           </div>
         </main>
@@ -162,24 +113,17 @@ const OwnerDetail = () => {
     );
   }
 
+  // Error state
   if (error) {
     return (
       <div className="main-content">
         <Header title="Owner Detail" />
         <main className="dashboard-body">
-          <div style={{ textAlign: 'center', padding: '40px', color: '#f44336' }}>
+          <div style={STYLES.ERROR_STATE}>
             <h2>Error: {error}</h2>
             <button 
-              onClick={() => fetchOwnerDetails()}
-              style={{
-                marginTop: '20px',
-                padding: '10px 20px',
-                backgroundColor: '#4285f4',
-                color: 'white',
-                border: 'none',
-                borderRadius: '6px',
-                cursor: 'pointer'
-              }}
+              onClick={() => loadOwnerDetails()}
+              style={STYLES.RETRY_BUTTON}
             >
               Retry
             </button>
@@ -189,6 +133,7 @@ const OwnerDetail = () => {
     );
   }
 
+  // Not found state
   if (!owner) {
     return (
       <div className="main-content">
@@ -304,29 +249,7 @@ const OwnerDetail = () => {
                       </div>
                     </div>
                   </div>
-
-                  {/* Stats Info */}
-                  {/* <div style={{
-                    marginTop: '15px',
-                    padding: '12px',
-                    backgroundColor: '#e3f2fd',
-                    borderRadius: '6px',
-                    fontSize: '13px',
-                    color: '#1976d2'
-                  }}>
-                    <p style={{ margin: 0 }}>
-                      📊 <strong>Total Properties Owned:</strong> {owner.propertyOwned || 0}
-                    </p>
-                    <p style={{ margin: '8px 0 0 0', fontSize: '12px', color: '#666' }}>
-                      Stats are automatically calculated from properties in the system
-                    </p>
-                  </div> */}
                 </div>
-
-                {/* <div className="owner-reviews">
-                  <h3 className="review-heading">Reviews :</h3>
-                  <p>No reviews available for this owner yet.</p>
-                </div> */}
               </div>
 
               {/* RIGHT SIDEBAR */}
@@ -447,13 +370,7 @@ const OwnerDetail = () => {
                       <div className="property-info">
                         <h4>{property.name}</h4>
                         <p>{property.address || 'Address not specified'}</p>
-                        <p className="property-price">
-                          {property.status === 'rent' && property.rentPrice && `₹${property.rentPrice}/month`}
-                          {property.status === 'sale' && property.salePrice && `₹${property.salePrice}`}
-                          {property.status === 'both' && property.rentPrice && property.salePrice && `₹${property.rentPrice}/month | ₹${property.salePrice}`}
-                          {!property.rentPrice && !property.salePrice && property.price && `₹${property.price}`}
-                          {!property.rentPrice && !property.salePrice && !property.price && 'Price not specified'}
-                        </p>
+                        <p className="property-price">{formatPropertyPrice(property)}</p>
                         <p className="property-status">Status: {property.status}</p>
                       </div>
                       {selectedProperties.find(p => p._id === property._id) && (
@@ -463,7 +380,7 @@ const OwnerDetail = () => {
                   ))}
                 </div>
               ) : (
-                <div className="empty-state">
+                <div style={STYLES.EMPTY_STATE}>
                   <p>No properties found for this owner.</p>
                   <p className="empty-state-subtitle">Properties may not be assigned to this owner yet.</p>
                 </div>
