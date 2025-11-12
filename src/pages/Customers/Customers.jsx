@@ -1,3 +1,4 @@
+// src/pages/Customers/Customers.jsx
 import React, { useState, useEffect } from 'react';
 import CustomerList from './CustomerList';
 import CustomerGrid from './CustomerGrid';
@@ -6,7 +7,7 @@ import Header from '../../components/layout/Header';
 import PopupMessage from '../../components/common/PopupMessage';
 import { useSocket } from '../../hooks/useSocket';
 import { useCustomers } from '../../hooks/useCustomers';
-import { deleteCustomer } from '../../services/customerService';
+import customerService from '../../services/customerService';
 import '../../styles/Dashboard.css';
 import '../../styles/Customers.css';
 import {
@@ -54,14 +55,15 @@ const Customers = () => {
     setShowDeletePopup(true);
   };
 
-  // Execute delete
+  // Execute delete using customerService
   const handleDelete = async () => {
     if (!customerToDelete) return;
 
     try {
       console.log('Attempting to delete customer with phone:', customerToDelete);
 
-      await deleteCustomer(customerToDelete);
+      // ✅ Use customerService instead of old deleteCustomer import
+      await customerService.deleteCustomer(customerToDelete);
 
       console.log('Customer deleted successfully');
       removeCustomer(customerToDelete);

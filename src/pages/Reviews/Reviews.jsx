@@ -2,8 +2,9 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import { FaStar } from "react-icons/fa";
-import axios from "axios";
 import io from "socket.io-client";
+import reviewService from "../../services/reviewService";
+import { usePagination } from "../../hooks/usePagination";
 import Header from "../../components/layout/Header";
 import MonthDropdown from "../../components/common/MonthDropdown";
 import PopupMessage from "../../components/common/PopupMessage";
@@ -18,7 +19,6 @@ import {
 } from "../../utils/constants";
 import {
   applyReviewFilters,
-  calculatePagination,
   getSelectedIds,
   toggleAllItems,
   toggleSingleItem,
@@ -26,6 +26,8 @@ import {
   validateRating
 } from "../../utils/reviewHelpers";
 import "../../styles/Reviews.css";
+
+const ITEMS_PER_PAGE = 5;
 
 const Reviews = () => {
   const [selectAll, setSelectAll] = useState(false);
@@ -37,14 +39,20 @@ const Reviews = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 5;
-
   const [showPopup, setShowPopup] = useState(false);
   const [deleteMode, setDeleteMode] = useState("single");
   const [selectedIds, setSelectedIds] = useState([]);
 
   const socketRef = useRef(null);
+
+  // Use pagination hook
+  const {
+    currentPage,
+    totalPages,
+    currentItems: currentReviews,
+    handlePageChange,
+    resetPage
+  } = usePagination(filteredReviews, ITEMS_PER_PAGE);
 
   const tableHeaders = [
     { 
@@ -102,14 +110,12 @@ const Reviews = () => {
   const fetchReviews = async (silent = false) => {
     try {
       if (!silent) setIsLoading(true);
-      const res = await axios.get(`${API_CONFIG.BASE_URL}/api/reviews`, {
-        timeout: API_CONFIG.TIMEOUT
-      });
-      setReviews(res.data);
-      setFilteredReviews(res.data);
+      const data = await reviewService.getAllReviews();
+      setReviews(data);
+      setFilteredReviews(data);
       setError(null);
     } catch (err) {
-      setError(err.message);
+      setError(err.message || 'Failed to fetch reviews');
       console.error("Error fetching reviews:", err);
     } finally {
       if (!silent) setIsLoading(false);
@@ -123,12 +129,8 @@ const Reviews = () => {
       month: selectedMonth
     });
     setFilteredReviews(filtered);
-    setCurrentPage(1);
+    resetPage(); // Reset to page 1 when filters change
   }, [searchTerm, selectedMonth, reviews]);
-
-  // Calculate pagination using utility function
-  const pagination = calculatePagination(filteredReviews, currentPage, itemsPerPage);
-  const { totalPages, currentItems: currentReviews } = pagination;
 
   // Reset selections when page or data changes
   useEffect(() => {
@@ -146,14 +148,6 @@ const Reviews = () => {
     const result = toggleSingleItem(checkedRows, id, currentReviews);
     setCheckedRows(result.checkedRows);
     setSelectAll(result.selectAll);
-  };
-
-  const handlePageChange = (page) => {
-    if (page >= 1 && page <= totalPages) {
-      setCurrentPage(page);
-      setSelectAll(false);
-      setCheckedRows({});
-    }
   };
 
   const handleConfirmDelete = (id) => {
@@ -174,19 +168,15 @@ const Reviews = () => {
   const handleDelete = async () => {
     try {
       if (deleteMode === "bulk") {
+        // Bulk delete using service
         await Promise.all(
-          selectedIds.map((id) => 
-            axios.delete(`${API_CONFIG.BASE_URL}/api/reviews/${id}`, {
-              timeout: API_CONFIG.TIMEOUT
-            })
-          )
+          selectedIds.map((id) => reviewService.deleteReview(id))
         );
         setReviews((prev) => prev.filter((r) => !selectedIds.includes(r._id)));
         alert(`${selectedIds.length} review(s) deleted successfully`);
       } else {
-        await axios.delete(`${API_CONFIG.BASE_URL}/api/reviews/${selectedIds[0]}`, {
-          timeout: API_CONFIG.TIMEOUT
-        });
+        // Single delete using service
+        await reviewService.deleteReview(selectedIds[0]);
         setReviews((prev) => prev.filter((r) => r._id !== selectedIds[0]));
         alert('Review deleted successfully');
       }

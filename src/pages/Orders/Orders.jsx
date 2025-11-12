@@ -1,4 +1,4 @@
-// src/pages/Orders.jsx
+// src/pages/Orders/Orders.jsx
 
 import React, { useState, useEffect } from 'react';
 import OrderList from './OrderList';
@@ -7,16 +7,15 @@ import '../../styles/Orders.css';
 import { BsSearch } from 'react-icons/bs';
 import MonthDropdown from '../../components/common/MonthDropdown';
 import Header from '../../components/layout/Header';
+import transactionService from '../../services/transactionService';
 import { 
   MONTHS_FULL, 
   API_CONFIG, 
-  API_ENDPOINTS, 
   DEFAULTS, 
   ASSET_PATHS,
   UI_MESSAGES 
 } from '../../utils/constants';
 import { applyFilters } from '../../utils/filterUtils';
-import { fetchData, deleteResource, handleApiError } from '../../utils/apiHelpers';
 
 const Orders = () => {
   const [view, setView] = useState(DEFAULTS.VIEW_MODE);
@@ -33,21 +32,33 @@ const Orders = () => {
   const [showDeletePopup, setShowDeletePopup] = useState(false);
   const [orderToDelete, setOrderToDelete] = useState(null);
 
-  // --- DATA FETCHING ---
+  // --- DATA FETCHING using transactionService ---
   useEffect(() => {
     const fetchTransactions = async () => {
-      const result = await fetchData(`${API_CONFIG.BASE_URL}${API_ENDPOINTS.TRANSACTIONS}`);
-      
-      if (result.success) {
-        setAllTransactions(result.data);
-      } else {
-        setError(result.error);
+      try {
+        setIsLoading(true);
+        setError(null);
+        
+        // ✅ Use transactionService instead of fetchData
+        const data = await transactionService.getAllTransactions();
+        
+        setAllTransactions(data);
+      } catch (err) {
+        console.error('❌ Failed to fetch transactions:', err);
+        setError(err.response?.data?.error || err.message || 'Failed to fetch transactions');
+      } finally {
+        setIsLoading(false);
       }
-      
-      setIsLoading(false);
     };
 
     fetchTransactions();
+
+    // Auto-refresh every 30 seconds
+    const refreshInterval = setInterval(() => {
+      fetchTransactions();
+    }, API_CONFIG.AUTO_REFRESH_INTERVAL);
+
+    return () => clearInterval(refreshInterval);
   }, []);
 
   // --- FILTERING LOGIC for both month and search term ---
@@ -72,25 +83,27 @@ const Orders = () => {
     setShowDeletePopup(true);
   };
 
-  // Actual delete handler with API call
+  // Actual delete handler with API call using transactionService
   const handleDelete = async () => {
     if (!orderToDelete) return;
     
-    const result = await deleteResource(
-      `${API_CONFIG.BASE_URL}${API_ENDPOINTS.TRANSACTIONS}`,
-      orderToDelete
-    );
-    
-    if (result.success) {
+    try {
+      // ✅ Use transactionService instead of deleteResource
+      await transactionService.deleteTransaction(orderToDelete);
+      
       // Update local state - remove from both arrays
       setAllTransactions(prev => prev.filter(t => t.customTransactionId !== orderToDelete));
       setFilteredTransactions(prev => prev.filter(t => t.customTransactionId !== orderToDelete));
       
+      console.log(`✅ Transaction ${orderToDelete} deleted successfully`);
+      
       setShowDeletePopup(false);
       setOrderToDelete(null);
-    } else {
-      alert(`Failed to delete transaction: ${result.error}`);
-      handleApiError(new Error(result.error), setError);
+    } catch (err) {
+      console.error('❌ Failed to delete transaction:', err);
+      alert(`Failed to delete transaction: ${err.response?.data?.error || err.message}`);
+      setError(err.response?.data?.error || err.message);
+      
       setShowDeletePopup(false);
       setOrderToDelete(null);
     }

@@ -2,14 +2,14 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import Header from '../../components/layout/Header';
-import { API_CONFIG, STYLES } from '../../utils/constants';
+import ownerService from '../../services/ownerService';
+import { STYLES } from '../../utils/constants';
 import { 
   getOwnerPhotoSrc, 
   getPropertyPhotoSrc, 
   handleImageError,
   formatPropertyPrice 
 } from '../../utils/ownerHelpers';
-import { fetchOwnerById, fetchOwnerProperties } from '../../utils/apiHelpers';
 import '../../styles/Owners.css';
 
 const OwnerDetail = () => {
@@ -22,29 +22,36 @@ const OwnerDetail = () => {
   const [showPropertyModal, setShowPropertyModal] = useState(false);
   const [loadingProperties, setLoadingProperties] = useState(false);
 
-  // Fetch owner details
+  // Fetch owner details using ownerService
   const loadOwnerDetails = async () => {
-    setLoading(true);
-    setError(null);
-    
-    const result = await fetchOwnerById(ownerId);
-    
-    if (result.success) {
-      setOwner(result.data);
-    } else {
-      setError(result.error);
+    try {
+      setLoading(true);
+      setError(null);
+  
+      const data = await ownerService.getOwnerById(ownerId);
+      
+      setOwner(data.owner || data);
+    } catch (err) {
+      console.error('❌ Failed to fetch owner:', err);
+      setError(err.response?.data?.error || err.message || 'Failed to fetch owner details');
+    } finally {
+      setLoading(false);
     }
-    
-    setLoading(false);
   };
 
-  // Fetch owner properties
+  // Fetch owner properties using ownerService
   const loadOwnerProperties = async () => {
-    const result = await fetchOwnerProperties(ownerId);
-    
-    if (result.success) {
-      setSelectedProperties(result.data);
-      setAvailableProperties(result.data);
+    try {
+  
+      const data = await ownerService.getOwnerProperties(ownerId);
+      
+      const properties = data.properties || data || [];
+      setSelectedProperties(properties);
+      setAvailableProperties(properties);
+    } catch (err) {
+      console.error('❌ Failed to fetch owner properties:', err);
+      setSelectedProperties([]);
+      setAvailableProperties([]);
     }
   };
 
@@ -66,14 +73,19 @@ const OwnerDetail = () => {
 
   // Fetch available properties for modal
   const fetchAvailablePropertiesForModal = async () => {
-    setLoadingProperties(true);
-    const result = await fetchOwnerProperties(ownerId);
-    
-    if (result.success) {
-      setAvailableProperties(result.data);
+    try {
+      setLoadingProperties(true);
+      
+      // ✅ Use ownerService
+      const data = await ownerService.getOwnerProperties(ownerId);
+      
+      setAvailableProperties(data.properties || data || []);
+    } catch (err) {
+      console.error('❌ Failed to fetch properties for modal:', err);
+      setAvailableProperties([]);
+    } finally {
+      setLoadingProperties(false);
     }
-    
-    setLoadingProperties(false);
   };
 
   const handlePlusClick = () => {

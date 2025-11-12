@@ -1,4 +1,5 @@
-// src/pages/Dashboard/WeeklySales.jsx
+// WeeklySales.jsx - UPDATED
+// ============================================
 import React, { useState, useEffect } from "react";
 import {
   BarChart,
@@ -24,7 +25,8 @@ const WeeklySales = () => {
       setLoading(true);
       setError(null);
 
-      const response = await api.get(`/sales/weekly?offset=${offset}`);
+      // ✅ FIXED: Use /api/sales/weekly (with /api prefix)
+      const response = await api.get(`/api/sales/weekly?offset=${offset}`);
       const formattedData = formatWeeklySalesData(response.data);
 
       setSalesData(formattedData);

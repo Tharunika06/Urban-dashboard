@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import Checkbox from '../../components/common/Checkbox';
 import PopupMessage from '../../components/common/PopupMessage';
+import { usePagination } from '../../hooks/usePagination';
 import {
   ASSET_PATHS,
   UI_MESSAGES,
@@ -14,7 +15,6 @@ import {
   getPropertyImageSrc,
   handlePropertyImageError,
 } from '../../utils/propertyHelpers';
-import { calculatePagination, getPaginatedItems } from '../../utils/paginationUtils';
 import '../../styles/Property.css';
 
 const ITEMS_PER_PAGE = 6;
@@ -22,11 +22,22 @@ const ITEMS_PER_PAGE = 6;
 const PropertyList = ({ properties, handleDelete, handleBulkDelete }) => {
   const [selectAll, setSelectAll] = useState(false);
   const [checkedRows, setCheckedRows] = useState({});
-  const [currentPage, setCurrentPage] = useState(1);
   const [showDeletePopup, setShowDeletePopup] = useState(false);
   const [showBulkDeletePopup, setShowBulkDeletePopup] = useState(false);
   const [selectedIds, setSelectedIds] = useState([]);
   const [deleteMode, setDeleteMode] = useState('single');
+
+  // Use pagination hook
+  const {
+    currentPage,
+    totalPages,
+    currentItems,
+    handlePageChange,
+    nextPage,
+    prevPage,
+    hasNextPage,
+    hasPrevPage
+  } = usePagination(properties, ITEMS_PER_PAGE);
 
   const tableHeaders = [
     { 
@@ -48,11 +59,7 @@ const PropertyList = ({ properties, handleDelete, handleBulkDelete }) => {
     { label: 'Action', key: 'action' }
   ];
 
-  // Pagination using paginationUtils
-  const pagination = calculatePagination(properties.length, currentPage, ITEMS_PER_PAGE);
-  const currentItems = getPaginatedItems(properties, currentPage, ITEMS_PER_PAGE);
-  const { totalPages, hasNextPage, hasPreviousPage: hasPrevPage } = pagination;
-
+  // Reset selections when page or data changes
   useEffect(() => {
     setSelectAll(false);
     setCheckedRows({});
@@ -76,8 +83,8 @@ const PropertyList = ({ properties, handleDelete, handleBulkDelete }) => {
     });
   };
 
-  const handlePageChange = (page) => {
-    setCurrentPage(page);
+  const handlePageChangeAndReset = (page) => {
+    handlePageChange(page);
     setSelectAll(false);
     setCheckedRows({});
   };
@@ -120,14 +127,6 @@ const PropertyList = ({ properties, handleDelete, handleBulkDelete }) => {
 
   const selectedCount = getSelectedIds().length;
 
-  const nextPage = () => {
-    if (hasNextPage) handlePageChange(currentPage + 1);
-  };
-
-  const prevPage = () => {
-    if (hasPrevPage) handlePageChange(currentPage - 1);
-  };
-
   return (
     <>
       {selectedCount > 0 && (
@@ -163,7 +162,7 @@ const PropertyList = ({ properties, handleDelete, handleBulkDelete }) => {
         />
       )}
 
-      <div className="table-container">
+      <div className="table-scroll-container">
         <table className="property-table">
           <thead>
             <tr>
@@ -173,122 +172,132 @@ const PropertyList = ({ properties, handleDelete, handleBulkDelete }) => {
             </tr>
           </thead>
           <tbody>
-            {currentItems.map((prop) => {
-              const isSold = prop.status?.toLowerCase() === 'sold';
-              return (
-                <tr key={prop._id} className={isSold ? 'sold-row' : ''}>
-                  <td>
-                    <Checkbox
-                      checked={checkedRows[prop._id] || false}
-                      onChange={() => toggleCheckbox(prop._id)}
-                      id={`checkbox-${prop._id}`}
-                    />
-                  </td>
+            {currentItems.length === 0 ? (
+              <tr>
+                <td colSpan={tableHeaders.length} style={{ textAlign: 'center', padding: '20px' }}>
+                  No properties found
+                </td>
+              </tr>
+            ) : (
+              currentItems.map((prop) => {
+                const isSold = prop.status?.toLowerCase() === 'sold';
+                return (
+                  <tr key={prop._id} className={isSold ? 'sold-row' : ''}>
+                    <td>
+                      <Checkbox
+                        checked={checkedRows[prop._id] || false}
+                        onChange={() => toggleCheckbox(prop._id)}
+                        id={`checkbox-${prop._id}`}
+                      />
+                    </td>
 
-                  <td>
-                    <Link to={`/property/${prop._id}`}>
-                      <div className="prop-name-cell">
-                        <img
-                          src={getPropertyImageSrc(prop.photo)}
-                          alt={prop.name || 'Property'}
-                          className="prop-photo"
-                          onError={handlePropertyImageError}
-                          style={{
-                            width: '50px',
-                            height: '50px',
-                            objectFit: 'cover',
-                            borderRadius: '4px',
-                            marginRight: '10px',
-                          }}
-                        />
-                        <span>{prop.name}</span>
-                      </div>
-                    </Link>
-                  </td>
-
-                  <td>
-                    {prop.ownerId && prop.ownerName ? (
-                      <Link to={`/owners/${prop.ownerId}`} className="owner-link">
-                        {prop.ownerName}
+                    <td>
+                      <Link to={`/property/${prop._id}`}>
+                        <div className="prop-name-cell">
+                          <img
+                            src={getPropertyImageSrc(prop.photo)}
+                            alt={prop.name || 'Property'}
+                            className="prop-photo"
+                            onError={handlePropertyImageError}
+                            style={{
+                              width: '50px',
+                              height: '50px',
+                              objectFit: 'cover',
+                              borderRadius: '4px',
+                              marginRight: '10px',
+                            }}
+                          />
+                          <span>{prop.name}</span>
+                        </div>
                       </Link>
-                    ) : (
-                      'N/A'
-                    )}
-                  </td>
+                    </td>
 
-                  <td>
-                    <Link to={`/property/${prop._id}`}>{prop.size || 'N/A'} sq ft</Link>
-                  </td>
+                    <td>
+                      {prop.ownerId && prop.ownerName ? (
+                        <Link to={`/owners/${prop.ownerId}`} className="owner-link">
+                          {prop.ownerName}
+                        </Link>
+                      ) : (
+                        'N/A'
+                      )}
+                    </td>
 
-                  <td>
-                    <Link to={`/property/${prop._id}`}>{prop.type || 'N/A'}</Link>
-                  </td>
+                    <td>
+                      <Link to={`/property/${prop._id}`}>{prop.size || 'N/A'} sq ft</Link>
+                    </td>
 
-                  <td>
-                    <Link to={`/property/${prop._id}`}>
-                      <span className={`status-badge ${getStatusClass(prop.status)}`}>
-                        {prop.status?.toUpperCase() || 'N/A'}
-                      </span>
-                    </Link>
-                  </td>
+                    <td>
+                      <Link to={`/property/${prop._id}`}>{prop.type || 'N/A'}</Link>
+                    </td>
 
-                  <td>
-                    <Link to={`/property/${prop._id}`}>{prop.bedrooms || 'N/A'}</Link>
-                  </td>
+                    <td>
+                      <Link to={`/property/${prop._id}`}>
+                        <span className={`status-badge ${getStatusClass(prop.status)}`}>
+                          {prop.status?.toUpperCase() || 'N/A'}
+                        </span>
+                      </Link>
+                    </td>
 
-                  <td>
-                    <Link to={`/property/${prop._id}`}>{prop.city || prop.address || 'N/A'}</Link>
-                  </td>
+                    <td>
+                      <Link to={`/property/${prop._id}`}>{prop.bedrooms || 'N/A'}</Link>
+                    </td>
 
-                  <td>
-                    <Link to={`/property/${prop._id}`}>{formatPrice(prop)}</Link>
-                  </td>
+                    <td>
+                      <Link to={`/property/${prop._id}`}>{prop.city || prop.address || 'N/A'}</Link>
+                    </td>
 
-                  <td className="action-icons">
-                    <Link to={`/property/${prop._id}`}>
-                      <img src="/assets/view-icon.png" alt="View" />
-                    </Link>
-                    <img
-                      src="/assets/delete-icon.png"
-                      alt="Delete"
-                      onClick={() => handleDeleteClick(prop._id)}
-                      style={{ cursor: 'pointer' }}
-                    />
-                  </td>
-                </tr>
-              );
-            })}
+                    <td>
+                      <Link to={`/property/${prop._id}`}>{formatPrice(prop)}</Link>
+                    </td>
+
+                    <td className="action-icons">
+                      <Link to={`/property/${prop._id}`}>
+                        <img src="/assets/view-icon.png" alt="View" />
+                      </Link>
+                      <img
+                        src="/assets/delete-icon.png"
+                        alt="Delete"
+                        onClick={() => handleDeleteClick(prop._id)}
+                        style={{ cursor: 'pointer' }}
+                      />
+                    </td>
+                  </tr>
+                );
+              })
+            )}
           </tbody>
         </table>
       </div>
 
       {totalPages > 1 && (
-        <div className="pagination">
-          <button
-            className="page-link"
-            onClick={prevPage}
-            disabled={!hasPrevPage}
-          >
-            « Back
-          </button>
-
-          {Array.from({ length: totalPages }, (_, i) => (
+        <div className="pagination-wrapper">
+          <div className="pagination">
             <button
-              key={i}
-              className={`page-link ${currentPage === i + 1 ? 'active' : ''}`}
-              onClick={() => handlePageChange(i + 1)}
+              className="page-link"
+              onClick={prevPage}
+              disabled={!hasPrevPage}
             >
-              {i + 1}
+              « Back
             </button>
-          ))}
 
-          <button
-            className="page-link"
-            onClick={nextPage}
-            disabled={!hasNextPage}
-          >
-            Next »
-          </button>
+            {Array.from({ length: totalPages }, (_, i) => (
+              <button
+                key={i}
+                className={`page-link ${currentPage === i + 1 ? 'active' : ''}`}
+                onClick={() => handlePageChangeAndReset(i + 1)}
+              >
+                {i + 1}
+              </button>
+            ))}
+
+            <button
+              className="page-link"
+              onClick={nextPage}
+              disabled={!hasNextPage}
+            >
+              Next »
+            </button>
+          </div>
         </div>
       )}
     </>

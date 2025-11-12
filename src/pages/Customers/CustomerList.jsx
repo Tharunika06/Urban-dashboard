@@ -7,7 +7,7 @@ const CustomerList = ({ customers, onDelete }) => {
   const navigate = useNavigate();
   const placeholderPhoto = '/assets/placeholder.png';
 
-  const { currentPage, totalPages, currentItems, handlePageChange } = usePagination(customers, 7);
+  const { currentPage, totalPages, currentItems, handlePageChange } = usePagination(customers, 6);
 
   const tableHeaders = [
     'Customer Photo & Name',

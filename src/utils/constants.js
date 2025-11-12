@@ -103,7 +103,7 @@ export const formatters = {
  * Use environment variable or fallback to local network IP
  */
 export const API_CONFIG = {
-  BASE_URL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000',
+  BASE_URL:'http://localhost:5000',
   TIMEOUT: 30000, // 30 seconds
   MAX_CONTENT_LENGTH: Infinity,
   MAX_BODY_LENGTH: Infinity,

@@ -1,11 +1,9 @@
 // src/pages/Owners/AddOwnerModal.jsx
 import React, { useState } from 'react';
-import axios from 'axios';
+import ownerService from '../../services/ownerService';
 import { 
-  API_CONFIG, 
   BUTTON_LABELS, 
   FORM_LABELS,
-  PLACEHOLDERS,
   CITIES,
   convertToBase64,
   POPUP_MESSAGES 
@@ -339,26 +337,19 @@ const AddOwnerModal = ({ isOpen, onClose, onSave }) => {
       console.log('Note: Property stats will be auto-calculated from actual properties');
       console.log('============================');
 
-      const response = await axios.post(
-        `${API_CONFIG.BASE_URL}/api/owners/add-owner`,
-        payload,
-        {
-          headers: { 
-            'Content-Type': 'application/json'
-          },
-          timeout: API_CONFIG.TIMEOUT
-        }
-      );
+      // ✅ Use ownerService instead of axios
+      const response = await ownerService.createOwner(payload);
 
-      console.log('Owner added successfully:', response.data);
+      console.log('Owner added successfully:', response);
       console.log('Initial stats (all 0):', {
-        propertyOwned: response.data.owner?.propertyOwned || 0,
-        propertyRent: response.data.owner?.propertyRent || 0,
-        propertySold: response.data.owner?.propertySold || 0,
-        totalListing: response.data.owner?.totalListing || 0
+        propertyOwned: response.owner?.propertyOwned || 0,
+        propertyRent: response.owner?.propertyRent || 0,
+        propertySold: response.owner?.propertySold || 0,
+        totalListing: response.owner?.totalListing || 0
       });
+      
       setShowSuccessPopup(true);
-      onSave(response.data);
+      onSave(response);
 
     } catch (error) {
       console.error('Error saving owner:', error.response ? error.response.data : error.message);

@@ -6,6 +6,7 @@ import PopupMessage from '../../components/common/PopupMessage';
 import MonthDropdown from '../../components/common/MonthDropdown';
 import Header from '../../components/layout/Header';
 import { BsSearch } from 'react-icons/bs';
+import transactionService from '../../services/transactionService';
 import { 
   API_CONFIG, 
   DEFAULTS,
@@ -64,13 +65,11 @@ const Transaction = () => {
   const fetchTransactions = async (silent = false) => {
     try {
       if (!silent) setIsLoading(true);
-      const response = await fetch(`${API_CONFIG.BASE_URL}/api/payment/transactions`);
-      if (!response.ok) throw new Error('Network response was not ok');
-      const data = await response.json();
+      const data = await transactionService.getAllTransactions();
       setAllTransactions(data);
       setError(null);
     } catch (err) {
-      setError(err.message);
+      setError(err.message || 'Failed to fetch transactions');
       console.error("Failed to fetch transactions:", err);
     } finally {
       if (!silent) setIsLoading(false);
@@ -111,13 +110,8 @@ const Transaction = () => {
       if (isBulkDelete) {
         // Bulk delete
         const deletePromises = bulkDeleteIds.map(async (transactionId) => {
-          const encodedTransactionId = encodeURIComponent(transactionId);
-          const response = await fetch(
-            `${API_CONFIG.BASE_URL}/api/payment/transactions/${encodedTransactionId}`,
-            { method: 'DELETE', headers: { 'Content-Type': 'application/json' } }
-          );
-          const data = await response.json();
-          if (!response.ok || !data.success) {
+          const data = await transactionService.deleteTransaction(transactionId);
+          if (!data.success) {
             throw new Error(data.message || `Failed to delete transaction ${transactionId}`);
           }
           return transactionId;
@@ -149,14 +143,9 @@ const Transaction = () => {
         // Single delete
         if (!transactionToDelete) return;
 
-        const encodedTransactionId = encodeURIComponent(transactionToDelete);
-        const response = await fetch(
-          `${API_CONFIG.BASE_URL}/api/payment/transactions/${encodedTransactionId}`,
-          { method: 'DELETE', headers: { 'Content-Type': 'application/json' } }
-        );
-        const data = await response.json();
+        const data = await transactionService.deleteTransaction(transactionToDelete);
 
-        if (!response.ok || !data.success) {
+        if (!data.success) {
           throw new Error(data.message || UI_MESSAGES.DELETE_FAILED);
         }
 

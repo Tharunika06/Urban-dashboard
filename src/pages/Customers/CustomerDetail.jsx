@@ -1,3 +1,4 @@
+// src/pages/Customers/CustomerDetail.jsx
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { IoEllipsisVertical } from 'react-icons/io5';
@@ -6,7 +7,7 @@ import 'react-circular-progressbar/dist/styles.css';
 
 import '../../styles/Customers.css';
 import Header from '../../components/layout/Header';
-import { fetchCustomerByPhone } from '../../services/customerService';
+import customerService from '../../services/customerService';
 import { calculateCustomerStats, calculateStatProgress } from '../../utils/customerUtils';
 
 // Reusable StatCard Component
@@ -48,18 +49,25 @@ export default function CustomerDetail() {
     const loadCustomerData = async () => {
       try {
         setIsLoading(true);
+        setError(null);
 
-        const { customer, transactions } = await fetchCustomerByPhone(customerPhone);
+        // ✅ Use customerService instead of old fetchCustomerByPhone import
+        const data = await customerService.getCustomerByPhone(customerPhone);
+
+        // Handle different response formats
+        const customer = data.customer || data;
+        const transactions = data.transactions || [];
 
         if (!customer) {
-          console.warn(`No transactions found for phone: ${customerPhone}`);
+          console.warn(`No customer found for phone: ${customerPhone}`);
+          setError('Customer not found');
+        } else {
+          setCustomerData(customer);
+          setCustomerTransactions(transactions);
         }
-
-        setCustomerData(customer);
-        setCustomerTransactions(transactions);
       } catch (err) {
         console.error('Failed to fetch customer details:', err);
-        setError(err.message);
+        setError(err.response?.data?.error || err.message || 'Failed to fetch customer details');
       } finally {
         setIsLoading(false);
       }
@@ -122,7 +130,7 @@ export default function CustomerDetail() {
       handle: '@system',
       photo: '/assets/placeholder.png',
       stars: 5,
-      body: `Customer has completed ${c.totalTransactions} transactions with a total amount of $${c.totalAmount.toLocaleString()}.`,
+      body: `Customer has completed ${c.totalTransactions || 0} transactions with a total amount of $${(c.totalAmount || 0).toLocaleString()}.`,
       date: 'Recent',
     },
   ];
@@ -137,7 +145,11 @@ export default function CustomerDetail() {
           {/* Customer Overview */}
           <div className="customer-overview-card">
             <div className="overview-item profile-info">
-              <img src={c.photo} alt={c.name} className="customer-photo-detail" />
+              <img 
+                src={c.photo || '/assets/placeholder.png'} 
+                alt={c.name} 
+                className="customer-photo-detail" 
+              />
               <div>
                 <h3 className="profile-name">{c.name}</h3>
                 <p className="profile-sub-email">{c.email}</p>
@@ -153,16 +165,16 @@ export default function CustomerDetail() {
             </div>
             <div className="overview-item">
               <p className="overview-label">Location:</p>
-              <p className="overview-value">{c.address}</p>
+              <p className="overview-value">{c.address || 'N/A'}</p>
             </div>
             <div className="overview-item">
               <p className="overview-label">Status:</p>
-              <span className="status-badge available">{c.status}</span>
+              <span className="status-badge available">{c.status || 'Active'}</span>
             </div>
             <div className="overview-item preferences-info">
               <p className="overview-label">Interested Properties:</p>
               <div className="overview-value">
-                {c.interestedProperties.length > 0 ? (
+                {c.interestedProperties && c.interestedProperties.length > 0 ? (
                   c.interestedProperties.map((property, index) => <span key={index}>{property}</span>)
                 ) : (
                   <span>No properties found</span>
@@ -172,7 +184,7 @@ export default function CustomerDetail() {
             <div className="overview-item preferences-info">
               <p className="overview-label">Property Types:</p>
               <div className="overview-value">
-                {c.propertyTypes.length > 0 ? (
+                {c.propertyTypes && c.propertyTypes.length > 0 ? (
                   <span>{c.propertyTypes.join(', ')}</span>
                 ) : (
                   <span>No property types found</span>
@@ -181,15 +193,17 @@ export default function CustomerDetail() {
             </div>
             <div className="overview-item">
               <p className="overview-label">Total Transactions:</p>
-              <p className="overview-value">{c.totalTransactions}</p>
+              <p className="overview-value">{c.totalTransactions || 0}</p>
             </div>
             <div className="overview-item">
               <p className="overview-label">Total Amount:</p>
-              <p className="overview-value">${c.totalAmount.toLocaleString()}</p>
+              <p className="overview-value">${(c.totalAmount || 0).toLocaleString()}</p>
             </div>
             <div className="overview-item">
               <p className="overview-label">Last Contacted:</p>
-              <p className="overview-value">{new Date(c.lastContacted).toLocaleDateString()}</p>
+              <p className="overview-value">
+                {c.lastContacted ? new Date(c.lastContacted).toLocaleDateString() : 'N/A'}
+              </p>
             </div>
           </div>
 
@@ -201,7 +215,7 @@ export default function CustomerDetail() {
               label="Properties Viewed"
               value={stats.viewPropertyCount.toString()}
               color="#9B59B6"
-              progress={calculateStatProgress(stats.viewPropertyCount, c.totalTransactions)}
+              progress={calculateStatProgress(stats.viewPropertyCount, c.totalTransactions || 0)}
               iconBgColor="rgba(155, 89, 182, 0.1)"
             />
             <StatCard
@@ -209,7 +223,7 @@ export default function CustomerDetail() {
               label="Properties Owned"
               value={stats.ownPropertyCount.toString()}
               color="#E67E22"
-              progress={calculateStatProgress(stats.ownPropertyCount, c.totalTransactions)}
+              progress={calculateStatProgress(stats.ownPropertyCount, c.totalTransactions || 0)}
               iconBgColor="rgba(230, 126, 34, 0.1)"
             />
             <StatCard
@@ -217,7 +231,7 @@ export default function CustomerDetail() {
               label="Property Investments"
               value={stats.investPropertyCount.toString()}
               color="#3498DB"
-              progress={calculateStatProgress(stats.investPropertyCount, c.totalTransactions)}
+              progress={calculateStatProgress(stats.investPropertyCount, c.totalTransactions || 0)}
               iconBgColor="rgba(52, 152, 219, 0.1)"
             />
           </div>

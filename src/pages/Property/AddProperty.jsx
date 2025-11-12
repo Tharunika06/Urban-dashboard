@@ -1,11 +1,26 @@
-// AddProperty.jsx
+// src/pages/Property/AddProperty.jsx
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
 import PopupMessage from '../../components/common/PopupMessage';
+import propertyService from '../../services/propertyService';
 import {
-  API_CONFIG,API_ENDPOINTS,PROPERTY_TYPES,PROPERTY_STATUS,PROPERTY_STATUS_OPTIONS,BEDROOM_OPTIONS,BATHROOM_OPTIONS,
-  COUNTRIES,CITIES,STATIC_FACILITIES,IMAGE_CONFIG,VALIDATION_MESSAGES,POPUP_MESSAGES,ICONS,PLACEHOLDERS,FORM_LABELS,
-  BUTTON_LABELS,FORM_STEPS,convertToBase64,
+  API_CONFIG,
+  PROPERTY_TYPES,
+  PROPERTY_STATUS,
+  PROPERTY_STATUS_OPTIONS,
+  BEDROOM_OPTIONS,
+  BATHROOM_OPTIONS,
+  COUNTRIES,
+  CITIES,
+  STATIC_FACILITIES,
+  IMAGE_CONFIG,
+  VALIDATION_MESSAGES,
+  POPUP_MESSAGES,
+  ICONS,
+  PLACEHOLDERS,
+  FORM_LABELS,
+  BUTTON_LABELS,
+  FORM_STEPS,
+  convertToBase64,
 } from '../../utils/constants';
 
 // ---------------- Price Input Component ----------------
@@ -164,7 +179,7 @@ const FacilitiesSection = ({
 };
 
 // ---------------- Main AddProperty Component ----------------
-const AddProperty = ({ isOpen, onClose }) => {
+const AddProperty = ({ isOpen, onClose, onSave }) => {
   const initialForm = {
     name: '',
     type: PROPERTY_TYPES[0],
@@ -206,8 +221,9 @@ const AddProperty = ({ isOpen, onClose }) => {
   useEffect(() => {
     const fetchOwners = async () => {
       try {
-        const res = await axios.get(`${API_CONFIG.BASE_URL}${API_ENDPOINTS.OWNERS}`);
-        setOwners(res.data.owners || []);
+        // ✅ Use propertyService to fetch owners
+        const data = await propertyService.getAllOwners();
+        setOwners(data.owners || []);
       } catch (err) {
         console.error('Failed to fetch owners:', err);
         showPopup(
@@ -248,14 +264,18 @@ const AddProperty = ({ isOpen, onClose }) => {
 
     if (!name.trim()) {
       showPopup(
-        POPUP_MESSAGES.VALIDATION_ERROR.type,POPUP_MESSAGES.VALIDATION_ERROR.title,VALIDATION_MESSAGES.PROPERTY_NAME_REQUIRED
+        POPUP_MESSAGES.VALIDATION_ERROR.type,
+        POPUP_MESSAGES.VALIDATION_ERROR.title,
+        VALIDATION_MESSAGES.PROPERTY_NAME_REQUIRED
       );
       return false;
     }
 
     if (!ownerId) {
       showPopup(
-        POPUP_MESSAGES.VALIDATION_ERROR.type,POPUP_MESSAGES.VALIDATION_ERROR.title,VALIDATION_MESSAGES.OWNER_ID_REQUIRED
+        POPUP_MESSAGES.VALIDATION_ERROR.type,
+        POPUP_MESSAGES.VALIDATION_ERROR.title,
+        VALIDATION_MESSAGES.OWNER_ID_REQUIRED
       );
       return false;
     }
@@ -373,25 +393,20 @@ const AddProperty = ({ isOpen, onClose }) => {
         }
       }
 
-      const response = await axios.post(
-        `${API_CONFIG.BASE_URL}${API_ENDPOINTS.PROPERTY}`,
-        payload,
-        {
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          timeout: API_CONFIG.TIMEOUT,
-          maxContentLength: API_CONFIG.MAX_CONTENT_LENGTH,
-          maxBodyLength: API_CONFIG.MAX_BODY_LENGTH,
-        }
-      );
+      // ✅ Use propertyService to create property
+      const response = await propertyService.createProperty(payload);
 
-      console.log('✅ Property created successfully:', response.data);
+      console.log('✅ Property created successfully:', response);
       showPopup(
         POPUP_MESSAGES.PROPERTY_ADDED.type,
         POPUP_MESSAGES.PROPERTY_ADDED.title,
         POPUP_MESSAGES.PROPERTY_ADDED.message
       );
+
+      // Pass the new property back to parent
+      if (onSave) {
+        onSave(response);
+      }
     } catch (err) {
       console.error('❌ Failed to add property:', err);
 

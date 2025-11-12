@@ -1,4 +1,5 @@
-// src/pages/Dashboard/Transactions.jsx
+// Transactions.jsx - UPDATED
+// ============================================
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../../utils/api';
@@ -8,7 +9,7 @@ import {
   getStatusClass, 
   formatters,
   DEFAULTS,
-  ASSET_PATHS
+  API_CONFIG
 } from '../../utils/constants';
 import '../../styles/Dashboard.css';
 
@@ -36,7 +37,8 @@ const TransactionsTable = () => {
   useEffect(() => {
     const fetchTransactions = async () => {
       try {
-        const response = await api.get('/payment/transactions');
+        // ✅ FIXED: Use /api/payment/transactions (with /api prefix)
+        const response = await api.get('/api/payment/transactions');
         setAllTransactions(response.data);
       } catch (err) {
         setError(err.message);
@@ -87,10 +89,10 @@ const TransactionsTable = () => {
     setSelectedRows(prev => prev.filter(rowId => rowId !== id));
   };
 
-  // Get customer photo with fallback
+  // ✅ FIXED: Get customer photo with proper base URL
   const getCustomerPhoto = (photo) => {
     if (photo && photo.startsWith('data:image/')) return photo;
-    if (photo && photo.startsWith('/uploads/')) return `${api.defaults.baseURL}${photo}`;
+    if (photo && photo.startsWith('/uploads/')) return `${API_CONFIG.BASE_URL}${photo}`;
     return DEFAULTS.PLACEHOLDER_IMAGE;
   };
 

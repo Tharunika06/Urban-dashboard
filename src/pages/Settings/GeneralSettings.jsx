@@ -2,7 +2,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import authService, { storage } from "../../services/authService";
-import { saveProfile } from "../../services/profileService"; // ✅ ADD THIS
 import "../../styles/GeneralSettings.css";
 
 const GeneralSettings = () => {

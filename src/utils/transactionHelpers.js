@@ -1,9 +1,5 @@
 // src/utils/transactionHelpers.js
 import { MONTHS_FULL } from './constants';
-import { 
-  calculatePagination as calcPaginationDetails, 
-  getPaginatedItems 
-} from './paginationUtils';
 
 /**
  * Filter transactions by month
@@ -71,27 +67,6 @@ export const applyTransactionFilters = (transactions, filters = {}) => {
   }
 
   return filtered;
-};
-
-/**
- * Calculate pagination data for transactions
- * @param {Array} items - Array of items to paginate
- * @param {number} currentPage - Current page number
- * @param {number} itemsPerPage - Items per page
- * @returns {Object} Pagination data
- */
-export const calculateTransactionPagination = (items, currentPage, itemsPerPage) => {
-  const paginationDetails = calcPaginationDetails(items.length, currentPage, itemsPerPage);
-  const currentItems = getPaginatedItems(items, currentPage, itemsPerPage);
-
-  return {
-    totalPages: paginationDetails.totalPages,
-    startIndex: paginationDetails.startIndex,
-    endIndex: paginationDetails.endIndex,
-    currentItems,
-    hasNextPage: paginationDetails.hasNextPage,
-    hasPrevPage: paginationDetails.hasPreviousPage
-  };
 };
 
 /**

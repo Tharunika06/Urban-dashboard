@@ -1,9 +1,5 @@
 // src/utils/reviewHelpers.js
 import { MONTHS_FULL } from './constants';
-import { 
-  calculatePagination as calcPaginationDetails, 
-  getPaginatedItems 
-} from './paginationUtils';
 
 /**
  * Filter reviews by month
@@ -71,27 +67,6 @@ export const applyReviewFilters = (reviews, filters = {}) => {
   }
 
   return filtered;
-};
-
-/**
- * Calculate pagination data
- * @param {Array} items - Array of items to paginate
- * @param {number} currentPage - Current page number
- * @param {number} itemsPerPage - Items per page
- * @returns {Object} Pagination data
- */
-export const calculatePagination = (items, currentPage, itemsPerPage) => {
-  const paginationDetails = calcPaginationDetails(items.length, currentPage, itemsPerPage);
-  const currentItems = getPaginatedItems(items, currentPage, itemsPerPage);
-
-  return {
-    totalPages: paginationDetails.totalPages,
-    startIndex: paginationDetails.startIndex,
-    endIndex: paginationDetails.endIndex,
-    currentItems,
-    hasNextPage: paginationDetails.hasNextPage,
-    hasPrevPage: paginationDetails.hasPreviousPage
-  };
 };
 
 /**

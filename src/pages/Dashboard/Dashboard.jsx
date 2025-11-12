@@ -1,6 +1,6 @@
-// Dashboard.jsx
+// Dashboard.jsx - UPDATED
+// ============================================
 import React, { useState, useEffect } from "react"; 
-import Sidebar from "../../components/layout/Sidebar";
 import Header from "../../components/layout/Header";
 import Analytics from "./Analytics";
 import SalesAnalytic from "./SalesAnalytic";
@@ -11,11 +11,12 @@ import PropertyRevenue from "./PropertyRevenue";
 import Transactions from "./Transactions";
 import { io as socketIO } from "socket.io-client";
 import api from "../../utils/api";
+import { SOCKET_CONFIG } from "../../utils/constants";
 import "/src/styles/Dashboard.css";
 import "bootstrap/dist/css/bootstrap.min.css";
 
-const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || "http://localhost:5000";
-const socket = socketIO(SOCKET_URL, { withCredentials: true });
+// ✅ Use SOCKET_CONFIG from constants
+const socket = socketIO(SOCKET_CONFIG.URL, SOCKET_CONFIG.OPTIONS);
 
 const Dashboard = () => {
   const [isSidebarOpen, setSidebarOpen] = useState(false);
@@ -30,11 +31,12 @@ const Dashboard = () => {
 
   const toggleSidebar = () => setSidebarOpen(!isSidebarOpen);
 
-  // Centralized stats fetching function
+  // ✅ Centralized stats fetching function using api instance
   const fetchStats = async () => {
     try {
       setError(null);
-      const res = await api.get('/stats');
+      // ✅ FIXED: Use /api/stats (with /api prefix)
+      const res = await api.get('/api/stats');
       
       console.log('Dashboard stats fetched:', res.data);
       
@@ -74,11 +76,10 @@ const Dashboard = () => {
   }, []);
 
   return (
-    
     <div className="dashboard-container">
       <div className="main-content">
         <Header title="Dashboard" onToggleSidebar={toggleSidebar} />
-       {/*<Sidebar isOpen={isSidebarOpen} onClose={toggleSidebar} />*/}
+        {/*<Sidebar isOpen={isSidebarOpen} onClose={toggleSidebar} />*/}
         <main className="dashboard-body">
           <div className="dashboard-content">
             {/* Row 1: Analytics Stat Cards */}
@@ -117,8 +118,6 @@ const Dashboard = () => {
         </main>
       </div>
     </div>
-       
-
   );
 };
 

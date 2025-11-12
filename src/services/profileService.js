@@ -103,7 +103,6 @@ export const updateProfilePhoto = (photoUrl) => {
     throw error;
   }
 };
-
 export default {
   getProfile,
   saveProfile,

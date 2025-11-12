@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import axios from "axios";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "../styles/Verification.css";
 
+import authService, { storage } from "../services/authService";
 import logo from "/assets/logo.png";
 import houseImage from "/assets/image.png";
 
@@ -17,7 +17,7 @@ const Verification = () => {
   const [type, setType] = useState("signup"); // default type
 
   useEffect(() => {
-    const passedEmail = location.state?.email || localStorage.getItem("resetEmail");
+    const passedEmail = location.state?.email || storage.getResetEmail();
     const passedType = location.state?.type || "signup";
 
     if (!passedEmail) {
@@ -55,31 +55,33 @@ const Verification = () => {
 
     setIsLoading(true);
     try {
-      const endpoint =
-        type === "reset"
-          ? "http://localhost:5000/api/verify-reset-otp"
-          : "http://localhost:5000/api/verify-code";
+      let response;
+      
+      // ✅ Use different authService methods based on type
+      if (type === "reset") {
+        response = await authService.verifyResetOTP(email, enteredCode);
+      } else {
+        response = await authService.verifySignupOTP(email, enteredCode);
+      }
 
-      const response = await axios.post(endpoint, {
-        email,
-        otp: enteredCode, // ✅ send exactly as expected
-      });
+      console.log("Server response:", response);
 
-      console.log("Server response:", response.data);
-
-      if (response.data.ok) {
+      if (response.ok) {
         if (type === "reset") {
-          localStorage.setItem("resetEmail", email);
+          storage.saveResetEmail(email);
           navigate("/reset-password");
         } else if (type === "signup") {
           navigate("/congratulations");
         }
       } else {
-        setError(response.data.error || "Invalid verification code");
+        setError(response.error || "Invalid verification code");
       }
     } catch (error) {
       console.error("Verification error:", error);
-      setError(error.response?.data?.error || "Verification failed. Please try again.");
+      setError(
+        error.response?.data?.error || 
+        "Verification failed. Please try again."
+      );
     } finally {
       setIsLoading(false);
     }

@@ -1,27 +1,32 @@
 // src/utils/api.js
 import axios from 'axios';
+import { API_CONFIG } from './constants';
 
+// ✅ Create axios instance with configuration from constants
 const api = axios.create({
-  baseURL: 'http://localhost:5000/api',
+  baseURL: API_CONFIG.BASE_URL,
+  timeout: API_CONFIG.TIMEOUT,
+  maxContentLength: API_CONFIG.MAX_CONTENT_LENGTH,
+  maxBodyLength: API_CONFIG.MAX_BODY_LENGTH,
   withCredentials: true, // ✅ CRITICAL: Enable sending cookies with requests
   headers: {
     'Content-Type': 'application/json'
   }
 });
 
-// ✅ Request interceptor - Now supports both cookie and token methods
+// ✅ Request interceptor - Supports both cookie and token methods
 api.interceptors.request.use(
   (config) => {
     // For mobile apps or API testing, still support Authorization header
     // Web app will use cookies automatically
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem('token') || localStorage.getItem('authToken');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
     
     // Debug log in development
-    if (process.env.NODE_ENV === 'development') {
-      console.log('🔵 API Request:', config.method.toUpperCase(), config.url);
+    if (import.meta.env.DEV) {
+      console.log('🔵 API Request:', config.method?.toUpperCase(), config.url);
     }
     
     return config;
@@ -36,7 +41,7 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => {
     // Debug log in development
-    if (process.env.NODE_ENV === 'development') {
+    if (import.meta.env.DEV) {
       console.log('🟢 API Response:', response.config.url, response.status);
     }
     return response;
@@ -45,8 +50,9 @@ api.interceptors.response.use(
     if (error.response?.status === 401) {
       console.warn('⚠️ Unauthorized - redirecting to login');
       
-      // Clear any stored tokens (for backward compatibility)
+      // Clear any stored tokens and user data
       localStorage.removeItem('token');
+      localStorage.removeItem('authToken');
       localStorage.removeItem('user');
       
       // Only redirect if we're not already on the login page
@@ -56,7 +62,7 @@ api.interceptors.response.use(
     }
     
     // Log other errors in development
-    if (process.env.NODE_ENV === 'development') {
+    if (import.meta.env.DEV) {
       console.error('🔴 API Error:', error.response?.status, error.response?.data);
     }
     
@@ -68,8 +74,6 @@ export default api;
 
 // ✅ Helper function to check if user is authenticated
 export const isAuthenticated = () => {
-  // In cookie-based auth, we can't check cookie from JS
-  // Instead, make a request to a protected endpoint or check localStorage for user info
   const user = localStorage.getItem('user');
   return !!user;
 };
@@ -98,11 +102,12 @@ export const setCurrentUser = (user) => {
 export const logout = async () => {
   try {
     // Call logout endpoint (server will clear the cookie)
-    await api.post('/auth/logout');
+    await api.post('/api/logout');
     
     // Clear localStorage
     localStorage.removeItem('user');
-    localStorage.removeItem('token'); // Remove legacy token if exists
+    localStorage.removeItem('token');
+    localStorage.removeItem('authToken');
     
     return true;
   } catch (error) {
@@ -110,6 +115,7 @@ export const logout = async () => {
     // Even if server request fails, clear local data
     localStorage.removeItem('user');
     localStorage.removeItem('token');
+    localStorage.removeItem('authToken');
     return false;
   }
 };

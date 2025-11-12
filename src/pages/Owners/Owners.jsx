@@ -5,6 +5,8 @@ import MonthDropdown from '../../components/common/MonthDropdown';
 import Header from '../../components/layout/Header';
 import AddOwnerModal from '../Owners/AddOwnerModal';
 import PopupMessage from '../../components/common/PopupMessage';
+import ownerService from '../../services/ownerService';
+import { usePagination } from '../../hooks/usePagination';
 import { 
   API_CONFIG, 
   MONTHS_FULL,
@@ -20,12 +22,12 @@ import {
   filterOwnersBySearch,
   formatDate
 } from '../../utils/ownerHelpers';
-import { fetchOwners, deleteOwner } from '../../utils/apiHelpers';
-import { calculatePagination, getPaginatedItems } from '../../utils/paginationUtils';
 import { initializeSocket, cleanupSocket } from '../../utils/socketHelpers';
 
 import '../../styles/Dashboard.css';
 import '../../styles/Owners.css';
+
+const OWNERS_PER_PAGE = 6;
 
 const Owners = () => {
   const [owners, setOwners] = useState([]);
@@ -37,9 +39,19 @@ const Owners = () => {
   const [error, setError] = useState(null);
   const [showDeletePopup, setShowDeletePopup] = useState(false);
   const [ownerToDelete, setOwnerToDelete] = useState(null);
-  const [currentPage, setCurrentPage] = useState(1);
-  
-  const ownersPerPage = 6;
+
+  // Use pagination hook
+  const {
+    currentPage,
+    totalPages,
+    currentItems: currentOwners,
+    handlePageChange,
+    nextPage,
+    prevPage,
+    resetPage,
+    hasNextPage,
+    hasPrevPage
+  } = usePagination(filteredOwners, OWNERS_PER_PAGE);
 
   const tableHeaders = [
     'Owner Photo & Name',
@@ -70,21 +82,22 @@ const Owners = () => {
     return () => clearInterval(refreshInterval);
   }, []);
 
-  // Load owners data
+  // Load owners data using ownerService
   const loadOwners = async (silent = false) => {
-    if (!silent) setIsLoading(true);
-    
-    const result = await fetchOwners();
-    
-    if (result.success) {
-      setOwners(result.data);
-      setFilteredOwners(result.data);
+    try {
+      if (!silent) setIsLoading(true);
+      
+      const data = await ownerService.getAllOwners();
+      
+      setOwners(data.owners || data || []);
+      setFilteredOwners(data.owners || data || []);
       setError(null);
-    } else {
-      setError(result.error);
+    } catch (err) {
+      console.error('❌ Failed to fetch owners:', err);
+      setError(err.response?.data?.error || err.message || 'Failed to fetch owners');
+    } finally {
+      if (!silent) setIsLoading(false);
     }
-    
-    if (!silent) setIsLoading(false);
   };
 
   // Filter owners when search or month changes
@@ -98,8 +111,8 @@ const Owners = () => {
     ownersToFilter = filterOwnersBySearch(ownersToFilter, searchTerm);
 
     setFilteredOwners(ownersToFilter);
-    setCurrentPage(1);
-  }, [searchTerm, selectedMonth, owners]);
+    resetPage(); // Reset to page 1 when filters change
+  }, [searchTerm, selectedMonth, owners, resetPage]);
 
   const handleMonthChange = (month) => {
     setSelectedMonth(month);
@@ -117,35 +130,26 @@ const Owners = () => {
   const handleDelete = async () => {
     if (!ownerToDelete) return;
     
-    const result = await deleteOwner(ownerToDelete);
-    
-    if (result.success) {
+    try {
+      await ownerService.deleteOwner(ownerToDelete);
+      
+      // Update local state
       setOwners((prev) => prev.filter((owner) => owner.ownerId !== ownerToDelete));
       setFilteredOwners((prev) => prev.filter((owner) => owner.ownerId !== ownerToDelete));
-    } else {
-      alert(result.error);
+      
+      console.log(`✅ Owner ${ownerToDelete} deleted successfully`);
+    } catch (err) {
+      console.error('❌ Failed to delete owner:', err);
+      alert(err.response?.data?.error || err.message || 'Failed to delete owner');
+    } finally {
+      setShowDeletePopup(false);
+      setOwnerToDelete(null);
     }
-    
-    setShowDeletePopup(false);
-    setOwnerToDelete(null);
   };
 
   const handleCancelDelete = () => {
     setShowDeletePopup(false);
     setOwnerToDelete(null);
-  };
-
-  // Pagination using paginationUtils
-  const pagination = calculatePagination(filteredOwners.length, currentPage, ownersPerPage);
-  const currentOwners = getPaginatedItems(filteredOwners, currentPage, ownersPerPage);
-  const { totalPages, hasNextPage, hasPreviousPage: hasPrevPage } = pagination;
-
-  const nextPage = () => {
-    if (hasNextPage) setCurrentPage(prev => prev + 1);
-  };
-
-  const prevPage = () => {
-    if (hasPrevPage) setCurrentPage(prev => prev - 1);
   };
 
   const renderTableContent = () => {
@@ -268,7 +272,7 @@ const Owners = () => {
               </div>
             </div>
 
-            <div className="table-container">
+            <div className="table-scroll-container">
               <table>
                 <thead>
                   <tr>
@@ -282,32 +286,34 @@ const Owners = () => {
             </div>
 
             {totalPages > 1 && (
-              <div className="pagination">
-                <button
-                  className="page-link"
-                  onClick={prevPage}
-                  disabled={!hasPrevPage}
-                >
-                  « Back
-                </button>
-
-                {Array.from({ length: totalPages }, (_, i) => (
+              <div className="pagination-wrapper">
+                <div className="pagination">
                   <button
-                    key={i}
-                    className={`page-link ${currentPage === i + 1 ? 'active' : ''}`}
-                    onClick={() => setCurrentPage(i + 1)}
+                    className="page-link"
+                    onClick={prevPage}
+                    disabled={!hasPrevPage}
                   >
-                    {i + 1}
+                    « Back
                   </button>
-                ))}
 
-                <button
-                  className="page-link"
-                  onClick={nextPage}
-                  disabled={!hasNextPage}
-                >
-                  Next »
-                </button>
+                  {Array.from({ length: totalPages }, (_, i) => (
+                    <button
+                      key={i}
+                      className={`page-link ${currentPage === i + 1 ? 'active' : ''}`}
+                      onClick={() => handlePageChange(i + 1)}
+                    >
+                      {i + 1}
+                    </button>
+                  ))}
+
+                  <button
+                    className="page-link"
+                    onClick={nextPage}
+                    disabled={!hasNextPage}
+                  >
+                    Next »
+                  </button>
+                </div>
               </div>
             )}
           </section>

@@ -1,4 +1,5 @@
-// src/pages/Dashboard/SalesAnalytic.jsx
+// SalesAnalytic.jsx - UPDATED
+// ============================================
 import React, { useEffect, useState } from "react";
 import {
   LineChart,
@@ -35,7 +36,8 @@ const SalesAnalytic = () => {
   useEffect(() => {
     const fetchSales = async () => {
       try {
-        const res = await api.get("/sales/monthly");
+        // ✅ FIXED: Use /api/sales/monthly (with /api prefix)
+        const res = await api.get("/api/sales/monthly");
         const formattedData = formatSalesData(res.data, toFullMonthName);
         
         setData(formattedData);

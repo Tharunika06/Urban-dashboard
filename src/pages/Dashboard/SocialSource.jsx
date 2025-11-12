@@ -1,121 +1,184 @@
-// src/pages/Dashboard/SocialSource.jsx
+// WeeklySales.jsx - UPDATED
+// ============================================
 import React, { useState, useEffect } from "react";
-import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  ResponsiveContainer,
+} from "recharts";
 import api from "../../utils/api";
-import MonthDropdown from "../../components/common/MonthDropdown";
-import { PIE_CHART_COLORS, CHART_COLORS, DEFAULTS } from "../../utils/constants";
-import { formatPieChartData } from "../../utils/chartUtils";
-import { calculateMonthlyTotal } from "../../utils/dataUtils";
-import { getPeriodDisplayText } from "../../utils/dateUtils";
+import { getPaddedMaxValue, calculateTotal } from "../../utils/chartUtils";
+import { formatWeeklySalesData, getWeeklySalesFallback } from "../../utils/dataUtils";
+import { getWeekLabel } from "../../utils/dateUtils";
 
-const SocialSource = () => {
-  const [buyersData, setBuyersData] = useState({});
-  const [selectedMonth, setSelectedMonth] = useState(DEFAULTS.MONTH);
+const WeeklySales = () => {
+  const [salesData, setSalesData] = useState([]);
+  const [totalSales, setTotalSales] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [weekOffset, setWeekOffset] = useState(0);
+
+  const fetchSalesData = async (offset = 0) => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      // ✅ FIXED: Use /api/sales/weekly (with /api prefix)
+      const response = await api.get(`/api/sales/weekly?offset=${offset}`);
+      const formattedData = formatWeeklySalesData(response.data);
+
+      setSalesData(formattedData);
+      const total = calculateTotal(formattedData, 'sales');
+      setTotalSales(total);
+    } catch (err) {
+      console.error("Error fetching sales data:", err);
+      setError("Failed to load sales data");
+
+      const fallback = getWeeklySalesFallback();
+      setSalesData(fallback);
+      setTotalSales(calculateTotal(fallback, 'sales'));
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchBuyersData = async () => {
-      try {
-        const response = await api.get("/payment/buyers");
-        console.log("Buyers data response:", response.data);
-        setBuyersData(response.data);
-      } catch (error) {
-        console.error("Error fetching buyers data:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
+    fetchSalesData(weekOffset);
+  }, [weekOffset]);
 
-    fetchBuyersData();
-  }, []);
+  const goToPreviousWeek = () => {
+    setWeekOffset(prev => prev - 1);
+  };
+
+  const goToNextWeek = () => {
+    setWeekOffset(prev => prev + 1);
+  };
 
   if (loading) {
-    return <div className="card text-center p-3">Loading buyers data...</div>;
+    return (
+      <div className="card">
+        <h3 className="card-title">Weekly Sales</h3>
+        <div style={{ textAlign: "center", padding: "40px" }}>
+          Loading sales data...
+        </div>
+      </div>
+    );
   }
 
-  const totalValue = calculateMonthlyTotal(buyersData, selectedMonth, DEFAULTS.MONTH);
-  const hasData = totalValue > 0;
-  const chartData = formatPieChartData(totalValue);
+  const paddedMax = getPaddedMaxValue(salesData, 'sales');
 
   return (
-    <div className="card text-center">
-      <div className="d-flex justify-content-between align-items-center mb-3">
-        <h3 className="card-title">Social Source</h3>
-        <MonthDropdown 
-          onChange={(month) => setSelectedMonth(month)}
-          defaultValue={DEFAULTS.MONTH}
-        />
-      </div>
-      <span className="text-secondary" style={{ display: 'block', marginBottom: '1rem' }}>
-        Total traffic in <strong>{getPeriodDisplayText(selectedMonth, DEFAULTS.MONTH)}</strong>
-      </span>
-      <div style={{ 
-        position: 'relative', 
-        width: '100%', 
-        height: '200px',
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        margin: '0 auto'
-      }}>
-        <div style={{ width: '200px', height: '200px', position: 'relative' }}>
-          <ResponsiveContainer width="100%" height="100%">
-            <PieChart>
-              {hasData && (
-                <defs>
-                  <linearGradient id="gradientColor" x1="0" y1="0" x2="1" y2="1">
-                    <stop offset="0%" stopColor={CHART_COLORS.GRADIENT_START} />
-                    <stop offset="100%" stopColor={CHART_COLORS.GRADIENT_END} />
-                  </linearGradient>
-                </defs>
-              )}
-              <Pie
-                data={chartData}
-                cx="50%"
-                cy="50%"
-                innerRadius={60}
-                outerRadius={75}
-                startAngle={90}
-                endAngle={450}
-                dataKey="value"
-              >
-                {chartData.map((entry, index) => (
-                  <Cell
-                    key={`cell-${entry.name}-${index}`}
-                    fill={hasData ? PIE_CHART_COLORS[index % PIE_CHART_COLORS.length] : CHART_COLORS.EMPTY}
-                    stroke={hasData ? PIE_CHART_COLORS[index % PIE_CHART_COLORS.length] : CHART_COLORS.EMPTY}
-                  />
-                ))}
-              </Pie>
-            </PieChart>
-          </ResponsiveContainer>
-          <div style={{
-            position: 'absolute',
-            top: '50%',
-            left: '50%',
-            transform: 'translate(-50%, -50%)',
-            textAlign: 'center',
-            pointerEvents: 'none'
-          }}>
-            <div style={{ 
-              fontSize: '0.85rem', 
-              color: '#8A92A6',
-              marginBottom: '0.25rem'
-            }}>
-              Total Buyers
-            </div>
-            <div style={{ 
-              fontSize: '2rem', 
-              fontWeight: '700',
-              color: hasData ? '#1a2238' : '#999'
-            }}>
-              {totalValue}
-            </div>
-          </div>
+    <div className="card">
+      <h3 className="card-title">Weekly Sales</h3>
+      <br />
+
+      {error && (
+        <div
+          style={{
+            color: "red",
+            fontSize: "14px",
+            padding: "8px",
+            backgroundColor: "#ffe6e6",
+            borderRadius: "4px",
+            marginBottom: "16px",
+          }}
+        >
+          {error}
         </div>
+      )}
+
+      <div style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: "20px",
+        marginBottom: "20px"
+      }}>
+        <button
+          onClick={goToPreviousWeek}
+          style={{
+            background: "#E6E8F0",
+            border: "none",
+            color: "black",
+            width: "32px",
+            height: "32px",
+            borderRadius: "50%",
+            cursor: "pointer",
+            fontSize: "16px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center"
+          }}
+          onMouseOver={(e) => e.target.style.opacity = "0.8"}
+          onMouseOut={(e) => e.target.style.opacity = "1"}
+        >
+          &lt;
+        </button>
+        
+        <span 
+          className="card-subtitle" 
+          style={{ 
+            minWidth: "120px", 
+            textAlign: "center",
+            fontSize: "16px",
+            fontWeight: "600"
+          }}
+        >
+          {getWeekLabel(weekOffset)}
+        </span>
+        
+        <button
+          onClick={goToNextWeek}
+          style={{
+            background: "#E6E8F0",
+            border: "none",
+            color: "black",
+            width: "32px",
+            height: "32px",
+            borderRadius: "50%",
+            cursor: "pointer",
+            fontSize: "16px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center"
+          }}
+          onMouseOver={(e) => e.target.style.opacity = "0.8"}
+          onMouseOut={(e) => e.target.style.opacity = "1"}
+        >
+          &gt;
+        </button>
+      </div>
+      <br />
+
+      <div style={{ width: "100%", height: 200 }}>
+        <ResponsiveContainer>
+          <BarChart
+            data={salesData}
+            margin={{ top: 20, right: 0, left: -20, bottom: 0 }}
+          >
+            <XAxis dataKey="day" axisLine={true} tickLine={false} />
+            <YAxis
+              domain={[0, paddedMax]}
+              axisLine={true}
+              tickLine={true}
+              tickCount={5}
+            />
+            <Bar
+              dataKey="sales"
+              fill="#0075FF"
+              barSize={15}
+              radius={[5, 5, 0, 0]}
+            />
+          </BarChart>
+        </ResponsiveContainer>
+        <p className="total-sales-text">
+          Total Property Sales: <strong>{totalSales}</strong>
+        </p>
       </div>
     </div>
   );
 };
 
-export default SocialSource;
+export default WeeklySales;

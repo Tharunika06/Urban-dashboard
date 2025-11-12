@@ -1,21 +1,24 @@
 // src/pages/OrderList.jsx
-import React, { useState } from 'react';
+import React from 'react';
 import { Link } from 'react-router-dom';
+import { usePagination } from '../../hooks/usePagination';
 import { DEFAULTS, ASSET_PATHS, UI_MESSAGES } from '../../utils/constants';
-import { 
-  calculatePagination, 
-  getPaginatedItems, 
-  validatePageNumber 
-} from '../../utils/paginationUtils';
 import { 
   formatCurrency, 
   formatTableDate, 
   getNestedValue 
 } from '../../utils/tableUtils';
 
+const ITEMS_PER_PAGE = 5;
+
 const OrderList = ({ orders, onDelete }) => {
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 5;
+  // Use pagination hook
+  const {
+    currentPage,
+    totalPages,
+    currentItems: currentOrders,
+    handlePageChange
+  } = usePagination(orders, ITEMS_PER_PAGE);
 
   // Table headers configuration
   const tableHeaders = [
@@ -27,15 +30,6 @@ const OrderList = ({ orders, onDelete }) => {
     'Purchase Properties',
     'Action'
   ];
-
-  // Pagination calculations using utility
-  const { totalPages } = calculatePagination(orders.length, currentPage, itemsPerPage);
-  const currentOrders = getPaginatedItems(orders, currentPage, itemsPerPage);
-
-  const handlePageChange = (page) => {
-    const validPage = validatePageNumber(page, totalPages);
-    setCurrentPage(validPage);
-  };
 
   // Render cell content based on column using utilities
   const renderCell = (order, header) => {
@@ -81,65 +75,69 @@ const OrderList = ({ orders, onDelete }) => {
   };
 
   return (
-    <div className="table-container">
-      <table className="order-list-table">
-        <thead>
-          <tr>
-            {tableHeaders.map((header) => (
-              <th key={header}>{header}</th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {currentOrders.length > 0 ? (
-            currentOrders.map((order) => (
-              <tr key={order._id}>
-                {tableHeaders.map((header) => (
-                  <td key={`${order._id}-${header}`}>
-                    {renderCell(order, header)}
-                  </td>
-                ))}
-              </tr>
-            ))
-          ) : (
+    <>
+      <div className="table-scroll-container">
+        <table className="order-list-table">
+          <thead>
             <tr>
-              <td colSpan={tableHeaders.length} className="no-data-cell">
-                {UI_MESSAGES.NO_ORDERS_FOUND}
-              </td>
+              {tableHeaders.map((header) => (
+                <th key={header}>{header}</th>
+              ))}
             </tr>
-          )}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {currentOrders.length > 0 ? (
+              currentOrders.map((order) => (
+                <tr key={order._id}>
+                  {tableHeaders.map((header) => (
+                    <td key={`${order._id}-${header}`}>
+                      {renderCell(order, header)}
+                    </td>
+                  ))}
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td colSpan={tableHeaders.length} className="no-data-cell">
+                  {UI_MESSAGES.NO_ORDERS_FOUND}
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
 
-      {/* Pagination */}
+      {/* Pagination - Now outside scroll container */}
       {totalPages > 1 && (
-        <div className="pagination">
-          <button
-            className="page-link"
-            onClick={() => handlePageChange(currentPage - 1)}
-            disabled={currentPage === 1}
-          >
-            ‹ Back
-          </button>
-          {Array.from({ length: totalPages }, (_, i) => (
+        <div className="pagination-wrapper">
+          <div className="pagination">
             <button
-              key={i + 1}
-              className={`page-link ${currentPage === i + 1 ? 'active' : ''}`}
-              onClick={() => handlePageChange(i + 1)}
+              className="page-link"
+              onClick={() => handlePageChange(currentPage - 1)}
+              disabled={currentPage === 1}
             >
-              {i + 1}
+              ‹ Back
             </button>
-          ))}
-          <button
-            className="page-link"
-            onClick={() => handlePageChange(currentPage + 1)}
-            disabled={currentPage === totalPages}
-          >
-            Next ›
-          </button>
+            {Array.from({ length: totalPages }, (_, i) => (
+              <button
+                key={i + 1}
+                className={`page-link ${currentPage === i + 1 ? 'active' : ''}`}
+                onClick={() => handlePageChange(i + 1)}
+              >
+                {i + 1}
+              </button>
+            ))}
+            <button
+              className="page-link"
+              onClick={() => handlePageChange(currentPage + 1)}
+              disabled={currentPage === totalPages}
+            >
+              Next ›
+            </button>
+          </div>
         </div>
       )}
-    </div>
+    </>
   );
 };
 

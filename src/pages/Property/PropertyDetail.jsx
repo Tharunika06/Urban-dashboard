@@ -3,12 +3,10 @@ import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import Header from '../../components/layout/Header';
 import Sidebar from '../../components/layout/Sidebar';
+import propertyService from '../../services/propertyService';
 import {
-  API_CONFIG,
-  API_ENDPOINTS,
   DEFAULTS,
   UI_MESSAGES,
-  BUTTON_LABELS,
 } from '../../utils/constants';
 import {
   getImageSrc,
@@ -23,18 +21,20 @@ const PropertyDetail = () => {
   const { propertyId } = useParams();
   const [property, setProperty] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     const fetchProperty = async () => {
       try {
-        const res = await fetch(`${API_CONFIG.BASE_URL}${API_ENDPOINTS.PROPERTY}/${propertyId}`);
-        if (!res.ok) {
-          throw new Error('Property not found');
-        }
-        const data = await res.json();
+        setLoading(true);
+        
+        // ✅ Use propertyService instead of fetch
+        const data = await propertyService.getPropertyById(propertyId);
         setProperty(data);
+        setError(null);
       } catch (err) {
         console.error('Failed to fetch property:', err);
+        setError(err.message || 'Property not found');
       } finally {
         setLoading(false);
       }
@@ -43,8 +43,33 @@ const PropertyDetail = () => {
     fetchProperty();
   }, [propertyId]);
 
-  if (loading) return <div className="loading-state">{UI_MESSAGES.LOADING_PROPERTIES}</div>;
-  if (!property) return <div className="loading-state">Property not found</div>;
+  if (loading) {
+    return (
+      <div className="dashboard-container">
+        <Sidebar />
+        <div className="main-content">
+          <Header title="Property Details" />
+          <div className="loading-state" style={{ textAlign: 'center', padding: '40px' }}>
+            {UI_MESSAGES.LOADING_PROPERTIES}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !property) {
+    return (
+      <div className="dashboard-container">
+        <Sidebar />
+        <div className="main-content">
+          <Header title="Property Details" />
+          <div className="loading-state" style={{ textAlign: 'center', padding: '40px' }}>
+            {error || 'Property not found'}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const ownerInfo = getOwnerInfo(property);
 

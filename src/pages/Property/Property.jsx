@@ -1,15 +1,14 @@
 // src/pages/Property/Property.jsx
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
 import PropertyList from './PropertyList.jsx';
 import PropertyGrid from './PropertyGrid.jsx';
 import AddProperty from './AddProperty.jsx';
 import Header from '../../components/layout/Header';
 import MonthDropdown from '../../components/common/MonthDropdown';
 import PopupMessage from '../../components/common/PopupMessage';
+import propertyService from '../../services/propertyService';
 import {
   API_CONFIG,
-  API_ENDPOINTS,
   MONTHS_FULL,
   DEFAULTS,
   PROPERTY_VIEW,
@@ -50,8 +49,10 @@ const Property = () => {
     try {
       if (!silent) setIsLoading(true);
       setError(null);
-      const res = await axios.get(`${API_CONFIG.BASE_URL}${API_ENDPOINTS.PROPERTY}`);
-      const propertiesArray = Array.isArray(res.data) ? res.data : [];
+      
+      // ✅ Use propertyService instead of axios
+      const data = await propertyService.getAllProperties();
+      const propertiesArray = Array.isArray(data) ? data : [];
       setPropertyList(propertiesArray);
     } catch (err) {
       setError(err.message);
@@ -104,12 +105,8 @@ const Property = () => {
 
     try {
       if (bulkDeleteMode) {
-        // Bulk delete - delete multiple properties
-        const deletePromises = propertyToDelete.map(id => 
-          axios.delete(`${API_CONFIG.BASE_URL}${API_ENDPOINTS.PROPERTY}/${id}`)
-        );
-        
-        await Promise.all(deletePromises);
+        // ✅ Bulk delete using propertyService
+        await propertyService.bulkDeleteProperties(propertyToDelete);
         
         // Immediately update UI by filtering out all deleted properties
         setPropertyList(prevList => 
@@ -118,8 +115,8 @@ const Property = () => {
         
         console.log(`✅ ${propertyToDelete.length} ${UI_MESSAGES.PROPERTIES_DELETED}`);
       } else {
-        // Single delete
-        await axios.delete(`${API_CONFIG.BASE_URL}${API_ENDPOINTS.PROPERTY}/${propertyToDelete}`);
+        // ✅ Single delete using propertyService
+        await propertyService.deleteProperty(propertyToDelete);
         
         // Immediately update the UI by filtering out the deleted property
         setPropertyList(prevList => 
@@ -243,7 +240,6 @@ const Property = () => {
               <div className="list-header">
                 <h2 className="page-title">
                   {getPageTitle()} 
-                  {/* <span className="subtext"> ({filteredList.length} Properties)</span> */}
                 </h2>
                 <MonthDropdown onChange={handleMonthChange} />
               </div>
