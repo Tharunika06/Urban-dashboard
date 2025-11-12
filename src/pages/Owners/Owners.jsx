@@ -3,8 +3,10 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import MonthDropdown from '../../components/common/MonthDropdown';
 import Header from '../../components/layout/Header';
+import GradientButton from '../../components/common/GradientButton';
 import AddOwnerModal from '../Owners/AddOwnerModal';
 import PopupMessage from '../../components/common/PopupMessage';
+import SearchBar from '../../components/common/SearchBar';
 import ownerService from '../../services/ownerService';
 import { usePagination } from '../../hooks/usePagination';
 import { 
@@ -162,9 +164,9 @@ const Owners = () => {
         <td colSpan={tableHeaders.length} className="error-state">
           <div style={STYLES.ERROR_STATE}>
             <p>Error: {error}</p>
-            <button onClick={() => loadOwners()} style={STYLES.RETRY_BUTTON}>
+            <GradientButton onClick={() => loadOwners()} width="100px" height="38px">
               Retry
-            </button>
+            </GradientButton>
           </div>
         </td>
       </tr>
@@ -238,30 +240,20 @@ const Owners = () => {
 
         <main className="dashboard-body p-4">
           <div className="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4 gap-3">
-            <div className="search-bar w-100 w-md-50 d-flex align-items-center">
-              <img src={ASSET_PATHS.SEARCH_ICON} alt="search" />
-              <input
-                type="text"
-                placeholder="Search"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-            </div>
+            <SearchBar
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-100 w-md-50"
+            />
 
-            <button
-              className="btn btn-primary"
+            <GradientButton
               onClick={() => setIsModalOpen(true)}
-              style={{
-                backgroundColor: '#000',
-                color: '#fff',
-                padding: '8px 16px',
-                borderRadius: '6px',
-                border: 'none',
-                cursor: 'pointer',
-              }}
+              width="140px"
+              height="40px"
+              style={{ padding: '10px 20px' }}
             >
               New Owner
-            </button>
+            </GradientButton>
           </div>
 
           <section className="content-section">
@@ -289,29 +281,64 @@ const Owners = () => {
               <div className="pagination-wrapper">
                 <div className="pagination">
                   <button
-                    className="page-link"
                     onClick={prevPage}
                     disabled={!hasPrevPage}
+                    style={{
+                      padding: '10px 20px',
+                      background: 'white',
+                      border: '1px solid #ddd',
+                      borderRadius: '8px',
+                      cursor: hasPrevPage ? 'pointer' : 'not-allowed',
+                      opacity: hasPrevPage ? 1 : 0.5,
+                      fontSize: '14px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '5px'
+                    }}
                   >
-                    « Back
+                    <span>‹</span> Back
                   </button>
 
                   {Array.from({ length: totalPages }, (_, i) => (
                     <button
                       key={i}
-                      className={`page-link ${currentPage === i + 1 ? 'active' : ''}`}
                       onClick={() => handlePageChange(i + 1)}
+                      style={{
+                        width: '45px',
+                        height: '45px',
+                        padding: '10px',
+                        background: currentPage === i + 1 
+                          ? 'linear-gradient(180deg, #474747 0%, #000000 100%)' 
+                          : 'white',
+                        color: currentPage === i + 1 ? '#fff' : '#000',
+                        border: '1px solid #ddd',
+                        borderRadius: '8px',
+                        cursor: 'pointer',
+                        fontSize: '14px',
+                        fontWeight: currentPage === i + 1 ? '600' : '400'
+                      }}
                     >
                       {i + 1}
                     </button>
                   ))}
 
                   <button
-                    className="page-link"
                     onClick={nextPage}
                     disabled={!hasNextPage}
+                    style={{
+                      padding: '10px 20px',
+                      background: 'white',
+                      border: '1px solid #ddd',
+                      borderRadius: '8px',
+                      cursor: hasNextPage ? 'pointer' : 'not-allowed',
+                      opacity: hasNextPage ? 1 : 0.5,
+                      fontSize: '14px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '5px'
+                    }}
                   >
-                    Next »
+                    Next <span>›</span>
                   </button>
                 </div>
               </div>
@@ -327,7 +354,14 @@ const Owners = () => {
       />
 
       {showDeletePopup && (
-        <PopupMessage onConfirm={handleDelete} onCancel={handleCancelDelete} />
+        <PopupMessage 
+          title="Delete Owner"
+          message="Are you sure you want to delete this owner? This action cannot be undone."
+          confirmLabel="Delete"
+          cancelLabel="Cancel"
+          onConfirm={handleDelete} 
+          onCancel={handleCancelDelete} 
+        />
       )}
     </div>
   );

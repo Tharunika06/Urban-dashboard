@@ -1,7 +1,6 @@
 // src/hooks/useLogout.js
 import { useNavigate } from 'react-router-dom';
-
-const API_URL = "http://localhost:5000/api";
+import { API_CONFIG } from '../utils/constants';
 
 export const useLogout = () => {
   const navigate = useNavigate();
@@ -9,7 +8,7 @@ export const useLogout = () => {
   const logout = async () => {
     try {
       // ✅ Call backend logout endpoint to clear httpOnly cookie
-      await fetch(`${API_URL}/admin/logout`, {
+      await fetch(`${API_CONFIG}/admin/logout`, {
         method: 'POST',
         credentials: 'include', // ✅ Send cookie to be cleared
         headers: {

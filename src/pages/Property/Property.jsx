@@ -6,6 +6,8 @@ import AddProperty from './AddProperty.jsx';
 import Header from '../../components/layout/Header';
 import MonthDropdown from '../../components/common/MonthDropdown';
 import PopupMessage from '../../components/common/PopupMessage';
+import GradientButton from '../../components/common/GradientButton';
+import SearchBar from '../../components/common/SearchBar';
 import propertyService from '../../services/propertyService';
 import {
   API_CONFIG,
@@ -50,9 +52,16 @@ const Property = () => {
       if (!silent) setIsLoading(true);
       setError(null);
       
-      // ✅ Use propertyService instead of axios
+      console.log('🔄 Fetching properties...');
+      
       const data = await propertyService.getAllProperties();
-      const propertiesArray = Array.isArray(data) ? data : [];
+      
+      console.log('📦 Response data:', data);
+      
+      const propertiesArray = data.properties || data || [];
+      
+      console.log(`✅ Loaded ${propertiesArray.length} properties`);
+      
       setPropertyList(propertiesArray);
     } catch (err) {
       setError(err.message);
@@ -76,24 +85,21 @@ const Property = () => {
   const handleMonthChange = (month) => setSelectedMonth(month);
   
   const handleSaveProperty = async (newProperty) => {
-    // Immediately update the list with the new property
     if (newProperty) {
-      setPropertyList(prevList => [...prevList, newProperty]);
+      const propertyData = newProperty.property || newProperty;
+      setPropertyList(prevList => [...prevList, propertyData]);
     } else {
-      // Fetch all properties again to ensure data consistency
       await fetchProperties();
     }
     setIsModalOpen(false);
   };
 
-  // Single property delete
   const confirmDelete = (id) => {
     setPropertyToDelete(id);
     setBulkDeleteMode(false);
     setDeleteModalOpen(true);
   };
 
-  // Bulk delete
   const confirmBulkDelete = (ids) => {
     setPropertyToDelete(ids);
     setBulkDeleteMode(true);
@@ -105,30 +111,20 @@ const Property = () => {
 
     try {
       if (bulkDeleteMode) {
-        // ✅ Bulk delete using propertyService
         await propertyService.bulkDeleteProperties(propertyToDelete);
-        
-        // Immediately update UI by filtering out all deleted properties
         setPropertyList(prevList => 
           prevList.filter((prop) => !propertyToDelete.includes(prop._id))
         );
-        
         console.log(`✅ ${propertyToDelete.length} ${UI_MESSAGES.PROPERTIES_DELETED}`);
       } else {
-        // ✅ Single delete using propertyService
         await propertyService.deleteProperty(propertyToDelete);
-        
-        // Immediately update the UI by filtering out the deleted property
         setPropertyList(prevList => 
           prevList.filter((prop) => prop._id !== propertyToDelete)
         );
-        
         console.log(`✅ ${UI_MESSAGES.PROPERTY_DELETED}`);
       }
     } catch (err) {
       console.error('❌ Failed to delete property:', err);
-      alert(err.response?.data?.message || UI_MESSAGES.DELETE_FAILED);
-      // Refetch to ensure data consistency if delete failed
       fetchProperties();
     } finally {
       setDeleteModalOpen(false);
@@ -159,13 +155,13 @@ const Property = () => {
       return (
         <div className="error-state" style={STYLES.ERROR_STATE}>
           <p>Error: {error}</p>
-          <button 
+          <GradientButton 
             onClick={() => fetchProperties()} 
-            className="retry-btn" 
-            style={STYLES.RETRY_BUTTON}
+            width="100px" 
+            height="38px"
           >
             {BUTTON_LABELS.RETRY}
-          </button>
+          </GradientButton>
         </div>
       );
     }
@@ -198,15 +194,12 @@ const Property = () => {
         <main className="dashboard-body p-4">
           {/* Search + Actions */}
           <div className="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4 gap-3">
-            <div className="search-bar w-100 w-md-50 d-flex align-items-center">
-              <img src={ASSET_PATHS.SEARCH_ICON} alt="search" />
-              <input
-                type="text"
-                placeholder={PLACEHOLDERS.SEARCH}
-                value={searchTerm}
-                onChange={handleSearch}
-              />
-            </div>
+            <SearchBar
+              value={searchTerm}
+              onChange={handleSearch}
+              placeholder={PLACEHOLDERS.SEARCH}
+              className="w-100 w-md-50 d-flex align-items-center"
+            />
             <div className="d-flex align-items-center gap-2">
               <div className="view-toggle">
                 <button
@@ -228,9 +221,9 @@ const Property = () => {
                   />
                 </button>
               </div>
-              <button className="add-property-btn" onClick={() => setIsModalOpen(true)}>
+              <GradientButton onClick={() => setIsModalOpen(true)}>
                 {BUTTON_LABELS.ADD_PROPERTY}
-              </button>
+              </GradientButton>
             </div>
           </div>
 
@@ -239,7 +232,7 @@ const Property = () => {
             <div className="content-card">
               <div className="list-header">
                 <h2 className="page-title">
-                  {getPageTitle()} 
+                  {getPageTitle()} <span className="subtext"></span>
                 </h2>
                 <MonthDropdown onChange={handleMonthChange} />
               </div>

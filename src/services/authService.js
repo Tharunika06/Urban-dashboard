@@ -13,7 +13,6 @@ export const storage = {
       isAuthenticated: userData.isAuthenticated || true
     };
     localStorage.setItem('user', JSON.stringify(safeData));
-    console.log("User saved to localStorage:", safeData);
   },
   
   getUser: () => {
@@ -58,7 +57,6 @@ export const storage = {
     localStorage.removeItem('user');
     localStorage.removeItem('resetEmail');
     localStorage.removeItem('adminProfile');
-    console.log("🗑️ All storage cleared");
   }
 };
 
@@ -137,9 +135,7 @@ const authService = {
    * @returns {Promise} Response with user data and token (in httpOnly cookie)
    */
   adminLogin: async (email, password) => {
-    console.log("🔐 Attempting admin login...");
     const response = await api.post('/api/admin-login', { email, password });
-    console.log("✅ Admin login successful, cookies:", document.cookie);
     return response.data;
   },
 
@@ -246,8 +242,8 @@ const authService = {
    * @returns {Promise} Response with admin profile data
    */
   getAdminProfile: async () => {
-    console.log("👨‍💼 Fetching admin profile...");
-    console.log("🍪 Cookies available:", document.cookie);
+    // console.log("👨‍💼 Fetching admin profile...");
+    // console.log("🍪 Cookies available:", document.cookie);
     
     try {
       const response = await api.get('/api/admin/profile');
@@ -264,7 +260,7 @@ const authService = {
    * @returns {Promise} Response with updated profile
    */
   updateAdminProfile: async (formData) => {
-    console.log("💾 Updating admin profile...");
+    // console.log("💾 Updating admin profile...");
     const response = await api.put('/api/admin/profile', formData, {
       headers: {
         'Content-Type': 'multipart/form-data'
@@ -278,7 +274,7 @@ const authService = {
    * @returns {Promise} Response indicating photo deletion
    */
   deleteAdminPhoto: async () => {
-    console.log("🗑️ Deleting admin photo...");
+    // console.log("🗑️ Deleting admin photo...");
     const response = await api.delete('/api/admin/profile/photo');
     return response.data;
   },
@@ -288,7 +284,7 @@ const authService = {
    * @returns {Promise} Response with current user data
    */
   getCurrentUser: async () => {
-    console.log("👤 Fetching current user profile...");
+    // console.log("👤 Fetching current user profile...");
     const response = await api.get('/api/me');
     return response.data;
   },

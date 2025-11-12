@@ -3,8 +3,8 @@
 import React, { useState, useEffect } from 'react';
 import OrderList from './OrderList';
 import PopupMessage from '../../components/common/PopupMessage';
+import SearchBar from '../../components/common/SearchBar';
 import '../../styles/Orders.css';
-import { BsSearch } from 'react-icons/bs';
 import MonthDropdown from '../../components/common/MonthDropdown';
 import Header from '../../components/layout/Header';
 import transactionService from '../../services/transactionService';
@@ -132,16 +132,11 @@ const Orders = () => {
         <div className="page-content-wrapper">
           <div className="orders-page-container">
             <div className="controls-bar">
-              <div className="search-wrapper">
-                <BsSearch className="search-icon" />
-                <input
-                  type="search"
-                  placeholder="Search"
-                  className="search-input"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
-              </div>
+              <SearchBar
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="search-wrapper"
+              />
               <div className="header-actions">
                <div className="view-toggle">
                 <button

@@ -67,6 +67,7 @@ const ownerService = {
 
   /**
    * Get properties owned by specific owner
+   * ✅ FIXED: Now calls the correct endpoint
    * @param {string} ownerId - Owner ID
    * @returns {Promise} Response with array of properties
    */
@@ -77,13 +78,23 @@ const ownerService = {
   },
 
   /**
-   * Update owner statistics
+   * Recalculate owner statistics
    * @param {string} ownerId - Owner ID
    * @returns {Promise} Response with updated statistics
    */
-  updateOwnerStats: async (ownerId) => {
-    console.log(`📊 Updating stats for owner ${ownerId}...`);
-    const response = await api.post(`/api/owners/${ownerId}/update-stats`);
+  recalculateStats: async (ownerId) => {
+    console.log(`📊 Recalculating stats for owner ${ownerId}...`);
+    const response = await api.post(`/api/owners/${ownerId}/recalculate-stats`);
+    return response.data;
+  },
+
+  /**
+   * Recalculate all owner statistics
+   * @returns {Promise} Response with recalculation results
+   */
+  recalculateAllStats: async () => {
+    console.log(`📊 Recalculating stats for all owners...`);
+    const response = await api.post(`/api/owners/utils/recalculate-all`);
     return response.data;
   }
 };

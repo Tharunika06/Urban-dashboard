@@ -49,11 +49,6 @@ const LanguageSelector = () => {
   const handleLanguageSelect = (language) => {
     setSelectedLanguage(language);
     setShowLanguageMenu(false);
-    
-    // You can add additional logic here, like:
-    // - Save to localStorage
-    // - Trigger i18n language change
-    // - Dispatch to global state
     localStorage.setItem('selectedLanguage', JSON.stringify(language));
   };
 

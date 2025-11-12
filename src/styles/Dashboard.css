@@ -649,18 +649,7 @@ margin:20px;
   color: var(--pending-yellow); 
 }
 
-/* --- Buttons --- */
-.btn-view-all-button {
-  background-color: black;
-  color: white;
-  padding: 8px 8px;
-  border-radius: 6px;
-  text-decoration: none;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
+/* --- Card Footer --- */
 .card-footer {
   background-color: #fff;
   margin: 0;

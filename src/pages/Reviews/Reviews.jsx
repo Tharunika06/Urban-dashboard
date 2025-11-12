@@ -8,6 +8,7 @@ import { usePagination } from "../../hooks/usePagination";
 import Header from "../../components/layout/Header";
 import MonthDropdown from "../../components/common/MonthDropdown";
 import PopupMessage from "../../components/common/PopupMessage";
+import SearchBar from "../../components/common/SearchBar";
 import Checkbox from "../../components/common/Checkbox";
 import { 
   API_CONFIG, 
@@ -15,6 +16,7 @@ import {
   ASSET_PATHS,
   UI_MESSAGES,
   BUTTON_LABELS,
+  PLACEHOLDERS,
   STYLES
 } from "../../utils/constants";
 import {
@@ -51,6 +53,10 @@ const Reviews = () => {
     totalPages,
     currentItems: currentReviews,
     handlePageChange,
+    nextPage,
+    prevPage,
+    hasNextPage,
+    hasPrevPage,
     resetPage
   } = usePagination(filteredReviews, ITEMS_PER_PAGE);
 
@@ -126,11 +132,11 @@ const Reviews = () => {
   useEffect(() => {
     const filtered = applyReviewFilters(reviews, {
       searchTerm,
-      month: selectedMonth
+      selectedMonth
     });
     setFilteredReviews(filtered);
-    resetPage(); // Reset to page 1 when filters change
-  }, [searchTerm, selectedMonth, reviews]);
+    resetPage();
+  }, [searchTerm, selectedMonth, reviews, resetPage]);
 
   // Reset selections when page or data changes
   useEffect(() => {
@@ -173,12 +179,10 @@ const Reviews = () => {
           selectedIds.map((id) => reviewService.deleteReview(id))
         );
         setReviews((prev) => prev.filter((r) => !selectedIds.includes(r._id)));
-        alert(`${selectedIds.length} review(s) deleted successfully`);
       } else {
         // Single delete using service
         await reviewService.deleteReview(selectedIds[0]);
         setReviews((prev) => prev.filter((r) => r._id !== selectedIds[0]));
-        alert('Review deleted successfully');
       }
 
       setShowPopup(false);
@@ -187,7 +191,6 @@ const Reviews = () => {
       setSelectAll(false);
     } catch (err) {
       console.error("Error deleting reviews:", err);
-      alert(`${UI_MESSAGES.DELETE_FAILED}: ${err.response?.data?.message || err.message}`);
       setShowPopup(false);
     }
   };
@@ -205,15 +208,12 @@ const Reviews = () => {
         <Header />
         <div className="page-content reviews-wrapper">
           <div className="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4 gap-3">
-            <div className="search-bar w-100 w-md-50 d-flex align-items-center">
-              <img src={ASSET_PATHS.SEARCH_ICON} alt="search" />
-              <input
-                type="text"
-                placeholder="Search"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-            </div>
+            <SearchBar
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder={PLACEHOLDERS.SEARCH}
+              className="w-100 w-md-50"
+            />
           </div>
 
           <section className="content-section">
@@ -308,27 +308,64 @@ const Reviews = () => {
               <div className="pagination-wrapper">
                 <div className="pagination">
                   <button
-                    className="page-link"
-                    onClick={() => handlePageChange(currentPage - 1)}
-                    disabled={currentPage === 1}
+                    onClick={prevPage}
+                    disabled={!hasPrevPage}
+                    style={{
+                      padding: '10px 20px',
+                      background: 'white',
+                      border: '1px solid #ddd',
+                      borderRadius: '8px',
+                      cursor: hasPrevPage ? 'pointer' : 'not-allowed',
+                      opacity: hasPrevPage ? 1 : 0.5,
+                      fontSize: '14px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '5px'
+                    }}
                   >
-                    « Back
+                    <span>‹</span> Back
                   </button>
+
                   {Array.from({ length: totalPages }, (_, i) => (
                     <button
-                      key={i + 1}
-                      className={`page-link ${currentPage === i + 1 ? "active" : ""}`}
+                      key={i}
                       onClick={() => handlePageChange(i + 1)}
+                      style={{
+                        width: '45px',
+                        height: '45px',
+                        padding: '10px',
+                        background: currentPage === i + 1 
+                          ? 'linear-gradient(180deg, #474747 0%, #000000 100%)' 
+                          : 'white',
+                        color: currentPage === i + 1 ? '#fff' : '#000',
+                        border: '1px solid #ddd',
+                        borderRadius: '8px',
+                        cursor: 'pointer',
+                        fontSize: '14px',
+                        fontWeight: currentPage === i + 1 ? '600' : '400'
+                      }}
                     >
                       {i + 1}
                     </button>
                   ))}
+
                   <button
-                    className="page-link"
-                    onClick={() => handlePageChange(currentPage + 1)}
-                    disabled={currentPage === totalPages}
+                    onClick={nextPage}
+                    disabled={!hasNextPage}
+                    style={{
+                      padding: '10px 20px',
+                      background: 'white',
+                      border: '1px solid #ddd',
+                      borderRadius: '8px',
+                      cursor: hasNextPage ? 'pointer' : 'not-allowed',
+                      opacity: hasNextPage ? 1 : 0.5,
+                      fontSize: '14px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '5px'
+                    }}
                   >
-                    Next »
+                    Next <span>›</span>
                   </button>
                 </div>
               </div>

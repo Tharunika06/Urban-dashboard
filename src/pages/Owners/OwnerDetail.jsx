@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import Header from '../../components/layout/Header';
+import GradientButton from '../../components/common/GradientButton';
 import ownerService from '../../services/ownerService';
 import { STYLES } from '../../utils/constants';
 import { 
@@ -17,20 +18,20 @@ const OwnerDetail = () => {
   const [owner, setOwner] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [selectedProperties, setSelectedProperties] = useState([]);
-  const [availableProperties, setAvailableProperties] = useState([]);
-  const [showPropertyModal, setShowPropertyModal] = useState(false);
-  const [loadingProperties, setLoadingProperties] = useState(false);
+  const [properties, setProperties] = useState([]);
+  const [loadingProperties, setLoadingProperties] = useState(true);
 
-  // Fetch owner details using ownerService
+  // Fetch owner details
   const loadOwnerDetails = async () => {
     try {
       setLoading(true);
       setError(null);
   
+      console.log(`🔍 Loading owner details for ID: ${ownerId}`);
       const data = await ownerService.getOwnerById(ownerId);
       
       setOwner(data.owner || data);
+      console.log('✅ Owner loaded:', data.owner?.name || data.name);
     } catch (err) {
       console.error('❌ Failed to fetch owner:', err);
       setError(err.response?.data?.error || err.message || 'Failed to fetch owner details');
@@ -39,19 +40,23 @@ const OwnerDetail = () => {
     }
   };
 
-  // Fetch owner properties using ownerService
+  // Fetch owner properties
   const loadOwnerProperties = async () => {
     try {
-  
+      setLoadingProperties(true);
+      console.log(`📥 Fetching properties for owner: ${ownerId}`);
+      
       const data = await ownerService.getOwnerProperties(ownerId);
       
-      const properties = data.properties || data || [];
-      setSelectedProperties(properties);
-      setAvailableProperties(properties);
+      const fetchedProperties = data.properties || data || [];
+      console.log(`✅ Loaded ${fetchedProperties.length} properties`);
+      
+      setProperties(fetchedProperties);
     } catch (err) {
       console.error('❌ Failed to fetch owner properties:', err);
-      setSelectedProperties([]);
-      setAvailableProperties([]);
+      setProperties([]);
+    } finally {
+      setLoadingProperties(false);
     }
   };
 
@@ -62,47 +67,6 @@ const OwnerDetail = () => {
       loadOwnerProperties();
     }
   }, [ownerId]);
-
-  // Refresh owner stats when properties change
-  useEffect(() => {
-    if (ownerId && selectedProperties.length > 0) {
-      console.log('🔄 Properties changed, refreshing owner stats...');
-      loadOwnerDetails();
-    }
-  }, [selectedProperties.length]);
-
-  // Fetch available properties for modal
-  const fetchAvailablePropertiesForModal = async () => {
-    try {
-      setLoadingProperties(true);
-      
-      // ✅ Use ownerService
-      const data = await ownerService.getOwnerProperties(ownerId);
-      
-      setAvailableProperties(data.properties || data || []);
-    } catch (err) {
-      console.error('❌ Failed to fetch properties for modal:', err);
-      setAvailableProperties([]);
-    } finally {
-      setLoadingProperties(false);
-    }
-  };
-
-  const handlePlusClick = () => {
-    setShowPropertyModal(true);
-    fetchAvailablePropertiesForModal();
-  };
-
-  const handlePropertySelect = (property) => {
-    if (!selectedProperties.find(p => p._id === property._id)) {
-      setSelectedProperties([...selectedProperties, property]);
-    }
-    setShowPropertyModal(false);
-  };
-
-  const handleRemoveProperty = (propertyId) => {
-    setSelectedProperties(selectedProperties.filter(p => p._id !== propertyId));
-  };
 
   const scrollCarousel = (direction) => {
     const container = document.getElementById('property-carousel');
@@ -133,12 +97,9 @@ const OwnerDetail = () => {
         <main className="dashboard-body">
           <div style={STYLES.ERROR_STATE}>
             <h2>Error: {error}</h2>
-            <button 
-              onClick={() => loadOwnerDetails()}
-              style={STYLES.RETRY_BUTTON}
-            >
+            <GradientButton onClick={() => loadOwnerDetails()} width="100px" height="38px">
               Retry
-            </button>
+            </GradientButton>
           </div>
         </main>
       </div>
@@ -186,8 +147,27 @@ const OwnerDetail = () => {
                     <p className="email">{owner.email}</p>
                   </div>
                   <div className="action-buttons">
-                    <button className="btn-message">Message</button>
-                    <button className="btn-work-with">Work With {owner.name.split(' ')[0]}</button>
+                    <GradientButton 
+                      width="75px" 
+                      height="40px"
+                      style={{ 
+                        fontSize: '14px',
+                        padding: '10px 20px'
+                      }}
+                    >
+                      Message
+                    </GradientButton>
+                    <button 
+                      width="180px" 
+                      height="30px"
+                      style={{ 
+                        fontSize: '14px',
+                        padding: '10px 20px',
+                        borderRadius: '10px',
+                      }}
+                    >
+                      Work With {owner.name.split(' ')[0]}
+                    </button>
                   </div>
                 </div>
 
@@ -293,13 +273,20 @@ const OwnerDetail = () => {
                 <br/>
                 <div className="property-carousel-card">
                   <div className="carousel-header">
-                    <h3>Property Photos ({selectedProperties.length})</h3>
+                    <h3>Property Photos ({properties.length})</h3>
                   </div>
-                  {selectedProperties.length > 0 ? (
+                  
+                  {loadingProperties ? (
+                    <div className="loading-state" style={{ padding: '40px', textAlign: 'center' }}>
+                      <p>Loading properties...</p>
+                    </div>
+                  ) : properties.length > 0 ? (
                     <div className="carousel-wrapper">
-                      <button className="carousel-arrow left" onClick={() => scrollCarousel('left')}>‹</button>
+                      {properties.length > 1 && (
+                        <button className="carousel-arrow left" onClick={() => scrollCarousel('left')}>‹</button>
+                      )}
                       <div className="carousel-track" id="property-carousel">
-                        {selectedProperties.map((prop) => (
+                        {properties.map((prop) => (
                           <div key={prop._id} className="carousel-slide single-slide">
                             <img 
                               src={getPropertyPhotoSrc(prop.photo)} 
@@ -317,16 +304,18 @@ const OwnerDetail = () => {
                               <div className="icon-bg"><img src="/assets/home-icon.png" alt="icon" /></div>
                               <div>
                                 <strong>{prop.name}</strong>
-                                <span>{prop.address}</span>
+                                <span>{prop.address || prop.city}</span>
                               </div>
                             </div>
                           </div>
                         ))}
                       </div>
-                      <button className="carousel-arrow right" onClick={() => scrollCarousel('right')}>›</button>
+                      {properties.length > 1 && (
+                        <button className="carousel-arrow right" onClick={() => scrollCarousel('right')}>›</button>
+                      )}
                     </div>
                   ) : (
-                    <div className="no-properties">
+                    <div className="no-properties" style={{ padding: '40px', textAlign: 'center' }}>
                       <p>No properties found for this owner.</p>
                     </div>
                   )}
@@ -336,8 +325,8 @@ const OwnerDetail = () => {
                   <h3>Location</h3>
                   <img src={"/assets/world-map.png"} alt="Location Map" className="map-image" />
                   <div className="location-details">
-                    <strong>{owner.city}</strong>
-                    <span>{owner.address}</span>
+                    <strong>{owner.city || 'City Not Specified'}</strong>
+                    <span>{owner.address || 'Address Not Specified'}</span>
                   </div>
                 </div>
               </div>
@@ -345,62 +334,6 @@ const OwnerDetail = () => {
           </main>
         </div>
       </div>
-
-      {/* Property Selection Modal */}
-      {showPropertyModal && (
-        <div className="modal-overlay" onClick={() => setShowPropertyModal(false)}>
-          <div className="property-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h3>Select Properties for {owner.name}</h3>
-              <button className="modal-close-btn" onClick={() => setShowPropertyModal(false)}>×</button>
-            </div>
-            <div className="modal-content">
-              {loadingProperties ? (
-                <div className="loading-state">
-                  <p>Loading properties...</p>
-                </div>
-              ) : availableProperties.length > 0 ? (
-                <div className="property-grid">
-                  {availableProperties.map((property) => (
-                    <div 
-                      key={property._id} 
-                      className={`property-card ${selectedProperties.find(p => p._id === property._id) ? 'selected' : ''}`}
-                      onClick={() => handlePropertySelect(property)}
-                    >
-                      <img 
-                        src={getPropertyPhotoSrc(property.photo)} 
-                        alt={property.name}
-                        className="property-thumbnail"
-                        onError={(e) => handleImageError(e, '/assets/default-property.png')}
-                        style={{
-                          width: '100%',
-                          height: '150px',
-                          objectFit: 'cover',
-                          borderRadius: '8px 8px 0 0'
-                        }}
-                      />
-                      <div className="property-info">
-                        <h4>{property.name}</h4>
-                        <p>{property.address || 'Address not specified'}</p>
-                        <p className="property-price">{formatPropertyPrice(property)}</p>
-                        <p className="property-status">Status: {property.status}</p>
-                      </div>
-                      {selectedProperties.find(p => p._id === property._id) && (
-                        <div className="selected-indicator">✓</div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div style={STYLES.EMPTY_STATE}>
-                  <p>No properties found for this owner.</p>
-                  <p className="empty-state-subtitle">Properties may not be assigned to this owner yet.</p>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
     </>
   );
 };

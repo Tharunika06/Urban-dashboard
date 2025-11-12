@@ -1,6 +1,5 @@
 // src/services/propertyService.js
 import api from '../utils/api';
-import { API_ENDPOINTS } from '../utils/constants';
 
 /**
  * Property Service
@@ -9,11 +8,34 @@ import { API_ENDPOINTS } from '../utils/constants';
 const propertyService = {
   /**
    * Get all properties
+   * @param {boolean} includePhotos - Whether to include photos in response
    * @returns {Promise} Response with array of properties
    */
-  getAllProperties: async () => {
-    console.log("📋 Fetching all properties...");
-    const response = await api.get(API_ENDPOINTS.PROPERTY);
+  getAllProperties: async (includePhotos = true) => {
+    console.log("🏘️ Fetching all properties...");
+    const response = await api.get('/api/property', {
+      params: { includePhotos }
+    });
+    return response.data;
+  },
+
+  /**
+   * Get available properties (excluding sold ones)
+   * @returns {Promise} Response with array of available properties
+   */
+  getAvailableProperties: async () => {
+    console.log("🏘️ Fetching available properties...");
+    const response = await api.get('/api/property/available');
+    return response.data;
+  },
+
+  /**
+   * Get sold-out properties
+   * @returns {Promise} Response with array of sold properties
+   */
+  getSoldOutProperties: async () => {
+    console.log("🏘️ Fetching sold-out properties...");
+    const response = await api.get('/api/property/sold-out');
     return response.data;
   },
 
@@ -24,7 +46,51 @@ const propertyService = {
    */
   getPropertyById: async (propertyId) => {
     console.log(`🏠 Fetching property ${propertyId}...`);
-    const response = await api.get(`${API_ENDPOINTS.PROPERTY}/${propertyId}`);
+    const response = await api.get(`/api/property/${propertyId}`);
+    return response.data;
+  },
+
+  /**
+   * Get properties by owner ID
+   * @param {string} ownerId - Owner ID
+   * @returns {Promise} Response with array of properties
+   */
+  getPropertiesByOwner: async (ownerId) => {
+    console.log(`🏠 Fetching properties for owner ${ownerId}...`);
+    const response = await api.get(`/api/property/owner/${ownerId}`);
+    return response.data;
+  },
+
+  /**
+   * Get properties by category/type
+   * @param {string} type - Property type
+   * @returns {Promise} Response with array of properties
+   */
+  getPropertiesByCategory: async (type) => {
+    console.log(`🏠 Fetching properties of type ${type}...`);
+    const response = await api.get(`/api/property/category/${type}`);
+    return response.data;
+  },
+
+  /**
+   * Get property with owner details
+   * @param {string} propertyId - Property ID
+   * @returns {Promise} Response with property and owner details
+   */
+  getPropertyWithOwner: async (propertyId) => {
+    console.log(`🏠 Fetching property with owner details ${propertyId}...`);
+    const response = await api.get(`/api/property/${propertyId}/with-owner`);
+    return response.data;
+  },
+
+  /**
+   * Check property availability
+   * @param {string} propertyId - Property ID
+   * @returns {Promise} Response with availability status
+   */
+  checkPropertyAvailability: async (propertyId) => {
+    console.log(`🔍 Checking availability for property ${propertyId}...`);
+    const response = await api.get(`/api/property/${propertyId}/availability`);
     return response.data;
   },
 
@@ -35,7 +101,7 @@ const propertyService = {
    */
   createProperty: async (propertyData) => {
     console.log("➕ Creating new property...");
-    const response = await api.post(API_ENDPOINTS.PROPERTY, propertyData, {
+    const response = await api.post('/api/property', propertyData, {
       headers: {
         'Content-Type': 'application/json'
       }
@@ -51,7 +117,7 @@ const propertyService = {
    */
   updateProperty: async (propertyId, propertyData) => {
     console.log(`✏️ Updating property ${propertyId}...`);
-    const response = await api.put(`${API_ENDPOINTS.PROPERTY}/${propertyId}`, propertyData);
+    const response = await api.put(`/api/property/${propertyId}`, propertyData);
     return response.data;
   },
 
@@ -62,7 +128,7 @@ const propertyService = {
    */
   deleteProperty: async (propertyId) => {
     console.log(`🗑️ Deleting property ${propertyId}...`);
-    const response = await api.delete(`${API_ENDPOINTS.PROPERTY}/${propertyId}`);
+    const response = await api.delete(`/api/property/${propertyId}`);
     return response.data;
   },
 
@@ -74,20 +140,10 @@ const propertyService = {
   bulkDeleteProperties: async (propertyIds) => {
     console.log(`🗑️ Bulk deleting ${propertyIds.length} properties...`);
     const deletePromises = propertyIds.map(id => 
-      api.delete(`${API_ENDPOINTS.PROPERTY}/${id}`)
+      api.delete(`/api/property/${id}`)
     );
     const responses = await Promise.all(deletePromises);
     return responses.map(r => r.data);
-  },
-
-  /**
-   * Get all owners
-   * @returns {Promise} Response with array of owners
-   */
-  getAllOwners: async () => {
-    console.log("👥 Fetching all owners...");
-    const response = await api.get(API_ENDPOINTS.OWNERS);
-    return response.data;
   }
 };
 

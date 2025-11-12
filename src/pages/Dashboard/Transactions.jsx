@@ -1,9 +1,10 @@
 // Transactions.jsx - UPDATED
 // ============================================
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import api from '../../utils/api';
 import MonthDropdown from '/src/components/common/MonthDropdown.jsx';
+import GradientButton from '../../components/common/GradientButton';
 import { 
   MONTHS_FULL, 
   getStatusClass, 
@@ -14,6 +15,7 @@ import {
 import '../../styles/Dashboard.css';
 
 const TransactionsTable = () => {
+  const navigate = useNavigate();
   const [allTransactions, setAllTransactions] = useState([]);
   const [filteredTransactions, setFilteredTransactions] = useState([]);
   const [selectedMonth, setSelectedMonth] = useState('');
@@ -221,9 +223,12 @@ const TransactionsTable = () => {
       </div>
 
       <div className="card-footer">
-        <Link to="/transaction" className="btn-view-all-button">
+        <GradientButton 
+          buttonSize="medium"
+          onClick={() => navigate('/transaction')}
+        >
           View All
-        </Link>
+        </GradientButton>
       </div>
     </div>
   );

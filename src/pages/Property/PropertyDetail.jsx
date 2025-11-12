@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import Header from '../../components/layout/Header';
 import Sidebar from '../../components/layout/Sidebar';
+import GradientButton from '../../components/common/GradientButton';
 import propertyService from '../../services/propertyService';
 import {
   DEFAULTS,
@@ -42,6 +43,26 @@ const PropertyDetail = () => {
 
     fetchProperty();
   }, [propertyId]);
+
+  const handleCallUs = () => {
+    const ownerInfo = getOwnerInfo(property);
+    if (ownerInfo.phone) {
+      window.location.href = `tel:${ownerInfo.phone}`;
+    } else {
+      alert('Owner phone number not available');
+    }
+  };
+
+  const handleMessage = () => {
+    // Implement message functionality
+    alert('Message feature coming soon!');
+  };
+
+  const handleSendInformation = (e) => {
+    e.preventDefault();
+    // Implement schedule information sending
+    alert('Schedule information sent!');
+  };
 
   if (loading) {
     return (
@@ -110,8 +131,26 @@ const PropertyDetail = () => {
                   <a href="#"><img src="/assets/wp.png" alt="whatsapp" /></a>
                 </div>
                 <div className="agent-actions">
-                  <button className="btn-call">Call Us</button>
-                  <button className="btn-message">Message</button>
+                  <GradientButton
+                    onClick={handleCallUs}
+                    width="120px"
+                    height="38px"
+                    style={{
+                      padding: '10px 20px'
+                    }}
+                  >
+                    Call Us
+                  </GradientButton>
+                  <GradientButton
+                    onClick={handleMessage}
+                    width="120px"
+                    height="38px"
+                    style={{
+                      padding: '10px 20px'
+                    }}
+                  >
+                    Message
+                  </GradientButton>
                 </div>
               </div>
 
@@ -123,7 +162,17 @@ const PropertyDetail = () => {
                 <input type="email" placeholder="Email" />
                 <input type="text" placeholder="Number" />
                 <textarea placeholder="Message"></textarea>
-                <button className="btn-send-info">Send Information</button>
+                <GradientButton
+                  onClick={handleSendInformation}
+                  width="100%"
+                  height="42px"
+                  style={{
+                    padding: '12px 24px',
+                    marginTop: '10px'
+                  }}
+                >
+                  Send Information
+                </GradientButton>
               </div>
             </div>
 

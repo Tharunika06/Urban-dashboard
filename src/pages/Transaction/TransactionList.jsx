@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import Checkbox from '../../components/common/Checkbox';
+import { usePagination } from '../../hooks/usePagination';
 import { ASSET_PATHS, DEFAULTS } from '../../utils/constants';
 import { 
   formatTransactionDate, 
@@ -11,16 +12,27 @@ import {
   toggleSingleItem
 } from '../../utils/transactionHelpers';
 
+const ITEMS_PER_PAGE = 6;
+
 const TransactionList = ({ 
   transactions, 
   handleDelete, 
-  handleBulkDelete,
-  currentPage,
-  totalPages,
-  onPageChange
+  handleBulkDelete
 }) => {
   const [selectAll, setSelectAll] = useState(false);
   const [checkedRows, setCheckedRows] = useState({});
+
+  // Use pagination hook with all available features
+  const {
+    currentPage,
+    totalPages,
+    currentItems: currentTransactions,
+    handlePageChange,
+    nextPage,
+    prevPage,
+    hasNextPage,
+    hasPrevPage
+  } = usePagination(transactions, ITEMS_PER_PAGE);
 
   const tableHeaders = [
     { 
@@ -43,13 +55,13 @@ const TransactionList = ({
   }, [currentPage, transactions]);
 
   function handleSelectAll() {
-    const updated = toggleAllItems(transactions, selectAll, 'customTransactionId');
+    const updated = toggleAllItems(currentTransactions, selectAll, 'customTransactionId');
     setCheckedRows(updated);
     setSelectAll(!selectAll);
   }
 
   const toggleCheckbox = (id) => {
-    const result = toggleSingleItem(checkedRows, id, transactions, 'customTransactionId');
+    const result = toggleSingleItem(checkedRows, id, currentTransactions, 'customTransactionId');
     setCheckedRows(result.checkedRows);
     setSelectAll(result.selectAll);
   };
@@ -86,14 +98,14 @@ const TransactionList = ({
             </tr>
           </thead>
           <tbody>
-            {transactions.length === 0 ? (
+            {currentTransactions.length === 0 ? (
               <tr>
                 <td colSpan={tableHeaders.length} style={{ textAlign: 'center', padding: '20px' }}>
                   No transactions found
                 </td>
               </tr>
             ) : (
-              transactions.map((transaction) => (
+              currentTransactions.map((transaction) => (
                 <tr key={transaction._id || transaction.customTransactionId}>
                   <td>
                     <Checkbox
@@ -139,27 +151,64 @@ const TransactionList = ({
         <div className="pagination-wrapper">
           <div className="pagination">
             <button
-              className="page-link"
-              onClick={() => onPageChange(currentPage - 1)}
-              disabled={currentPage === 1}
+              onClick={prevPage}
+              disabled={!hasPrevPage}
+              style={{
+                padding: '10px 20px',
+                background: 'white',
+                border: '1px solid #ddd',
+                borderRadius: '8px',
+                cursor: hasPrevPage ? 'pointer' : 'not-allowed',
+                opacity: hasPrevPage ? 1 : 0.5,
+                fontSize: '14px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '5px'
+              }}
             >
-              « Back
+              <span>‹</span> Back
             </button>
+
             {Array.from({ length: totalPages }, (_, i) => (
               <button
-                key={i + 1}
-                className={`page-link ${currentPage === i + 1 ? 'active' : ''}`}
-                onClick={() => onPageChange(i + 1)}
+                key={i}
+                onClick={() => handlePageChange(i + 1)}
+                style={{
+                  width: '45px',
+                  height: '45px',
+                  padding: '10px',
+                  background: currentPage === i + 1 
+                    ? 'linear-gradient(180deg, #474747 0%, #000000 100%)' 
+                    : 'white',
+                  color: currentPage === i + 1 ? '#fff' : '#000',
+                  border: '1px solid #ddd',
+                  borderRadius: '8px',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  fontWeight: currentPage === i + 1 ? '600' : '400'
+                }}
               >
                 {i + 1}
               </button>
             ))}
+
             <button
-              className="page-link"
-              onClick={() => onPageChange(currentPage + 1)}
-              disabled={currentPage === totalPages}
+              onClick={nextPage}
+              disabled={!hasNextPage}
+              style={{
+                padding: '10px 20px',
+                background: 'white',
+                border: '1px solid #ddd',
+                borderRadius: '8px',
+                cursor: hasNextPage ? 'pointer' : 'not-allowed',
+                opacity: hasNextPage ? 1 : 0.5,
+                fontSize: '14px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '5px'
+              }}
             >
-              Next »
+              Next <span>›</span>
             </button>
           </div>
         </div>

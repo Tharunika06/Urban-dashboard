@@ -33,7 +33,7 @@ const Login = () => {
     }
   }, []);
 
-  // ✅ FIXED: Proper async handler with error handling
+
   const handleLogin = async (e) => {
     e.preventDefault(); // ✅ Prevent form default submission
     e.stopPropagation(); // ✅ Stop event bubbling

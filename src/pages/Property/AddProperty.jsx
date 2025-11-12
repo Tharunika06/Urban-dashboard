@@ -1,6 +1,7 @@
 // src/pages/Property/AddProperty.jsx
 import React, { useState, useEffect } from 'react';
 import PopupMessage from '../../components/common/PopupMessage';
+import GradientButton from '../../components/common/GradientButton';
 import propertyService from '../../services/propertyService';
 import {
   API_CONFIG,
@@ -101,7 +102,7 @@ const FacilitiesSection = ({
           value={customFacility}
           onChange={(e) => setCustomFacility(e.target.value)}
           style={{
-            padding: '10px 50px 10px 10px',
+            padding: '10px 180px 10px 10px',
             width: '100%',
             boxSizing: 'border-box',
             border: '1px solid #ddd',
@@ -109,24 +110,24 @@ const FacilitiesSection = ({
           }}
           onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), onAdd())}
         />
-        <button
-          type="button"
-          onClick={onAdd}
-          style={{
-            position: 'absolute',
-            right: '8px',
-            top: '50%',
-            transform: 'translateY(-50%)',
-            padding: '6px 12px',
-            border: 'none',
-            backgroundColor: '#0a74da',
-            color: 'white',
-            borderRadius: '4px',
-            cursor: 'pointer',
-          }}
-        >
-          {BUTTON_LABELS.ADD}
-        </button>
+        <div style={{
+          position: 'absolute',
+          right: '8px',
+          top: '50%',
+          transform: 'translateY(-50%)',
+        }}>
+          <GradientButton 
+            onClick={onAdd}
+            width="80px"
+            height="32px"
+            style={{ 
+              padding: '8px 16px',
+              fontSize: '14px'
+            }}
+          >
+            {BUTTON_LABELS.ADD}
+          </GradientButton>
+        </div>
       </div>
       {facilities.length > 0 && (
         <div style={{ marginTop: '15px' }}>
@@ -755,32 +756,20 @@ const AddProperty = ({ isOpen, onClose, onSave }) => {
           </div>
 
           {/* Footer Buttons */}
-          <div className="modal-footer">
+          <div className="modal-footer" style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', marginTop: '20px' }}>
             {step === 2 ? (
               <>
-                <button
-                  type="button"
-                  onClick={() => setStep(1)}
-                  className="btn btn-back"
-                >
+                <GradientButton onClick={() => setStep(1)}>
                   {BUTTON_LABELS.BACK}
-                </button>
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="btn btn-save"
-                >
+                </GradientButton>
+                <GradientButton onClick={handleSubmit} disabled={loading}>
                   {loading ? BUTTON_LABELS.SAVING : BUTTON_LABELS.SAVE}
-                </button>
+                </GradientButton>
               </>
             ) : (
-              <button
-                type="button"
-                onClick={() => setStep(2)}
-                className="btn btn-next"
-              >
+              <GradientButton onClick={() => setStep(2)}>
                 {BUTTON_LABELS.NEXT}
-              </button>
+              </GradientButton>
             )}
           </div>
         </form>

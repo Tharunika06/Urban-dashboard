@@ -12,12 +12,16 @@ import {
 const ITEMS_PER_PAGE = 5;
 
 const OrderList = ({ orders, onDelete }) => {
-  // Use pagination hook
+  // Use pagination hook with all available features
   const {
     currentPage,
     totalPages,
     currentItems: currentOrders,
-    handlePageChange
+    handlePageChange,
+    nextPage,
+    prevPage,
+    hasNextPage,
+    hasPrevPage
   } = usePagination(orders, ITEMS_PER_PAGE);
 
   // Table headers configuration
@@ -107,32 +111,69 @@ const OrderList = ({ orders, onDelete }) => {
         </table>
       </div>
 
-      {/* Pagination - Now outside scroll container */}
+      {/* Pagination - Matching PropertyList style */}
       {totalPages > 1 && (
         <div className="pagination-wrapper">
           <div className="pagination">
             <button
-              className="page-link"
-              onClick={() => handlePageChange(currentPage - 1)}
-              disabled={currentPage === 1}
+              onClick={prevPage}
+              disabled={!hasPrevPage}
+              style={{
+                padding: '10px 20px',
+                background: 'white',
+                border: '1px solid #ddd',
+                borderRadius: '8px',
+                cursor: hasPrevPage ? 'pointer' : 'not-allowed',
+                opacity: hasPrevPage ? 1 : 0.5,
+                fontSize: '14px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '5px'
+              }}
             >
-              ‹ Back
+              <span>‹</span> Back
             </button>
+
             {Array.from({ length: totalPages }, (_, i) => (
               <button
-                key={i + 1}
-                className={`page-link ${currentPage === i + 1 ? 'active' : ''}`}
+                key={i}
                 onClick={() => handlePageChange(i + 1)}
+                style={{
+                  width: '45px',
+                  height: '45px',
+                  padding: '10px',
+                  background: currentPage === i + 1 
+                    ? 'linear-gradient(180deg, #474747 0%, #000000 100%)' 
+                    : 'white',
+                  color: currentPage === i + 1 ? '#fff' : '#000',
+                  border: '1px solid #ddd',
+                  borderRadius: '8px',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  fontWeight: currentPage === i + 1 ? '600' : '400'
+                }}
               >
                 {i + 1}
               </button>
             ))}
+
             <button
-              className="page-link"
-              onClick={() => handlePageChange(currentPage + 1)}
-              disabled={currentPage === totalPages}
+              onClick={nextPage}
+              disabled={!hasNextPage}
+              style={{
+                padding: '10px 20px',
+                background: 'white',
+                border: '1px solid #ddd',
+                borderRadius: '8px',
+                cursor: hasNextPage ? 'pointer' : 'not-allowed',
+                opacity: hasNextPage ? 1 : 0.5,
+                fontSize: '14px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '5px'
+              }}
             >
-              Next ›
+              Next <span>›</span>
             </button>
           </div>
         </div>

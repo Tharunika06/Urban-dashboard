@@ -12,7 +12,7 @@ const transactionService = {
    * @returns {Promise} Response with array of transactions
    */
   getAllTransactions: async () => {
-    console.log("💳 Fetching all transactions...");
+
     const response = await api.get(API_ENDPOINTS.TRANSACTIONS);
     return response.data;
   },

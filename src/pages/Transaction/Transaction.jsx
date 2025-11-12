@@ -5,20 +5,18 @@ import TransactionList from './TransactionList';
 import PopupMessage from '../../components/common/PopupMessage';
 import MonthDropdown from '../../components/common/MonthDropdown';
 import Header from '../../components/layout/Header';
-import { BsSearch } from 'react-icons/bs';
+import SearchBar from '../../components/common/SearchBar';
 import transactionService from '../../services/transactionService';
-import { usePagination } from '../../hooks/usePagination';
 import { 
   API_CONFIG, 
   DEFAULTS,
   UI_MESSAGES,
   ASSET_PATHS,
-  BUTTON_LABELS
+  BUTTON_LABELS,
+  PLACEHOLDERS
 } from '../../utils/constants';
 import { applyTransactionFilters } from '../../utils/transactionHelpers';
 import '../../styles/Transaction.css';
-
-const ITEMS_PER_PAGE = 5;
 
 const Transaction = () => {
   const [allTransactions, setAllTransactions] = useState([]);
@@ -33,15 +31,6 @@ const Transaction = () => {
   const [transactionToDelete, setTransactionToDelete] = useState(null);
   const [isBulkDelete, setIsBulkDelete] = useState(false);
   const [bulkDeleteIds, setBulkDeleteIds] = useState([]);
-
-  // Use pagination hook
-  const {
-    currentPage,
-    totalPages,
-    currentItems: currentTransactions,
-    handlePageChange,
-    resetPage
-  } = usePagination(filteredTransactions, ITEMS_PER_PAGE);
 
   // Initialize Socket.io client
   useEffect(() => {
@@ -92,8 +81,7 @@ const Transaction = () => {
       month: selectedMonth
     });
     setFilteredTransactions(filtered);
-    resetPage(); // Reset to page 1 when filter changes
-  }, [searchTerm, selectedMonth, allTransactions, resetPage]);
+  }, [searchTerm, selectedMonth, allTransactions]);
 
   const handleMonthChange = (month) => {
     setSelectedMonth(month);
@@ -191,12 +179,9 @@ const Transaction = () => {
 
     return (
       <TransactionList
-        transactions={currentTransactions}
+        transactions={filteredTransactions}
         handleDelete={handleDelete}
         handleBulkDelete={handleBulkDelete}
-        currentPage={currentPage}
-        totalPages={totalPages}
-        onPageChange={handlePageChange}
       />
     );
   };
@@ -208,16 +193,12 @@ const Transaction = () => {
         <div className="page-content-wrapper">
           <div className="transaction-page-container">
             <div className="controls-bar">
-              <div className="search-wrapper">
-                <BsSearch className="search-icon" />
-                <input
-                  type="search"
-                  placeholder={DEFAULTS.SEARCH_TERM || "Search"}
-                  className="search-input"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
-              </div>
+              <SearchBar
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder={PLACEHOLDERS.SEARCH}
+                className="search-wrapper"
+              />
             </div>
 
             <div className="content-card">

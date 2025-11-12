@@ -1,5 +1,6 @@
 // src/components/common/PopupMessage.jsx
 import React from "react";
+import GradientButton from "./GradientButton";
 import "../../styles/PopupMessage.css";
 
 const PopupMessage = ({
@@ -9,8 +10,18 @@ const PopupMessage = ({
   confirmLabel = "Delete",
   cancelLabel = "Cancel",
   onConfirm,
-  onCancel
+  onCancel,
+  buttonSize = "medium" // "small", "medium", "large"
 }) => {
+  // Button size configurations
+  const buttonSizes = {
+    small: { width: "80px", height: "32px", padding: "8px 16px" },
+    medium: { width: "100px", height: "38px", padding: "12px 20px" },
+    large: { width: "120px", height: "44px", padding: "16px 24px" }
+  };
+
+  const sizeConfig = buttonSizes[buttonSize] || buttonSizes.medium;
+
   return (
     <div className="popup-overlay">
       <div className="popup-card">
@@ -24,17 +35,31 @@ const PopupMessage = ({
         <div className="popup-actions">
           {/* Only show cancel button if cancelLabel is provided */}
           {cancelLabel && (
-            <button className="cancel-btn" onClick={onCancel}>
+            <GradientButton
+              onClick={onCancel}
+              width={sizeConfig.width}
+              height={sizeConfig.height}
+              style={{ 
+                padding: sizeConfig.padding
+              }}
+            >
               {cancelLabel}
-            </button>
+            </GradientButton>
           )}
-          <button className="delete-btn" onClick={onConfirm}>
+          <GradientButton
+            onClick={onConfirm}
+            width={sizeConfig.width}
+            height={sizeConfig.height}
+            style={{ 
+              padding: sizeConfig.padding
+            }}
+          >
             {confirmLabel}
-          </button>
+          </GradientButton>
         </div>
       </div>
     </div>
   );
 };
 
-export default PopupMessage;  
+export default PopupMessage;

@@ -7,8 +7,12 @@ import 'react-circular-progressbar/dist/styles.css';
 
 import '../../styles/Customers.css';
 import Header from '../../components/layout/Header';
+import GradientButton from '../../components/common/GradientButton';
 import customerService from '../../services/customerService';
 import { calculateCustomerStats, calculateStatProgress } from '../../utils/customerUtils';
+import { usePagination } from '../../hooks/usePagination';
+
+const TRANSACTIONS_PER_PAGE = 5;
 
 // Reusable StatCard Component
 function StatCard({ iconSrc, label, value, progress, color, iconBgColor }) {
@@ -45,13 +49,24 @@ export default function CustomerDetail() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  // Use pagination hook for transactions
+  const {
+    currentPage,
+    totalPages,
+    currentItems: currentTransactions,
+    handlePageChange,
+    nextPage,
+    prevPage,
+    hasNextPage,
+    hasPrevPage,
+  } = usePagination(customerTransactions, TRANSACTIONS_PER_PAGE);
+
   useEffect(() => {
     const loadCustomerData = async () => {
       try {
         setIsLoading(true);
         setError(null);
 
-        // ✅ Use customerService instead of old fetchCustomerByPhone import
         const data = await customerService.getCustomerByPhone(customerPhone);
 
         // Handle different response formats
@@ -78,6 +93,12 @@ export default function CustomerDetail() {
     }
   }, [customerPhone]);
 
+  const handleRetry = () => {
+    setIsLoading(true);
+    setError(null);
+    window.location.reload();
+  };
+
   // Loading State
   if (isLoading) {
     return (
@@ -85,7 +106,14 @@ export default function CustomerDetail() {
         <div className="main-content-panel">
           <Header title="Customer Detail" />
           <div className="customer-detail-container">
-            <div className="loading-state">Loading customer details...</div>
+            <div className="loading-state" style={{ 
+              textAlign: 'center', 
+              padding: '40px',
+              fontSize: '16px',
+              color: '#666'
+            }}>
+              Loading customer details...
+            </div>
           </div>
         </div>
       </div>
@@ -99,7 +127,23 @@ export default function CustomerDetail() {
         <div className="main-content-panel">
           <Header title="Customer Detail" />
           <div className="customer-detail-container">
-            <div className="error-state">Error: {error}</div>
+            <div className="error-state" style={{
+              textAlign: 'center',
+              padding: '40px',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: '20px'
+            }}>
+              <p style={{ color: '#e74c3c', fontSize: '16px' }}>Error: {error}</p>
+              <GradientButton 
+                onClick={handleRetry}
+                width="120px"
+                height="40px"
+              >
+                Retry
+              </GradientButton>
+            </div>
           </div>
         </div>
       </div>
@@ -113,7 +157,14 @@ export default function CustomerDetail() {
         <div className="main-content-panel">
           <Header title="Customer Detail" />
           <div className="customer-detail-container">
-            <div className="no-data-cell">No customer found with phone: {customerPhone}</div>
+            <div className="no-data-cell" style={{
+              textAlign: 'center',
+              padding: '40px',
+              fontSize: '16px',
+              color: '#666'
+            }}>
+              No customer found with phone: {customerPhone}
+            </div>
           </div>
         </div>
       </div>
@@ -236,10 +287,10 @@ export default function CustomerDetail() {
             />
           </div>
 
-          {/* Recent Transactions */}
+          {/* Recent Transactions with Pagination */}
           <div className="section-title">Recent Transactions:</div>
           <div className="transactions-container">
-            {customerTransactions.slice(0, 5).map((transaction, index) => (
+            {currentTransactions.map((transaction, index) => (
               <div key={index} className="transaction-card">
                 <div className="transaction-info">
                   <p>
@@ -258,9 +309,84 @@ export default function CustomerDetail() {
               </div>
             ))}
             {customerTransactions.length === 0 && (
-              <div className="no-data-cell">No transactions found.</div>
+              <div className="no-data-cell" style={{
+                textAlign: 'center',
+                padding: '20px',
+                fontSize: '14px',
+                color: '#666'
+              }}>
+                No transactions found.
+              </div>
             )}
           </div>
+
+          {/* Pagination for Transactions */}
+          {totalPages > 1 && (
+            <div className="pagination-wrapper" style={{ marginTop: '20px' }}>
+              <div className="pagination">
+                <button
+                  onClick={prevPage}
+                  disabled={!hasPrevPage}
+                  style={{
+                    padding: '10px 20px',
+                    background: 'white',
+                    border: '1px solid #ddd',
+                    borderRadius: '8px',
+                    cursor: hasPrevPage ? 'pointer' : 'not-allowed',
+                    opacity: hasPrevPage ? 1 : 0.5,
+                    fontSize: '14px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '5px'
+                  }}
+                >
+                  <span>‹</span> Back
+                </button>
+
+                {Array.from({ length: totalPages }, (_, i) => (
+                  <button
+                    key={i}
+                    onClick={() => handlePageChange(i + 1)}
+                    style={{
+                      width: '45px',
+                      height: '45px',
+                      padding: '10px',
+                      background: currentPage === i + 1 
+                        ? 'linear-gradient(180deg, #474747 0%, #000000 100%)' 
+                        : 'white',
+                      color: currentPage === i + 1 ? '#fff' : '#000',
+                      border: '1px solid #ddd',
+                      borderRadius: '8px',
+                      cursor: 'pointer',
+                      fontSize: '14px',
+                      fontWeight: currentPage === i + 1 ? '600' : '400'
+                    }}
+                  >
+                    {i + 1}
+                  </button>
+                ))}
+
+                <button
+                  onClick={nextPage}
+                  disabled={!hasNextPage}
+                  style={{
+                    padding: '10px 20px',
+                    background: 'white',
+                    border: '1px solid #ddd',
+                    borderRadius: '8px',
+                    cursor: hasNextPage ? 'pointer' : 'not-allowed',
+                    opacity: hasNextPage ? 1 : 0.5,
+                    fontSize: '14px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '5px'
+                  }}
+                >
+                  Next <span>›</span>
+                </button>
+              </div>
+            </div>
+          )}
 
           {/* Reviews */}
           <div className="section-title">Reviews:</div>

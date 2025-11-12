@@ -7,7 +7,7 @@ import { API_ENDPOINTS } from '../utils/constants';
  * ✅ Updated to use axios instance
  */
 export const fetchTransactions = async () => {
-  console.log("💳 Fetching all transactions...");
+
   const response = await api.get(API_ENDPOINTS.TRANSACTIONS);
   return response.data;
 };
@@ -17,7 +17,7 @@ export const fetchTransactions = async () => {
  * ✅ Updated to use axios instance
  */
 export const deleteCustomer = async (customerPhone) => {
-  console.log(`🗑️ Deleting customer ${customerPhone}...`);
+
   
   const response = await api.delete(
     `${API_ENDPOINTS.CUSTOMER}/${encodeURIComponent(customerPhone)}`
@@ -37,7 +37,7 @@ export const deleteCustomer = async (customerPhone) => {
  * ✅ Updated to use axios instance
  */
 export const fetchCustomerByPhone = async (customerPhone) => {
-  console.log(`👤 Fetching customer ${customerPhone}...`);
+
   
   const allTransactions = await fetchTransactions();
 
@@ -82,7 +82,7 @@ export const fetchCustomerByPhone = async (customerPhone) => {
  * ✅ New function for customer listing
  */
 export const getAllCustomers = async () => {
-  console.log("👥 Fetching all customers...");
+
   
   const allTransactions = await fetchTransactions();
 
@@ -134,7 +134,7 @@ export const getAllCustomers = async () => {
  * ✅ New function for adding customers
  */
 export const createCustomer = async (customerData) => {
-  console.log("➕ Creating new customer...");
+
   const response = await api.post(API_ENDPOINTS.CUSTOMER, customerData);
   return response.data;
 };
@@ -144,7 +144,7 @@ export const createCustomer = async (customerData) => {
  * ✅ New function for updating customers
  */
 export const updateCustomer = async (customerPhone, customerData) => {
-  console.log(`✏️ Updating customer ${customerPhone}...`);
+
   const response = await api.put(
     `${API_ENDPOINTS.CUSTOMER}/${encodeURIComponent(customerPhone)}`,
     customerData
@@ -157,7 +157,7 @@ export const updateCustomer = async (customerPhone, customerData) => {
  * ✅ New function for getting specific customer transactions
  */
 export const getCustomerTransactions = async (customerPhone) => {
-  console.log(`💳 Fetching transactions for customer ${customerPhone}...`);
+
   const allTransactions = await fetchTransactions();
   
   return allTransactions.filter(
@@ -170,7 +170,7 @@ export const getCustomerTransactions = async (customerPhone) => {
  * ✅ New function for searching customers
  */
 export const searchCustomers = async (query) => {
-  console.log(`🔍 Searching customers: ${query}...`);
+
   
   const allCustomers = await getAllCustomers();
   const lowerQuery = query.toLowerCase();

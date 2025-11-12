@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import Checkbox from '../../components/common/Checkbox';
 import PopupMessage from '../../components/common/PopupMessage';
+import GradientButton from '../../components/common/GradientButton';
 import { usePagination } from '../../hooks/usePagination';
 import {
   ASSET_PATHS,
@@ -132,9 +133,16 @@ const PropertyList = ({ properties, handleDelete, handleBulkDelete }) => {
       {selectedCount > 0 && (
         <div className="bulk-actions-bar">
           <span className="selected-count">{selectedCount} selected</span>
-          <button className="bulk-delete-btn" onClick={handleBulkDeleteClick}>
+          <GradientButton 
+            onClick={handleBulkDeleteClick}
+            width="140px"
+            height="36px"
+            style={{
+              padding: '10px 20px'
+            }}
+          >
             Delete Selected
-          </button>
+          </GradientButton>
         </div>
       )}
 
@@ -145,6 +153,7 @@ const PropertyList = ({ properties, handleDelete, handleBulkDelete }) => {
           icon={ASSET_PATHS.REMOVE_ICON}
           confirmLabel={BUTTON_LABELS.DELETE}
           cancelLabel={BUTTON_LABELS.CANCEL}
+          buttonSize="medium"
           onConfirm={confirmDelete}
           onCancel={cancelDelete}
         />
@@ -157,6 +166,7 @@ const PropertyList = ({ properties, handleDelete, handleBulkDelete }) => {
           icon={ASSET_PATHS.REMOVE_ICON}
           confirmLabel="Delete All"
           cancelLabel={BUTTON_LABELS.CANCEL}
+          buttonSize="medium"
           onConfirm={confirmDelete}
           onCancel={cancelDelete}
         />
@@ -273,29 +283,64 @@ const PropertyList = ({ properties, handleDelete, handleBulkDelete }) => {
         <div className="pagination-wrapper">
           <div className="pagination">
             <button
-              className="page-link"
               onClick={prevPage}
               disabled={!hasPrevPage}
+              style={{
+                padding: '10px 20px',
+                background: 'white',
+                border: '1px solid #ddd',
+                borderRadius: '8px',
+                cursor: hasPrevPage ? 'pointer' : 'not-allowed',
+                opacity: hasPrevPage ? 1 : 0.5,
+                fontSize: '14px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '5px'
+              }}
             >
-              « Back
+              <span>‹</span> Back
             </button>
 
             {Array.from({ length: totalPages }, (_, i) => (
               <button
                 key={i}
-                className={`page-link ${currentPage === i + 1 ? 'active' : ''}`}
                 onClick={() => handlePageChangeAndReset(i + 1)}
+                style={{
+                  width: '45px',
+                  height: '45px',
+                  padding: '10px',
+                  background: currentPage === i + 1 
+                    ? 'linear-gradient(180deg, #474747 0%, #000000 100%)' 
+                    : 'white',
+                  color: currentPage === i + 1 ? '#fff' : '#000',
+                  border: '1px solid #ddd',
+                  borderRadius: '8px',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  fontWeight: currentPage === i + 1 ? '600' : '400'
+                }}
               >
                 {i + 1}
               </button>
             ))}
 
             <button
-              className="page-link"
               onClick={nextPage}
               disabled={!hasNextPage}
+              style={{
+                padding: '10px 20px',
+                background: 'white',
+                border: '1px solid #ddd',
+                borderRadius: '8px',
+                cursor: hasNextPage ? 'pointer' : 'not-allowed',
+                opacity: hasNextPage ? 1 : 0.5,
+                fontSize: '14px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '5px'
+              }}
             >
-              Next »
+              Next <span>›</span>
             </button>
           </div>
         </div>

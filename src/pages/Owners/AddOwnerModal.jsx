@@ -1,237 +1,16 @@
 // src/pages/Owners/AddOwnerModal.jsx
 import React, { useState } from 'react';
+import GradientButton from '../../components/common/GradientButton';
+import PopupMessage from '../../components/common/PopupMessage';
 import ownerService from '../../services/ownerService';
 import { 
   BUTTON_LABELS, 
   FORM_LABELS,
   CITIES,
   convertToBase64,
-  POPUP_MESSAGES 
+  POPUP_MESSAGES,
+  ICONS
 } from '../../utils/constants';
-
-// Success Popup Component
-const SuccessPopup = ({ isOpen, onClose, title = "Owner Added Successfully" }) => {
-  if (!isOpen) return null;
-
-  return (
-    <div style={{
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      backgroundColor: 'rgba(0, 0, 0, 0.5)',
-      display: 'flex',
-      justifyContent: 'center',
-      alignItems: 'center',
-      zIndex: 10000
-    }}>
-      <div style={{
-        backgroundColor: 'white',
-        borderRadius: '12px',
-        padding: '40px 60px',
-        textAlign: 'center',
-        boxShadow: '0 10px 40px rgba(0, 0, 0, 0.2)',
-        minWidth: '400px',
-        position: 'relative',
-        animation: 'slideIn 0.3s ease-out'
-      }}>
-        <button
-          onClick={onClose}
-          style={{
-            position: 'absolute',
-            top: '15px',
-            right: '20px',
-            background: 'none',
-            border: 'none',
-            fontSize: '24px',
-            color: '#666',
-            cursor: 'pointer',
-            padding: '5px'
-          }}
-        >
-          {BUTTON_LABELS.CLOSE}
-        </button>
-
-        <div style={{
-          width: '60px',
-          height: '60px',
-          borderRadius: '50%',
-          backgroundColor: '#4CAF50',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          margin: '0 auto 20px auto'
-        }}>
-          <span style={{
-            fontSize: '30px',
-            color: 'white'
-          }}>✓</span>
-        </div>
-
-        <h2 style={{
-          fontSize: '28px',
-          fontWeight: '600',
-          color: '#333',
-          margin: '0 0 30px 0',
-          lineHeight: '1.2'
-        }}>
-          {title}
-        </h2>
-
-        <button
-          onClick={onClose}
-          style={{
-            backgroundColor: '#4285f4',
-            color: 'white',
-            border: 'none',
-            borderRadius: '8px',
-            padding: '12px 40px',
-            fontSize: '16px',
-            fontWeight: '500',
-            cursor: 'pointer',
-            minWidth: '120px',
-            transition: 'background-color 0.2s ease'
-          }}
-          onMouseOver={(e) => e.target.style.backgroundColor = '#3367d6'}
-          onMouseOut={(e) => e.target.style.backgroundColor = '#4285f4'}
-        >
-          {BUTTON_LABELS.OK}
-        </button>
-
-        <style>{`
-          @keyframes slideIn {
-            from {
-              opacity: 0;
-              transform: scale(0.9) translateY(-20px);
-            }
-            to {
-              opacity: 1;
-              transform: scale(1) translateY(0);
-            }
-          }
-        `}</style>
-      </div>
-    </div>
-  );
-};
-
-// Error Popup Component
-const ErrorPopup = ({ isOpen, onClose, title = "Error", message = "Something went wrong!" }) => {
-  if (!isOpen) return null;
-
-  return (
-    <div style={{
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      backgroundColor: 'rgba(0, 0, 0, 0.5)',
-      display: 'flex',
-      justifyContent: 'center',
-      alignItems: 'center',
-      zIndex: 10000
-    }}>
-      <div style={{
-        backgroundColor: 'white',
-        borderRadius: '12px',
-        padding: '40px 60px',
-        textAlign: 'center',
-        boxShadow: '0 10px 40px rgba(0, 0, 0, 0.2)',
-        minWidth: '400px',
-        maxWidth: '500px',
-        position: 'relative',
-        animation: 'slideIn 0.3s ease-out'
-      }}>
-        <button
-          onClick={onClose}
-          style={{
-            position: 'absolute',
-            top: '15px',
-            right: '20px',
-            background: 'none',
-            border: 'none',
-            fontSize: '24px',
-            color: '#666',
-            cursor: 'pointer',
-            padding: '5px'
-          }}
-        >
-          {BUTTON_LABELS.CLOSE}
-        </button>
-
-        <div style={{
-          width: '60px',
-          height: '60px',
-          borderRadius: '50%',
-          backgroundColor: '#f44336',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          margin: '0 auto 20px auto'
-        }}>
-          <span style={{
-            fontSize: '30px',
-            color: 'white'
-          }}>✕</span>
-        </div>
-
-        <h2 style={{
-          fontSize: '28px',
-          fontWeight: '600',
-          color: '#333',
-          margin: '0 0 15px 0',
-          lineHeight: '1.2'
-        }}>
-          {title}
-        </h2>
-
-        <p style={{
-          fontSize: '16px',
-          color: '#666',
-          margin: '0 0 30px 0',
-          lineHeight: '1.4'
-        }}>
-          {message}
-        </p>
-
-        <button
-          onClick={onClose}
-          style={{
-            backgroundColor: '#f44336',
-            color: 'white',
-            border: 'none',
-            borderRadius: '8px',
-            padding: '12px 40px',
-            fontSize: '16px',
-            fontWeight: '500',
-            cursor: 'pointer',
-            minWidth: '120px',
-            transition: 'background-color 0.2s ease'
-          }}
-          onMouseOver={(e) => e.target.style.backgroundColor = '#d32f2f'}
-          onMouseOut={(e) => e.target.style.backgroundColor = '#f44336'}
-        >
-          {BUTTON_LABELS.OK}
-        </button>
-
-        <style>{`
-          @keyframes slideIn {
-            from {
-              opacity: 0;
-              transform: scale(0.9) translateY(-20px);
-            }
-            to {
-              opacity: 1;
-              transform: scale(1) translateY(0);
-            }
-          }
-        `}</style>
-      </div>
-    </div>
-  );
-};
 
 const AddOwnerModal = ({ isOpen, onClose, onSave }) => {
   const initialForm = {
@@ -337,7 +116,6 @@ const AddOwnerModal = ({ isOpen, onClose, onSave }) => {
       console.log('Note: Property stats will be auto-calculated from actual properties');
       console.log('============================');
 
-      // ✅ Use ownerService instead of axios
       const response = await ownerService.createOwner(payload);
 
       console.log('Owner added successfully:', response);
@@ -372,6 +150,16 @@ const AddOwnerModal = ({ isOpen, onClose, onSave }) => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const resetAndClose = () => {
+    setForm(initialForm);
+    setOwnerPhoto(null);
+    setOwnerPhotoName('No file chosen');
+    setStep(1);
+    setPhoneError('');
+    setShowSuccessPopup(false);
+    onClose();
   };
 
   if (!isOpen) return null;
@@ -565,7 +353,7 @@ const AddOwnerModal = ({ isOpen, onClose, onSave }) => {
                   </div>
                 </div>
                 
-                {/* INFO BOX - Property stats are auto-calculated */}
+                {/* INFO BOX */}
                 <div style={{
                   marginTop: '20px',
                   padding: '15px',
@@ -586,44 +374,62 @@ const AddOwnerModal = ({ isOpen, onClose, onSave }) => {
             )}
           </div>
 
-          <div className="modal-footer">
+          <div className="modal-footer" style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
             {step === 1 ? (
-              <button type="button" className="btn btn-next" onClick={() => setStep(2)}>
+              <GradientButton 
+                type="button" 
+                onClick={() => setStep(2)}
+                width="100px"
+                height="38px"
+              >
                 {BUTTON_LABELS.NEXT}
-              </button>
+              </GradientButton>
             ) : (
               <>
-                <button type="button" className="btn btn-back" onClick={() => setStep(1)}>
+                <GradientButton 
+                  type="button" 
+                  onClick={() => setStep(1)}
+                  width="100px"
+                  height="38px"
+                >
                   {BUTTON_LABELS.BACK}
-                </button>
-                <button type="submit" className="btn btn-save" disabled={loading}>
+                </GradientButton>
+                <GradientButton 
+                  type="submit" 
+                  disabled={loading}
+                  width="140px"
+                  height="38px"
+                >
                   {loading ? BUTTON_LABELS.SAVING : BUTTON_LABELS.SAVE}
-                </button>
+                </GradientButton>
               </>
             )}
           </div>
         </form>
 
-        <SuccessPopup 
-          isOpen={showSuccessPopup}
-          onClose={() => {
-            setShowSuccessPopup(false);
-            setForm(initialForm);
-            setOwnerPhoto(null);
-            setOwnerPhotoName('No file chosen');
-            setStep(1);
-            setPhoneError('');
-            onClose();
-          }}
-          title="Owner Added Successfully"
-        />
+        {showSuccessPopup && (
+          <PopupMessage
+            title="Owner Added Successfully"
+            message="The owner has been successfully added to the system."
+            icon={ICONS.SUCCESS}
+            confirmLabel={BUTTON_LABELS.OK}
+            cancelLabel=""
+            onConfirm={resetAndClose}
+            onCancel={resetAndClose}
+          />
+        )}
 
-        <ErrorPopup 
-          isOpen={showErrorPopup}
-          onClose={() => setShowErrorPopup(false)}
-          title="Failed to Save Owner"
-          message={errorMessage}
-        />
+        {showErrorPopup && (
+          <PopupMessage
+            title="Failed to Save Owner"
+            message={errorMessage}
+            icon={ICONS.ERROR}
+            confirmLabel={BUTTON_LABELS.OK}
+            cancelLabel=""
+            onConfirm={() => setShowErrorPopup(false)}
+            onCancel={() => setShowErrorPopup(false)}
+          />
+        )}
       </div>
     </div>
   );
