@@ -7,6 +7,7 @@ import MonthDropdown from '../../components/common/MonthDropdown';
 import Header from '../../components/layout/Header';
 import { BsSearch } from 'react-icons/bs';
 import transactionService from '../../services/transactionService';
+import { usePagination } from '../../hooks/usePagination';
 import { 
   API_CONFIG, 
   DEFAULTS,
@@ -26,13 +27,21 @@ const Transaction = () => {
   const [selectedMonth, setSelectedMonth] = useState(DEFAULTS.SELECTED_MONTH);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [currentPage, setCurrentPage] = useState(1);
 
   // Popup state
   const [showDeletePopup, setShowDeletePopup] = useState(false);
   const [transactionToDelete, setTransactionToDelete] = useState(null);
   const [isBulkDelete, setIsBulkDelete] = useState(false);
   const [bulkDeleteIds, setBulkDeleteIds] = useState([]);
+
+  // Use pagination hook
+  const {
+    currentPage,
+    totalPages,
+    currentItems: currentTransactions,
+    handlePageChange,
+    resetPage
+  } = usePagination(filteredTransactions, ITEMS_PER_PAGE);
 
   // Initialize Socket.io client
   useEffect(() => {
@@ -83,8 +92,8 @@ const Transaction = () => {
       month: selectedMonth
     });
     setFilteredTransactions(filtered);
-    setCurrentPage(1); // Reset page when filter changes
-  }, [searchTerm, selectedMonth, allTransactions]);
+    resetPage(); // Reset to page 1 when filter changes
+  }, [searchTerm, selectedMonth, allTransactions, resetPage]);
 
   const handleMonthChange = (month) => {
     setSelectedMonth(month);
@@ -129,10 +138,6 @@ const Transaction = () => {
           t => !deletedIds.includes(t.customTransactionId)
         );
         setFilteredTransactions(updatedFilteredTransactions);
-        
-        // Reset pagination if current page becomes empty
-        const totalPages = Math.ceil(updatedFilteredTransactions.length / ITEMS_PER_PAGE);
-        if (currentPage > totalPages) setCurrentPage(totalPages > 0 ? totalPages : 1);
 
         setShowDeletePopup(false);
         setBulkDeleteIds([]);
@@ -160,10 +165,6 @@ const Transaction = () => {
         );
         setFilteredTransactions(updatedFilteredTransactions);
 
-        // Reset pagination if current page becomes empty
-        const totalPages = Math.ceil(updatedFilteredTransactions.length / ITEMS_PER_PAGE);
-        if (currentPage > totalPages) setCurrentPage(totalPages > 0 ? totalPages : 1);
-
         setShowDeletePopup(false);
         setTransactionToDelete(null);
       }
@@ -190,11 +191,12 @@ const Transaction = () => {
 
     return (
       <TransactionList
-        transactions={filteredTransactions}
+        transactions={currentTransactions}
         handleDelete={handleDelete}
         handleBulkDelete={handleBulkDelete}
         currentPage={currentPage}
-        setCurrentPage={setCurrentPage}
+        totalPages={totalPages}
+        onPageChange={handlePageChange}
       />
     );
   };

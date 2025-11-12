@@ -2,116 +2,68 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import Checkbox from '../../components/common/Checkbox';
-import PopupMessage from '../../components/common/PopupMessage';
+import { ASSET_PATHS, DEFAULTS } from '../../utils/constants';
 import { 
-  API_CONFIG, 
-  DEFAULTS,
-  ASSET_PATHS,
-  UI_MESSAGES,
-  BUTTON_LABELS,
-  getStatusClass 
-} from '../../utils/constants';
-import {
-  calculateTransactionPagination,
-  getPurchaseTypeClass,
-  formatPurchaseType,
+  formatTransactionDate, 
+  formatAmount,
   getSelectedIds,
   toggleAllItems,
-  toggleSingleItem,
-  getImageSrc,
-  handleImageError as getImageErrorHandler,
-  formatTransactionDate,
-  formatAmount
+  toggleSingleItem
 } from '../../utils/transactionHelpers';
 
-const ITEMS_PER_PAGE = 5;
-
-const TransactionList = ({
-  transactions,
-  handleDelete,
+const TransactionList = ({ 
+  transactions, 
+  handleDelete, 
   handleBulkDelete,
   currentPage,
-  setCurrentPage,
+  totalPages,
+  onPageChange
 }) => {
   const [selectAll, setSelectAll] = useState(false);
   const [checkedRows, setCheckedRows] = useState({});
-  const [showBulkDeletePopup, setShowBulkDeletePopup] = useState(false);
-  const [selectedIds, setSelectedIds] = useState([]);
 
   const tableHeaders = [
     { 
-      label: <Checkbox checked={selectAll} onChange={handleSelectAll} id="select-all-checkbox" />,
+      label: <Checkbox checked={selectAll} onChange={handleSelectAll} />,
       key: 'checkbox'
     },
-    { label: 'Transaction ID', key: 'transactionId' },
-    { label: 'Customer Photo & Name', key: 'customerName' },
-    { label: 'Phone', key: 'phone' },
-    { label: 'Date', key: 'date' },
-    { label: 'Payment Method', key: 'paymentMethod' },
+    { label: 'Customer Photo & Name', key: 'customer' },
+    { label: 'Purchase Date', key: 'date' },
+    { label: 'Contact', key: 'contact' },
+    { label: 'Property Type', key: 'propertyType' },
     { label: 'Amount', key: 'amount' },
-    { label: 'Purchase Type', key: 'purchaseType' },
-    { label: 'Property Name', key: 'propertyName' },
-    { label: 'Owner Name', key: 'ownerName' },
-    { label: 'Status', key: 'status' },
+    { label: 'Purchase Properties', key: 'property' },
     { label: 'Action', key: 'action' }
   ];
 
-  const pagination = calculateTransactionPagination(transactions, currentPage, ITEMS_PER_PAGE);
-  const { totalPages, currentItems: currentTransactions } = pagination;
-
+  // Reset selections when page or transactions change
   useEffect(() => {
     setSelectAll(false);
     setCheckedRows({});
   }, [currentPage, transactions]);
 
   function handleSelectAll() {
-    const updated = toggleAllItems(currentTransactions, selectAll, 'customTransactionId');
+    const updated = toggleAllItems(transactions, selectAll, 'customTransactionId');
     setCheckedRows(updated);
     setSelectAll(!selectAll);
   }
 
   const toggleCheckbox = (id) => {
-    const result = toggleSingleItem(
-      checkedRows, 
-      id, 
-      currentTransactions, 
-      'customTransactionId'
-    );
+    const result = toggleSingleItem(checkedRows, id, transactions, 'customTransactionId');
     setCheckedRows(result.checkedRows);
     setSelectAll(result.selectAll);
   };
 
-  const handlePageChange = (page) => {
-    if (page < 1 || page > totalPages) return;
-    setCurrentPage(page);
-    setSelectAll(false);
-    setCheckedRows({});
-  };
-
-  const handleImageErrorWrapper = (e) => {
-    getImageErrorHandler(e, DEFAULTS.PLACEHOLDER_IMAGE);
-  };
-
-  const selectedCount = getSelectedIds(checkedRows).length;
-
   const handleBulkDeleteClick = () => {
     const ids = getSelectedIds(checkedRows);
     if (ids.length > 0) {
-      setSelectedIds(ids);
-      setShowBulkDeletePopup(true);
+      handleBulkDelete(ids);
+      setCheckedRows({});
+      setSelectAll(false);
     }
   };
 
-  const confirmBulkDelete = () => {
-    handleBulkDelete(selectedIds);
-    setShowBulkDeletePopup(false);
-    setSelectedIds([]);
-  };
-
-  const cancelBulkDelete = () => {
-    setShowBulkDeletePopup(false);
-    setSelectedIds([]);
-  };
+  const selectedCount = getSelectedIds(checkedRows).length;
 
   return (
     <>
@@ -124,20 +76,8 @@ const TransactionList = ({
         </div>
       )}
 
-      {showBulkDeletePopup && (
-        <PopupMessage
-          title={UI_MESSAGES.DELETE_BULK_TITLE}
-          message={`${UI_MESSAGES.DELETE_BULK_MESSAGE_PREFIX} ${selectedIds.length} transaction(s)? ${UI_MESSAGES.DELETE_BULK_MESSAGE_SUFFIX}`}
-          icon={ASSET_PATHS.REMOVE_ICON}
-          confirmLabel={BUTTON_LABELS.DELETE}
-          cancelLabel={BUTTON_LABELS.CANCEL}
-          onConfirm={confirmBulkDelete}
-          onCancel={cancelBulkDelete}
-        />
-      )}
-
-      <div className="table-container">
-        <table className="transaction-list-table">
+      <div className="table-scroll-container">
+        <table className="transaction-table">
           <thead>
             <tr>
               {tableHeaders.map((header) => (
@@ -146,101 +86,82 @@ const TransactionList = ({
             </tr>
           </thead>
           <tbody>
-            {currentTransactions.length > 0 ? (
-              currentTransactions.map((transaction) => {
-                const purchaseType = transaction.purchaseType || transaction.transactionType || 'buy';
-
-                return (
-                  <tr key={transaction._id}>
-                    <td>
-                      <Checkbox
-                        checked={checkedRows[transaction.customTransactionId] || false}
-                        onChange={() => toggleCheckbox(transaction.customTransactionId)}
-                        id={`checkbox-${transaction.customTransactionId}`}
-                      />
-                    </td>
-                    <td>{transaction.customTransactionId}</td>
-                    <td>
-                      <div className="customer-info-cell">
-                        <img
-                          src={getImageSrc(
-                            transaction.customerPhoto,
-                            API_CONFIG.BASE_URL,
-                            DEFAULTS.PLACEHOLDER_IMAGE
-                          )}
-                          alt={transaction.customerName || 'Customer'}
-                          className="customer-photo"
-                          onError={handleImageErrorWrapper}
-                        />
-                        <span>{transaction.customerName}</span>
-                      </div>
-                    </td>
-                    <td>{transaction.customerPhone || 'N/A'}</td>
-                    <td>{formatTransactionDate(transaction.createdAt)}</td>
-                    <td>{transaction.paymentMethod}</td>
-                    <td>{formatAmount(transaction.amount)}</td>
-                    <td>
-                      <span className={`purchase-type-badge ${getPurchaseTypeClass(purchaseType)}`}>
-                        {formatPurchaseType(purchaseType)}
-                      </span>
-                    </td>
-                    <td>{transaction.property ? transaction.property.name : 'N/A'}</td>
-                    <td>{transaction.ownerName}</td>
-                    <td>
-                      <span className={`status-badge ${getStatusClass(transaction.status)}`}>
-                        {transaction.status}
-                      </span>
-                    </td>
-                    <td className="action-icons">
-                      <Link to={`/transaction/${transaction.customTransactionId}`}>
-                        <img src="/assets/view-icon.png" alt="View" />
-                      </Link>
-                      <img
-                        src="/assets/delete-icon.png"
-                        alt="Delete"
-                        onClick={() => handleDelete(transaction.customTransactionId)}
-                        style={{ cursor: 'pointer' }}
-                      />
-                    </td>
-                  </tr>
-                );
-              })
-            ) : (
+            {transactions.length === 0 ? (
               <tr>
-                <td colSpan={tableHeaders.length} className="no-data-cell">
-                  No transactions found.
+                <td colSpan={tableHeaders.length} style={{ textAlign: 'center', padding: '20px' }}>
+                  No transactions found
                 </td>
               </tr>
+            ) : (
+              transactions.map((transaction) => (
+                <tr key={transaction._id || transaction.customTransactionId}>
+                  <td>
+                    <Checkbox
+                      checked={checkedRows[transaction.customTransactionId] || false}
+                      onChange={() => toggleCheckbox(transaction.customTransactionId)}
+                    />
+                  </td>
+                  <td>
+                    <div className="customer-info-cell">
+                      <img
+                        src={transaction.customerPhoto || DEFAULTS.PLACEHOLDER_IMAGE}
+                        alt={transaction.customerName || 'Customer'}
+                        className="customer-photo"
+                        onError={(e) => e.target.src = DEFAULTS.PLACEHOLDER_IMAGE}
+                      />
+                      <span>{transaction.customerName || 'N/A'}</span>
+                    </div>
+                  </td>
+                  <td>{formatTransactionDate(transaction.createdAt)}</td>
+                  <td>{transaction.customerPhone || 'N/A'}</td>
+                  <td>{transaction.property?.type || transaction.propertyType || 'N/A'}</td>
+                  <td>{formatAmount(transaction.amount)}</td>
+                  <td>{transaction.property?.name || transaction.propertyName || 'N/A'}</td>
+                  <td className="action-icons">
+                    <Link to={`/transaction/${transaction.customTransactionId}`}>
+                      <img src={ASSET_PATHS.VIEW_ICON} alt="View" />
+                    </Link>
+                    <img
+                      src={ASSET_PATHS.DELETE_ICON}
+                      alt="Delete"
+                      onClick={() => handleDelete(transaction.customTransactionId)}
+                      style={{ cursor: 'pointer' }}
+                    />
+                  </td>
+                </tr>
+              ))
             )}
           </tbody>
         </table>
       </div>
 
       {totalPages > 1 && (
-        <div className="pagination">
-          <button
-            className="page-link"
-            onClick={() => handlePageChange(currentPage - 1)}
-            disabled={currentPage === 1}
-          >
-            « Back
-          </button>
-          {Array.from({ length: totalPages }, (_, i) => (
+        <div className="pagination-wrapper">
+          <div className="pagination">
             <button
-              key={i + 1}
-              className={`page-link ${currentPage === i + 1 ? 'active' : ''}`}
-              onClick={() => handlePageChange(i + 1)}
+              className="page-link"
+              onClick={() => onPageChange(currentPage - 1)}
+              disabled={currentPage === 1}
             >
-              {i + 1}
+              « Back
             </button>
-          ))}
-          <button
-            className="page-link"
-            onClick={() => handlePageChange(currentPage + 1)}
-            disabled={currentPage === totalPages}
-          >
-            Next »
-          </button>
+            {Array.from({ length: totalPages }, (_, i) => (
+              <button
+                key={i + 1}
+                className={`page-link ${currentPage === i + 1 ? 'active' : ''}`}
+                onClick={() => onPageChange(i + 1)}
+              >
+                {i + 1}
+              </button>
+            ))}
+            <button
+              className="page-link"
+              onClick={() => onPageChange(currentPage + 1)}
+              disabled={currentPage === totalPages}
+            >
+              Next »
+            </button>
+          </div>
         </div>
       )}
     </>

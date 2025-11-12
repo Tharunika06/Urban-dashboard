@@ -2,16 +2,11 @@ import { useState, useEffect } from "react";
 import authService from "../services/authService";
 import { getProfile, saveProfile } from "../services/profileService";
 
-/**
- * Custom hook to manage and auto-refresh the admin profile.
- * Syncs with backend, localStorage, and global profileUpdated event.
- */
 export const useProfile = () => {
   const [adminName, setAdminName] = useState("Guest");
   const [profilePhoto, setProfilePhoto] = useState("/assets/placeholder.png");
   const [loading, setLoading] = useState(true);
 
-  // ✅ Fetch admin profile from backend
   const fetchProfile = async () => {
     try {
       const data = await authService.getAdminProfile();
@@ -23,7 +18,6 @@ export const useProfile = () => {
         // Save locally for faster reloads
         saveProfile({ name, photo });
       } else {
-        // fallback to cached profile if no data
         const cached = getProfile();
         setAdminName(cached?.name || "Guest");
         setProfilePhoto(cached?.photo || "/assets/placeholder.png");
@@ -39,17 +33,16 @@ export const useProfile = () => {
   };
 
   useEffect(() => {
-    // Initial backend fetch
     fetchProfile();
 
-    // ✅ Listen for profileUpdated event from Settings page
+    // ✅ Listen for profileUpdated event - just update state, don't save
     const handleProfileUpdate = (event) => {
       const { name, photo } = event.detail;
-      console.log("🔄 Profile update event received in Header:", { name, photo });
+      console.log("🔄 Profile update event received:", { name, photo });
 
       setAdminName(name || "Guest");
       setProfilePhoto(photo || "/assets/placeholder.png");
-      saveProfile({ name, photo });
+      // ✅ No saveProfile() call here - already saved by whoever dispatched the event
     };
 
     // ✅ Listen for storage change (multi-tab sync)
@@ -62,7 +55,6 @@ export const useProfile = () => {
     window.addEventListener("profileUpdated", handleProfileUpdate);
     window.addEventListener("storage", handleStorage);
 
-    // Optional: refresh profile every minute
     const interval = setInterval(fetchProfile, 60000);
 
     return () => {

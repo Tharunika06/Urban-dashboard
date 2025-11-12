@@ -40,15 +40,9 @@ const NotificationMenu = () => {
     socket.on("new-notification", (payload) => {
       console.log("🔔 New notification received:", payload);
       setNotifications((prev) => [payload, ...prev].slice(0, 20));
-      
-      // Optional: Play notification sound
-      // playNotificationSound();
-      
-      // Optional: Show browser notification
-      // showBrowserNotification(payload);
     });
 
-    // ✅ Listen for notification updates (if you have mark as read functionality)
+    // ✅ Listen for notification updates
     socket.on("notification-updated", (updatedNotification) => {
       console.log("📝 Notification updated:", updatedNotification);
       setNotifications((prev) =>
@@ -141,35 +135,6 @@ const NotificationMenu = () => {
     }
   };
 
-  // ✅ Optional: Play notification sound
-  const playNotificationSound = () => {
-    try {
-      const audio = new Audio('/assets/notification-sound.mp3');
-      audio.volume = 0.5;
-      audio.play().catch(err => console.log('Could not play sound:', err));
-    } catch (err) {
-      console.log('Notification sound not available');
-    }
-  };
-
-  // ✅ Optional: Show browser notification
-  const showBrowserNotification = (notification) => {
-    if ('Notification' in window && Notification.permission === 'granted') {
-      new Notification(notification.message || 'New Notification', {
-        body: notification.type || '',
-        icon: '/assets/logo.png',
-        badge: '/assets/logo.png',
-        tag: notification._id,
-      });
-    } else if ('Notification' in window && Notification.permission !== 'denied') {
-      Notification.requestPermission().then(permission => {
-        if (permission === 'granted') {
-          showBrowserNotification(notification);
-        }
-      });
-    }
-  };
-
   const unreadCount = notifications.filter((n) => !n.isRead).length;
 
   return (
@@ -212,9 +177,8 @@ const NotificationMenu = () => {
             style={{ 
               maxHeight: '400px', 
               overflowY: 'auto',
-              /* Hide scrollbar for Chrome, Safari and Opera */
-              scrollbarWidth: 'none', /* Firefox */
-              msOverflowStyle: 'none', /* IE and Edge */
+              scrollbarWidth: 'none', // Firefox
+              msOverflowStyle: 'none', // IE and Edge
             }}
           >
             {notifications.length === 0 ? (
@@ -261,8 +225,8 @@ const NotificationMenu = () => {
         </div>
       )}
 
-      {/* Hidden scrollbar CSS */}
-      <style jsx>{`
+      {/* ✅ CSS for hiding scrollbar - moved to style tag */}
+      <style>{`
         .notifications-list::-webkit-scrollbar {
           display: none;
         }
@@ -290,4 +254,4 @@ const formatTimestamp = (timestamp) => {
   return date.toLocaleDateString();
 };
 
-export default NotificationMenu;
+export default NotificationMenu
