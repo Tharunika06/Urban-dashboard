@@ -353,31 +353,15 @@ const AddOwnerModal = ({ isOpen, onClose, onSave }) => {
                   </div>
                 </div>
                 
-                {/* INFO BOX */}
-                <div style={{
-                  marginTop: '20px',
-                  padding: '15px',
-                  backgroundColor: '#e3f2fd',
-                  borderLeft: '4px solid #2196F3',
-                  borderRadius: '4px'
-                }}>
-                  <p style={{ 
-                    margin: 0, 
-                    fontSize: '14px', 
-                    color: '#1976d2',
-                    fontWeight: '500'
-                  }}>
-                    ℹ️ <strong>Property Statistics:</strong> Property counts (Sold, Rent, Total Listing) are automatically calculated when properties are added to this owner.
-                  </p>
-                </div>
-              </>
+    
+  </>
             )}
           </div>
 
           <div className="modal-footer" style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
             {step === 1 ? (
               <GradientButton 
-                type="button" 
+                type="button" // ✅ Explicitly set to "button" so it doesn't submit
                 onClick={() => setStep(2)}
                 width="100px"
                 height="38px"
@@ -387,7 +371,7 @@ const AddOwnerModal = ({ isOpen, onClose, onSave }) => {
             ) : (
               <>
                 <GradientButton 
-                  type="button" 
+                  type="button" // ✅ Back button should not submit
                   onClick={() => setStep(1)}
                   width="100px"
                   height="38px"
@@ -395,7 +379,7 @@ const AddOwnerModal = ({ isOpen, onClose, onSave }) => {
                   {BUTTON_LABELS.BACK}
                 </GradientButton>
                 <GradientButton 
-                  type="submit" 
+                  type="submit" // ✅ Only Save button submits the form
                   disabled={loading}
                   width="140px"
                   height="38px"

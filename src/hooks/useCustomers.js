@@ -24,7 +24,6 @@ export const useCustomers = (selectedMonth, searchTerm) => {
       
       const data = await fetchTransactions();
       
-      console.log('Fetched transactions:', data);
       setAllTransactions(data);
       setError(null);
     } catch (err) {

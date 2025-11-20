@@ -143,24 +143,4 @@ export const getMonthData = (data, month, toFullMonthName, nameKey = 'name') => 
   return data.find(d => 
     String(d[nameKey]).trim().toLowerCase() === searchTerm
   );
-};
-
-/**
- * Custom tooltip formatter for currency values
- * @param {number} value - Value to format
- * @param {string} label - Label for the value
- * @returns {Array} [formattedValue, label]
- */
-export const currencyTooltipFormatter = (value, label = 'Earnings') => {
-  return [`$${Number(value).toLocaleString()}`, label];
-};
-
-/**
- * Custom label formatter for tooltips
- * @param {string} label - Label to format
- * @param {string} prefix - Prefix to add (default 'Month: ')
- * @returns {string} Formatted label
- */
-export const tooltipLabelFormatter = (label, prefix = 'Month: ') => {
-  return `${prefix}${label}`;
-};
+};  

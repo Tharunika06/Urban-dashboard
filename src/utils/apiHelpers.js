@@ -12,7 +12,7 @@ export const fetchData = async (url) => {
     const response = await axios.get(url);
     return { success: true, data: response.data, error: null };
   } catch (err) {
-    console.error('❌ Failed to fetch data:', err);
+    console.error('Failed to fetch data:', err);
     return { success: false, data: [], error: err.message };
   }
 };
@@ -28,7 +28,7 @@ export const deleteResource = async (baseUrl, resourceId) => {
     await axios.delete(`${baseUrl}/${resourceId}`);
     return { success: true, error: null };
   } catch (err) {
-    console.error('❌ Failed to delete resource:', err);
+    console.error('Failed to delete resource:', err);
     const errorMessage = err.response?.data?.message || err.message || 'Failed to delete resource';
     return { success: false, error: errorMessage };
   }
@@ -57,7 +57,7 @@ export const fetchOwners = async () => {
     const ownersArray = Array.isArray(res.data.owners) ? res.data.owners : [];
     return { success: true, data: ownersArray, error: null };
   } catch (err) {
-    console.error('❌ Failed to fetch owners:', err);
+    console.error('Failed to fetch owners:', err);
     return { success: false, data: [], error: err.message };
   }
 };
@@ -69,7 +69,6 @@ export const fetchOwners = async () => {
  */
 export const fetchOwnerById = async (ownerId) => {
   try {
-    console.log(`📥 Fetching owner details for ID: ${ownerId}`);
     const response = await fetch(`${API_CONFIG.BASE_URL}/api/owners/${ownerId}`);
     
     if (!response.ok) {
@@ -79,8 +78,7 @@ export const fetchOwnerById = async (ownerId) => {
     }
     
     const data = await response.json();
-    console.log('✅ Owner data received:', data);
-    console.log('📊 Auto-calculated stats:', {
+    console.log('Auto-calculated stats:', {
       propertyOwned: data.propertyOwned,
       propertyRent: data.propertyRent,
       propertySold: data.propertySold,
@@ -89,7 +87,7 @@ export const fetchOwnerById = async (ownerId) => {
     
     return { success: true, data, error: null };
   } catch (err) {
-    console.error('❌ Error fetching owner:', err);
+    console.error(' Error fetching owner:', err);
     return { success: false, data: null, error: err.message };
   }
 };
@@ -101,7 +99,6 @@ export const fetchOwnerById = async (ownerId) => {
  */
 export const fetchOwnerProperties = async (ownerId) => {
   try {
-    console.log(`📥 Fetching properties for owner ID: ${ownerId}`);
     const res = await fetch(`${API_CONFIG.BASE_URL}/api/property/owner/${ownerId}`);
     
     if (!res.ok) {
@@ -109,11 +106,11 @@ export const fetchOwnerProperties = async (ownerId) => {
     }
     
     const data = await res.json();
-    console.log(`✅ Found ${data.length} properties for this owner`);
+    console.log(`Found ${data.length} properties for this owner`);
     
     return { success: true, data, error: null };
   } catch (err) {
-    console.error("❌ Error fetching owner properties:", err);
+    console.error("Error fetching owner properties:", err);
     return { success: false, data: [], error: err.message };
   }
 };
@@ -128,7 +125,7 @@ export const deleteOwner = async (ownerId) => {
     await axios.delete(`${API_CONFIG.BASE_URL}/api/owners/${ownerId}`);
     return { success: true, error: null };
   } catch (err) {
-    console.error('❌ Failed to delete owner:', err);
+    console.error(' Failed to delete owner:', err);
     const errorMessage = err.response?.data?.message || 'Failed to delete owner';
     return { success: false, error: errorMessage };
   }

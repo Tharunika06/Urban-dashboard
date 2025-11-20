@@ -17,10 +17,10 @@ import {
   UI_MESSAGES,
   BUTTON_LABELS,
   PLACEHOLDERS,
-  STYLES
+  STYLES,
+  MONTHS_FULL
 } from "../../utils/constants";
 import {
-  applyReviewFilters,
   getSelectedIds,
   toggleAllItems,
   toggleSingleItem,
@@ -35,8 +35,8 @@ const Reviews = () => {
   const [selectAll, setSelectAll] = useState(false);
   const [checkedRows, setCheckedRows] = useState({});
   const [reviews, setReviews] = useState([]);
-  const [filteredReviews, setFilteredReviews] = useState([]);
-  const [searchTerm, setSearchTerm] = useState(DEFAULTS.SEARCH_TERM);
+  const [searchFilteredReviews, setSearchFilteredReviews] = useState([]);
+  const [displayReviews, setDisplayReviews] = useState([]);
   const [selectedMonth, setSelectedMonth] = useState(DEFAULTS.SELECTED_MONTH);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -58,7 +58,7 @@ const Reviews = () => {
     hasNextPage,
     hasPrevPage,
     resetPage
-  } = usePagination(filteredReviews, ITEMS_PER_PAGE);
+  } = usePagination(displayReviews, ITEMS_PER_PAGE);
 
   const tableHeaders = [
     { 
@@ -88,19 +88,16 @@ const Reviews = () => {
 
     socket.on("update-analytics", (data) => {
       if (["review-added", "review-updated", "review-deleted"].includes(data.type)) {
-        console.log('🔔 Received review update event:', data.type);
         fetchReviews(true);
       }
     });
 
     socket.on("review-deleted", (deletedId) => {
-      console.log('🗑️ Review deleted via socket:', deletedId);
       setReviews((prev) => prev.filter((r) => r._id !== deletedId));
     });
 
     return () => {
       socket.disconnect();
-      console.log('🔌 Socket.io disconnected');
     };
   }, []);
 
@@ -118,7 +115,7 @@ const Reviews = () => {
       if (!silent) setIsLoading(true);
       const data = await reviewService.getAllReviews();
       setReviews(data);
-      setFilteredReviews(data);
+      setSearchFilteredReviews(data);
       setError(null);
     } catch (err) {
       setError(err.message || 'Failed to fetch reviews');
@@ -128,21 +125,38 @@ const Reviews = () => {
     }
   };
 
-  // Filter reviews by search and month using utility functions
+  // Handle search results from SearchBar
+  const handleSearchResults = (filtered) => {
+    setSearchFilteredReviews(filtered);
+  };
+
+  // Apply month filter to search results
   useEffect(() => {
-    const filtered = applyReviewFilters(reviews, {
-      searchTerm,
-      selectedMonth
-    });
-    setFilteredReviews(filtered);
+    const filterByMonth = (reviewsList) => {
+      if (selectedMonth === 'all') {
+        return reviewsList;
+      }
+
+      const monthIndex = MONTHS_FULL.indexOf(selectedMonth);
+      if (monthIndex === -1) return reviewsList;
+
+      return reviewsList.filter(review => {
+        if (!review.createdAt) return false;
+        const date = new Date(review.createdAt);
+        return date.getMonth() === monthIndex;
+      });
+    };
+
+    const filtered = filterByMonth(searchFilteredReviews);
+    setDisplayReviews(filtered);
     resetPage();
-  }, [searchTerm, selectedMonth, reviews, resetPage]);
+  }, [searchFilteredReviews, selectedMonth, resetPage]);
 
   // Reset selections when page or data changes
   useEffect(() => {
     setSelectAll(false);
     setCheckedRows({});
-  }, [currentPage, filteredReviews]);
+  }, [currentPage, displayReviews]);
 
   function handleSelectAll() {
     const updated = toggleAllItems(currentReviews, selectAll);
@@ -209,8 +223,9 @@ const Reviews = () => {
         <div className="page-content reviews-wrapper">
           <div className="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4 gap-3">
             <SearchBar
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              data={reviews}
+              onFilteredResults={handleSearchResults}
+              searchFields={['customerName', 'comment', 'propertyId.name', 'propertyId.address']}
               placeholder={PLACEHOLDERS.SEARCH}
               className="w-100 w-md-50"
             />

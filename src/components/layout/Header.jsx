@@ -16,7 +16,7 @@ const Header = ({ title }) => {
   const navigate = useNavigate();
   const profileRef = useRef();
 
-  // ✅ Profile hook handles fetching, caching, and real-time updates
+  // Profile hook handles fetching, caching, and real-time updates
   const { adminName, profilePhoto, loading } = useProfile();
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
@@ -25,19 +25,17 @@ const Header = ({ title }) => {
     ? generateBreadcrumbsFromTitle(title)
     : getBreadcrumbsFromPath(location.pathname);
 
-  // ✅ Logout function
+  // Logout function
   const handleLogout = async () => {
     try {
       setLoggingOut(true);
-      console.log("🚪 Logging out...");
 
       await authService.logout();
       storage.clearAll();
 
-      console.log("✅ Logout successful");
       navigate("/login", { replace: true });
     } catch (error) {
-      console.error("❌ Logout error:", error);
+      console.error("Logout error:", error);
       storage.clearAll();
       navigate("/login", { replace: true });
     } finally {

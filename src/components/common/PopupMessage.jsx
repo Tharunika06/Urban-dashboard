@@ -27,7 +27,7 @@ const PopupMessage = ({
       <div className="popup-card">
         <button className="close-btn" onClick={onCancel}>×</button>
 
-        {icon && <img src={icon} alt="popup icon" className="popup-icon" />}
+        {icon && <img src="/assets/popup.png" alt="popup icon" className="popup-icon" />}
 
         <h2>{title}</h2>
         <p>{message}</p>

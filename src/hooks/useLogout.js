@@ -7,10 +7,10 @@ export const useLogout = () => {
 
   const logout = async () => {
     try {
-      // ✅ Call backend logout endpoint to clear httpOnly cookie
+      // Call backend logout endpoint to clear httpOnly cookie
       await fetch(`${API_CONFIG}/admin/logout`, {
         method: 'POST',
-        credentials: 'include', // ✅ Send cookie to be cleared
+        credentials: 'include', // Send cookie to be cleared
         headers: {
           'Content-Type': 'application/json'
         }
@@ -27,7 +27,6 @@ export const useLogout = () => {
       // Redirect to login
       navigate('/login', { replace: true });
       
-      console.log('✅ Logout successful');
     } catch (error) {
       console.error('Logout error:', error);
       

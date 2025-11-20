@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import "bootstrap/dist/css/bootstrap.min.css";
 import "../../styles/ForgotPassword.css";
 import authService, { handleAuthError, storage } from '../../services/authService';
+import GradientButton from "../../components/common/GradientButton";
 import logo from "/assets/logo.png";
 import userIcon from "/assets/user-icon.png";
 import peopleImg from "/assets/fgp.png";
@@ -39,7 +40,7 @@ const ForgotPassword = () => {
         {/* Left Side */}
         <div className="col-12 col-md-6 d-flex flex-column justify-content-center align-items-center forgot-left px-5">
           <img src={logo} alt="Urban Logo" className="forgot-logo mb-4" />
-          <h2 className="forgot-title mb-2">Forget Password</h2>
+          <h2 className="forgot-title mb-2">Forgot Password</h2>
           <p className="forgot-subtext mb-4 text-center">
             Select which contact details should we use to reset your password
           </p>
@@ -71,10 +72,12 @@ const ForgotPassword = () => {
               </div>
             )}
 
-            <button 
+            <GradientButton 
               type="submit" 
-              className="btn btn-dark w-100 forgot-button"
+              className="w-100"
               disabled={loading}
+              width="100%"
+              height="48px"
             >
               {loading ? (
                 <>
@@ -88,7 +91,7 @@ const ForgotPassword = () => {
               ) : (
                 "Continue"
               )}
-            </button>
+            </GradientButton>
           </form>
         </div>
 

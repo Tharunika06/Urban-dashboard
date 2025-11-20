@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "../../styles/ResetPassword.css";
 import authService, { handleAuthError, validatePassword, storage } from "../../services/authService";
+import GradientButton from "../../components/common/GradientButton";
 import logo from "/assets/logo.png";
 import lockIcon from "/assets/lock-icon.png";
 import eyeIcon from "/assets/eye-icon.png";
@@ -142,10 +143,12 @@ const ResetPassword = () => {
               </div>
             )}
 
-            <button 
+            <GradientButton 
               type="submit" 
-              className="btn btn-dark w-100 reset-button"
+              className="w-100"
               disabled={loading}
+              width="100%"
+              height="48px"
             >
               {loading ? (
                 <>
@@ -159,7 +162,7 @@ const ResetPassword = () => {
               ) : (
                 "Save"
               )}
-            </button>
+            </GradientButton>
           </form>
         </div>
 

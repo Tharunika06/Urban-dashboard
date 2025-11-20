@@ -99,8 +99,7 @@ export const formatters = {
 };
 
 /**
- * ✅ API Configuration - UPDATED
- * Use environment variable or fallback to local network IP
+ * API Configuration
  */
 export const API_CONFIG = {
   BASE_URL:'http://localhost:5000',
@@ -111,7 +110,7 @@ export const API_CONFIG = {
 };
 
 /**
- * Socket configuration - UPDATED to match API_CONFIG
+ * Socket configuration
  */
 export const SOCKET_CONFIG = {
   URL: import.meta.env.VITE_SOCKET_URL || API_CONFIG.BASE_URL,
@@ -132,8 +131,8 @@ export const API_ENDPOINTS = {
   PROPERTY: '/api/property',
   OWNERS: '/api/owners',
   CUSTOMER: '/api/payment/customer',
-  AUTH: '/api', // Base auth endpoint
-  ADMIN_PROFILE: '/api/admin/profile', // Admin profile endpoint
+  AUTH: '/api',
+  ADMIN_PROFILE: '/api/admin/profile',
 };
 
 /**
@@ -153,9 +152,8 @@ export const DEFAULTS = {
   MONTH: 'All',
   PLACEHOLDER_IMAGE: '/assets/placeholder.png',
   TRANSACTION_LIMIT: 3,
-  VIEW_MODE: 'list', // Default view mode for Property page
-  SEARCH_TERM: '',
-  SELECTED_MONTH: '',
+  VIEW_MODE: 'list',
+  SELECTED_MONTH: 'all', // Changed from '' to 'all' for consistency
   DEFAULT_PROPERTY_TYPE: 'Apartment',
 };
 
@@ -217,7 +215,14 @@ export const ASSET_PATHS = {
   DELETE_ICON: '/assets/delete-icon.png',
   EDIT_ICON: '/assets/edit-icon.png',
 };
+// Add this to your constants.js file
 
+export const ICONS = {
+  SUCCESS: '/assets/success.png',
+  ERROR: '/assets/error.png',
+  WARNING: '/assets/warning.png',
+  INFO: '/assets/info.png',
+};
 /**
  * UI Messages
  */
@@ -226,11 +231,13 @@ export const UI_MESSAGES = {
   LOADING_PROPERTIES: 'Loading properties...',
   LOADING_ORDERS: 'Loading orders...',
   LOADING_CUSTOMERS: 'Loading customers...',
+  LOADING_TRANSACTIONS: 'Loading transactions...',
   
   // Empty states
   NO_PROPERTIES_FOUND: 'No properties found',
   NO_ORDERS_FOUND: 'No orders found.',
   NO_CUSTOMERS_FOUND: 'No customers found.',
+  NO_TRANSACTIONS_FOUND: 'No transactions found.',
   
   // Page titles
   ALL_ORDER_LIST: 'All Order List',
@@ -241,24 +248,25 @@ export const UI_MESSAGES = {
   PROPERTIES_DELETED: 'properties deleted successfully',
   ORDER_DELETED: 'Order deleted successfully',
   CUSTOMER_DELETED: 'Customer deleted successfully',
+  TRANSACTION_DELETED: 'Transaction deleted successfully',
   
   // Error messages
-  DELETE_FAILED: 'Failed to delete property. Please try again.',
+  DELETE_FAILED: 'Failed to delete. Please try again.',
   CUSTOMER_DELETE_FAILED: 'Failed to delete customer',
-  FETCH_FAILED: 'Failed to fetch properties',
+  FETCH_FAILED: 'Failed to fetch data',
   FETCH_CUSTOMER_FAILED: 'Failed to fetch customer data',
   
   // Confirmation messages
-  DELETE_SINGLE_TITLE: 'Delete Property',
-  DELETE_SINGLE_MESSAGE: 'Are you sure you want to delete this property? This action cannot be undone.',
-  DELETE_BULK_TITLE: 'Delete Multiple Properties',
+  DELETE_SINGLE_TITLE: 'Delete Confirmation',
+  DELETE_SINGLE_MESSAGE: 'Are you sure you want to delete this item? This action cannot be undone.',
+  DELETE_BULK_TITLE: 'Delete Multiple Items',
   DELETE_BULK_MESSAGE_PREFIX: 'Are you sure you want to delete',
-  DELETE_BULK_MESSAGE_SUFFIX: 'properties? This action cannot be undone.',
+  DELETE_BULK_MESSAGE_SUFFIX: 'items? This action cannot be undone.',
   
   // Socket messages
-  SOCKET_CONNECTED: '🔌 Socket.io connected',
-  SOCKET_DISCONNECTED: '🔌 Socket.io disconnected',
-  SOCKET_UPDATE_RECEIVED: '🔔 Received update event:',
+  SOCKET_CONNECTED: 'Socket.io connected',
+  SOCKET_DISCONNECTED: 'Socket.io disconnected',
+  SOCKET_UPDATE_RECEIVED: 'Received update event:',
 };
 
 /**
@@ -346,16 +354,6 @@ export const POPUP_MESSAGES = {
     message: 'Failed to add property. Please try again.',
     type: 'error',
   },
-};
-
-/**
- * Icon paths (legacy support - use ASSET_PATHS for new code)
- */
-export const ICONS = {
-  SUCCESS: '/assets/success.png',
-  ERROR: '/assets/remove.png',
-  WARNING: '/assets/warning.png',
-  INFO: '/assets/info.png',
 };
 
 /**

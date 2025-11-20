@@ -131,10 +131,7 @@ margin:20px;
   color: var(--primary-blue); 
 }
 
-.sidebar-nav li.active a { 
-  background-color: var(--primary-blue); 
-  color: white; 
-}
+
 
 .sidebar-nav li.active .icon-img { 
   filter: invert(1) brightness(1.5); 
@@ -558,7 +555,7 @@ margin:20px;
 .transactions-table th, 
 .transactions-table td { 
   vertical-align: middle; 
-  text-align: left; 
+  text-align: center; 
   white-space: nowrap;  
 }
 

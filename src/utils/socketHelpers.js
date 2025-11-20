@@ -21,17 +21,17 @@ export const initializeSocket = (onUpdate) => {
     ];
 
     if (updateTypes.includes(data.type)) {
-      console.log(`🔔 Received ${data.type} event`);
+      console.log(`Received ${data.type} event`);
       onUpdate(data);
     }
   });
 
   socket.on('connect', () => {
-    console.log('🔌 Socket.io connected');
+    console.log('Socket.io connected');
   });
 
   socket.on('disconnect', () => {
-    console.log('🔌 Socket.io disconnected');
+    console.log('Socket.io disconnected');
   });
 
   return socket;
@@ -44,6 +44,6 @@ export const initializeSocket = (onUpdate) => {
 export const cleanupSocket = (socket) => {
   if (socket) {
     socket.disconnect();
-    console.log('🔌 Socket.io disconnected');
+    console.log('Socket.io disconnected');
   }
 };

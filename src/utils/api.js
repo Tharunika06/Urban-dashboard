@@ -2,19 +2,19 @@
 import axios from 'axios';
 import { API_CONFIG } from './constants';
 
-// ✅ Create axios instance with configuration from constants
+// Create axios instance with configuration from constants
 const api = axios.create({
   baseURL: API_CONFIG.BASE_URL,
   timeout: API_CONFIG.TIMEOUT,
   maxContentLength: API_CONFIG.MAX_CONTENT_LENGTH,
   maxBodyLength: API_CONFIG.MAX_BODY_LENGTH,
-  withCredentials: true, // ✅ CRITICAL: Enable sending cookies with requests
+  withCredentials: true, // CRITICAL: Enable sending cookies with requests
   headers: {
     'Content-Type': 'application/json'
   }
 });
 
-// ✅ Request interceptor - Supports both cookie and token methods
+// Request interceptor - Supports both cookie and token methods
 api.interceptors.request.use(
   (config) => {
     // For mobile apps or API testing, still support Authorization header
@@ -26,29 +26,26 @@ api.interceptors.request.use(
     
     // Debug log in development
     if (import.meta.env.DEV) {
-      console.log('🔵 API Request:', config.method?.toUpperCase(), config.url);
     }
     
     return config;
   },
   (error) => {
-    console.error('❌ Request interceptor error:', error);
+    console.error('Request interceptor error:', error);
     return Promise.reject(error);
   }
 );
 
-// ✅ Response interceptor - Handle authentication errors
+// Response interceptor - Handle authentication errors
 api.interceptors.response.use(
   (response) => {
     // Debug log in development
     if (import.meta.env.DEV) {
-      console.log('🟢 API Response:', response.config.url, response.status);
     }
     return response;
   },
   (error) => {
     if (error.response?.status === 401) {
-      console.warn('⚠️ Unauthorized - redirecting to login');
       
       // Clear any stored tokens and user data
       localStorage.removeItem('token');
@@ -63,7 +60,7 @@ api.interceptors.response.use(
     
     // Log other errors in development
     if (import.meta.env.DEV) {
-      console.error('🔴 API Error:', error.response?.status, error.response?.data);
+      console.error(' API Error:', error.response?.status, error.response?.data);
     }
     
     return Promise.reject(error);
@@ -72,13 +69,13 @@ api.interceptors.response.use(
 
 export default api;
 
-// ✅ Helper function to check if user is authenticated
+// Helper function to check if user is authenticated
 export const isAuthenticated = () => {
   const user = localStorage.getItem('user');
   return !!user;
 };
 
-// ✅ Helper function to get current user from localStorage
+// Helper function to get current user from localStorage
 export const getCurrentUser = () => {
   try {
     const user = localStorage.getItem('user');
@@ -89,7 +86,7 @@ export const getCurrentUser = () => {
   }
 };
 
-// ✅ Helper function to set current user in localStorage
+// Helper function to set current user in localStorage
 export const setCurrentUser = (user) => {
   if (user) {
     localStorage.setItem('user', JSON.stringify(user));
@@ -98,7 +95,7 @@ export const setCurrentUser = (user) => {
   }
 };
 
-// ✅ Helper function to logout (clear localStorage only, server handles cookie)
+// Helper function to logout (clear localStorage only, server handles cookie)
 export const logout = async () => {
   try {
     // Call logout endpoint (server will clear the cookie)

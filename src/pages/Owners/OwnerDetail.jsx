@@ -27,13 +27,12 @@ const OwnerDetail = () => {
       setLoading(true);
       setError(null);
   
-      console.log(`🔍 Loading owner details for ID: ${ownerId}`);
+      console.log(`Loading owner details for ID: ${ownerId}`);
       const data = await ownerService.getOwnerById(ownerId);
       
       setOwner(data.owner || data);
-      console.log('✅ Owner loaded:', data.owner?.name || data.name);
     } catch (err) {
-      console.error('❌ Failed to fetch owner:', err);
+      console.error('Failed to fetch owner:', err);
       setError(err.response?.data?.error || err.message || 'Failed to fetch owner details');
     } finally {
       setLoading(false);
@@ -44,16 +43,14 @@ const OwnerDetail = () => {
   const loadOwnerProperties = async () => {
     try {
       setLoadingProperties(true);
-      console.log(`📥 Fetching properties for owner: ${ownerId}`);
       
       const data = await ownerService.getOwnerProperties(ownerId);
       
       const fetchedProperties = data.properties || data || [];
-      console.log(`✅ Loaded ${fetchedProperties.length} properties`);
       
       setProperties(fetchedProperties);
     } catch (err) {
-      console.error('❌ Failed to fetch owner properties:', err);
+      console.error('Failed to fetch owner properties:', err);
       setProperties([]);
     } finally {
       setLoadingProperties(false);
@@ -112,7 +109,7 @@ const OwnerDetail = () => {
       <div className="main-content">
         <Header title="Owner Detail" />
         <main className="dashboard-body">
-          <div style={{ textAlign: 'center', padding: '40px' }}>
+          <div>
             <h2>Owner not found</h2>
           </div>
         </main>

@@ -15,140 +15,111 @@ const NotificationMenu = () => {
   const socketRef = useRef(null);
 
   useEffect(() => {
-    // ✅ Initialize Socket.IO connection
-    socketRef.current = socketIO(SOCKET_URL, { 
-      withCredentials: true,
-      transports: ['websocket', 'polling']
-    });
+  console.log("[INIT] NotificationMenu mounted");
+  console.log("API URL =", API_URL);
+  console.log("SOCKET URL =", SOCKET_URL);
+  console.log("Connecting socket...");
 
-    const socket = socketRef.current;
+  socketRef.current = socketIO(SOCKET_URL.BASE_URL, {
+    withCredentials: true,
+    transports: ["websocket"],
+    reconnection: true,
+  });
 
-    // ✅ Fetch initial notifications
-    const fetchNotifications = async () => {
-      try {
-        const token = localStorage.getItem("token");
-        const res = await axios.get(`${API_URL}/notifications`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        setNotifications(res.data || []);
-      } catch (err) {
-        console.error("❌ Error fetching notifications:", err);
-      }
-    };
-    fetchNotifications();
+  const socket = socketRef.current; // <-- THE REQUIRED LINE
 
-    // ✅ Listen for real-time notifications
-    socket.on("new-notification", (payload) => {
-      console.log("🔔 New notification received:", payload);
-      setNotifications((prev) => [payload, ...prev].slice(0, 20));
-    });
+  // Debug listeners
+  socket.on("connect", () => {
+    console.log(" SOCKET CONNECTED:", socket.id);
+  });
 
-    // ✅ Listen for notification updates
-    socket.on("notification-updated", (updatedNotification) => {
-      console.log("📝 Notification updated:", updatedNotification);
-      setNotifications((prev) =>
-        prev.map((n) =>
-          n._id === updatedNotification._id ? updatedNotification : n
-        )
-      );
-    });
+  socket.on("connect_error", (err) => {
+    console.error("SOCKET CONNECT ERROR:", err.message);
+    console.log("Full error:", err);
+    console.log("document.cookie =", document.cookie);
+  });
 
-    // ✅ Listen for notification deletions
-    socket.on("notification-deleted", (deletedId) => {
-      console.log("🗑️ Notification deleted:", deletedId);
-      setNotifications((prev) => prev.filter((n) => n._id !== deletedId));
-    });
+  socket.on("disconnect", (reason) => {
+    console.warn("SOCKET DISCONNECTED:", reason);
+  });
 
-    // ✅ Listen for bulk notification clear
-    socket.on("notifications-cleared", () => {
-      console.log("🧹 All notifications cleared");
+  // Fetch notifications
+  const fetchNotifications = async () => {
+    console.log("Fetching notifications...");
+    try {
+      const res = await axios.get(`${API_URL.BASE_URL}/api/notifications`, {
+        withCredentials: true,
+      });
+
+      console.log("Notifications received:", res.data);
+      setNotifications(Array.isArray(res.data) ? res.data : []);
+    } catch (err) {
+      console.error(" Notification fetch error:", err);
       setNotifications([]);
-    });
+    }
+  };
 
-    // ✅ Handle connection events
-    socket.on("connect", () => {
-      console.log("✅ Socket.IO connected:", socket.id);
-    });
+  fetchNotifications();
 
-    socket.on("disconnect", (reason) => {
-      console.log("🔌 Socket.IO disconnected:", reason);
-    });
+  return () => {
+    console.log(" Cleanup: disconnecting socket...");
+    socket.disconnect();
+  };
+}, []);
 
-    socket.on("connect_error", (error) => {
-      console.error("❌ Socket.IO connection error:", error);
-    });
-
-    // ✅ Close dropdown when clicking outside
-    const handleClickOutside = (event) => {
-      if (notifRef.current && !notifRef.current.contains(event.target)) {
-        setNotifOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-
-    // ✅ Cleanup function
-    return () => {
-      socket.off("new-notification");
-      socket.off("notification-updated");
-      socket.off("notification-deleted");
-      socket.off("notifications-cleared");
-      socket.off("connect");
-      socket.off("disconnect");
-      socket.off("connect_error");
-      socket.disconnect();
-      document.removeEventListener("mousedown", handleClickOutside);
-      console.log("🔌 Socket.IO disconnected and cleaned up");
-    };
-  }, []);
 
   const markAsRead = async (id) => {
+    console.log(" Marking notification as read:", id);
     try {
-      const token = localStorage.getItem("token");
       await axios.patch(
-        `${API_URL}/notifications/${id}/read`,
+        `${API_URL.BASE_URL}/api/notifications/${id}/read`,
         {},
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
+        { withCredentials: true }
       );
-      
-      // Optimistically update UI
+
+      console.log(" Marked as read SUCCESS");
+
       setNotifications((prev) =>
         prev.map((n) => (n._id === id ? { ...n, isRead: true } : n))
       );
     } catch (err) {
-      console.error("❌ Error marking notification as read:", err);
+      console.error(" Mark-as-read FAILED:", err.response?.data || err.message);
     }
   };
 
-  // ✅ Clear all notifications
   const clearNotifications = async () => {
+    console.log("Clearing all notifications...");
     try {
-      const token = localStorage.getItem("token");
-      await axios.delete(`${API_URL}/notifications`, {
-        headers: { Authorization: `Bearer ${token}` },
+      await axios.delete(`${API_URL.BASE_URL}/api/notifications`, {
+        withCredentials: true
       });
-      
-      // Optimistically update UI
+
+      console.log(" Notifications cleared");
+
       setNotifications([]);
     } catch (err) {
-      console.error("❌ Error clearing notifications:", err);
+      console.error("Clear notifications FAILED:", err.response?.data || err.message);
     }
   };
 
-  const unreadCount = notifications.filter((n) => !n.isRead).length;
+  const unreadCount = Array.isArray(notifications)
+    ? notifications.filter((n) => !n.isRead).length
+    : 0;
 
   return (
     <div className="notification-wrapper" ref={notifRef}>
       <button
         className="notification-btn"
-        onClick={() => setNotifOpen(!notifOpen)}
+        onClick={() => {
+          console.log(" Notification icon clicked");
+          setNotifOpen(!notifOpen);
+        }}
         aria-label="Notifications"
       >
         <IoMdNotificationsOutline size={24} />
         {unreadCount > 0 && (
           <span className="notif-badge">
-            {unreadCount > 99 ? '99+' : unreadCount}
+            {unreadCount > 99 ? "99+" : unreadCount}
           </span>
         )}
       </button>
@@ -173,13 +144,13 @@ const NotificationMenu = () => {
           </div>
           <hr className="m-1" />
 
-          <div 
-            className="notifications-list" 
-            style={{ 
-              maxHeight: '400px', 
-              overflowY: 'auto',
-              scrollbarWidth: 'none', // Firefox
-              msOverflowStyle: 'none', // IE and Edge
+          <div
+            className="notifications-list"
+            style={{
+              maxHeight: "400px",
+              overflowY: "auto",
+              scrollbarWidth: "none",
+              msOverflowStyle: "none"
             }}
           >
             {notifications.length === 0 ? (
@@ -194,8 +165,11 @@ const NotificationMenu = () => {
                   className={`dropdown-item notif-item ${
                     n.isRead ? "notif-read" : "notif-unread"
                   }`}
-                  onClick={() => !n.isRead && markAsRead(n._id)}
-                  style={{ cursor: !n.isRead ? 'pointer' : 'default' }}
+                  onClick={() => {
+                    console.log(" Notification clicked:", n);
+                    !n.isRead && markAsRead(n._id);
+                  }}
+                  style={{ cursor: !n.isRead ? "pointer" : "default" }}
                 >
                   <div className="d-flex align-items-start">
                     <div className="flex-grow-1">
@@ -203,7 +177,9 @@ const NotificationMenu = () => {
                         {n.message}
                       </div>
                       <div className="notif-meta d-flex align-items-center mt-1">
-                        <span className={`notif-tag notif-${n.type || "info"} badge`}>
+                        <span
+                          className={`notif-tag notif-${n.type || "info"} badge`}
+                        >
                           {n.type || "info"}
                         </span>
                         <small className="ms-2 text-muted">
@@ -212,9 +188,9 @@ const NotificationMenu = () => {
                       </div>
                     </div>
                     {!n.isRead && (
-                      <span 
-                        className="badge bg-primary rounded-circle ms-2" 
-                        style={{ width: '8px', height: '8px', padding: 0 }}
+                      <span
+                        className="badge bg-primary rounded-circle ms-2"
+                        style={{ width: "8px", height: "8px", padding: 0 }}
                         aria-label="Unread"
                       />
                     )}
@@ -226,7 +202,6 @@ const NotificationMenu = () => {
         </div>
       )}
 
-      {/* ✅ CSS for hiding scrollbar - moved to style tag */}
       <style>{`
         .notifications-list::-webkit-scrollbar {
           display: none;
@@ -236,23 +211,19 @@ const NotificationMenu = () => {
   );
 };
 
-// Helper function to format timestamp
 const formatTimestamp = (timestamp) => {
-  if (!timestamp) return '';
-  
+  if (!timestamp) return "";
   const date = new Date(timestamp);
   const now = new Date();
   const diffMs = now - date;
   const diffMins = Math.floor(diffMs / 60000);
   const diffHours = Math.floor(diffMs / 3600000);
   const diffDays = Math.floor(diffMs / 86400000);
-
-  if (diffMins < 1) return 'Just now';
+  if (diffMins < 1) return "Just now";
   if (diffMins < 60) return `${diffMins}m ago`;
   if (diffHours < 24) return `${diffHours}h ago`;
   if (diffDays < 7) return `${diffDays}d ago`;
-  
   return date.toLocaleDateString();
 };
 
-export default NotificationMenu
+export default NotificationMenu;

@@ -139,7 +139,7 @@
 .reviews-table th,
 .reviews-table td {
   /* padding: 6px; */
-  text-align: left;
+  text-align: center;
 }
 
 .reviews-table td.address {

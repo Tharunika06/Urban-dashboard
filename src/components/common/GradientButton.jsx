@@ -1,3 +1,4 @@
+// src/components/common/GradientButton.jsx
 import React from 'react';
 
 const GradientButton = ({ 
@@ -5,12 +6,14 @@ const GradientButton = ({
   children,
   className = '',
   disabled = false,
+  type = 'button', // ADD THIS - defaults to 'button' to prevent form submission
   width = '161px',
   height = '40px',
   style = {}
 }) => {
   return (
     <button
+      type={type} // ADD THIS
       onClick={onClick}
       disabled={disabled}
       style={{
@@ -26,7 +29,7 @@ const GradientButton = ({
         border: 'none',
         cursor: disabled ? 'not-allowed' : 'pointer',
         opacity: disabled ? 0.6 : 1,
-        ...style, // Allow additional custom styles
+        ...style,
       }}
       className={`
         text-white

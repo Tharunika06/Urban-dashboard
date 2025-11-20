@@ -1,18 +1,12 @@
-// src/pages/Customers/CustomerDetail.jsx
+// CustomerDetail.jsx
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useLocation } from 'react-router-dom';
 import { IoEllipsisVertical } from 'react-icons/io5';
 import { CircularProgressbar, buildStyles } from 'react-circular-progressbar';
 import 'react-circular-progressbar/dist/styles.css';
-
 import '../../styles/Customers.css';
 import Header from '../../components/layout/Header';
-import GradientButton from '../../components/common/GradientButton';
-import customerService from '../../services/customerService';
-import { calculateCustomerStats, calculateStatProgress } from '../../utils/customerUtils';
-import { usePagination } from '../../hooks/usePagination';
-
-const TRANSACTIONS_PER_PAGE = 5;
+import { API_CONFIG, API_ENDPOINTS, DEFAULTS } from '../../utils/constants';
 
 // Reusable StatCard Component
 function StatCard({ iconSrc, label, value, progress, color, iconBgColor }) {
@@ -43,76 +37,175 @@ function StatCard({ iconSrc, label, value, progress, color, iconBgColor }) {
 }
 
 export default function CustomerDetail() {
-  const { customerPhone } = useParams();
+  const params = useParams();
+  const location = useLocation();
+  
+  // Enhanced phone extraction logic
+  const getCustomerPhone = () => {
+    // Try different parameter names
+    const phone = params.customerPhone || params.id || params.phone;
+    
+    if (phone) return phone;
+    
+    // Try extracting from wildcard route
+    if (params['*']) {
+      const segments = params['*'].split('/');
+      return segments[segments.length - 1] || segments[segments.length - 2];
+    }
+    
+    // Try extracting from pathname
+    const pathSegments = location.pathname.split('/').filter(Boolean);
+    if (pathSegments.length > 1) {
+      return pathSegments[pathSegments.length - 1];
+    }
+    
+    return null;
+  };
+  
+  const customerPhone = getCustomerPhone();
+  
   const [customerData, setCustomerData] = useState(null);
   const [customerTransactions, setCustomerTransactions] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Use pagination hook for transactions
-  const {
-    currentPage,
-    totalPages,
-    currentItems: currentTransactions,
-    handlePageChange,
-    nextPage,
-    prevPage,
-    hasNextPage,
-    hasPrevPage,
-  } = usePagination(customerTransactions, TRANSACTIONS_PER_PAGE);
-
   useEffect(() => {
-    const loadCustomerData = async () => {
+    console.log('=== CustomerDetail Debug ===');
+    console.log('All URL params:', params);
+    console.log('Location pathname:', location.pathname);
+    console.log('Location state:', location.state);
+    console.log('Extracted customerPhone:', customerPhone);
+    console.log('========================');
+
+    const fetchCustomerData = async () => {
       try {
-        setIsLoading(true);
-        setError(null);
-
-        const data = await customerService.getCustomerByPhone(customerPhone);
-
-        // Handle different response formats
-        const customer = data.customer || data;
-        const transactions = data.transactions || [];
-
-        if (!customer) {
-          console.warn(`No customer found for phone: ${customerPhone}`);
-          setError('Customer not found');
-        } else {
-          setCustomerData(customer);
-          setCustomerTransactions(transactions);
+        if (!customerPhone) {
+          throw new Error('No customer phone provided in URL');
         }
+
+        setIsLoading(true);
+        console.log('Fetching transactions for phone:', customerPhone);
+        
+        // Fetch all transactions using API config
+        const apiUrl = `${API_CONFIG.BASE_URL}${API_ENDPOINTS.TRANSACTIONS}`;
+        console.log('API URL:', apiUrl);
+        
+        const response = await fetch(apiUrl);
+        console.log('Response status:', response.status);
+        
+        if (!response.ok) {
+          throw new Error(`Failed to fetch customer data: ${response.status} ${response.statusText}`);
+        }
+        
+        const allTransactions = await response.json();
+        console.log('Total transactions received:', allTransactions.length);
+        
+        if (allTransactions.length > 0) {
+          console.log('Sample transaction:', allTransactions[0]);
+        }
+        
+        // Decode the phone number from URL
+        const decodedPhone = decodeURIComponent(customerPhone);
+        console.log('Decoded phone for matching:', decodedPhone);
+        
+        // More flexible phone matching
+        const normalizePhone = (phone) => {
+          if (!phone) return '';
+          return phone.toString().replace(/\D/g, '');
+        };
+        
+        const normalizedSearchPhone = normalizePhone(decodedPhone);
+        console.log('Normalized search phone:', normalizedSearchPhone);
+        
+        // Filter transactions for the specific customer
+        const customerTxns = allTransactions.filter(tx => {
+          if (!tx.customerPhone) return false;
+          
+          const txPhone = tx.customerPhone.toString();
+          const normalizedTxPhone = normalizePhone(txPhone);
+          
+          const matches = 
+            txPhone === decodedPhone || 
+            txPhone === customerPhone ||
+            txPhone === `+${decodedPhone}` ||
+            normalizedTxPhone === normalizedSearchPhone ||
+            normalizedTxPhone.endsWith(normalizedSearchPhone) ||
+            normalizedSearchPhone.endsWith(normalizedTxPhone);
+          
+          if (matches) {
+            console.log('✓ Match found:', txPhone);
+          }
+          
+          return matches;
+        });
+        
+        console.log('Matching transactions found:', customerTxns.length);
+        
+        if (customerTxns.length === 0) {
+          // Log all unique phone numbers to help debug
+          const uniquePhones = [...new Set(allTransactions.map(tx => tx.customerPhone))].filter(Boolean);
+          console.log('Available customer phones in database:', uniquePhones.slice(0, 10));
+          console.log('Total unique phones:', uniquePhones.length);
+          throw new Error(`No transactions found for phone: ${decodedPhone}`);
+        }
+        
+        // Get the most recent transaction for customer details
+        const latestTxn = customerTxns.sort((a, b) => 
+          new Date(b.createdAt) - new Date(a.createdAt)
+        )[0];
+        
+        console.log('Latest transaction:', latestTxn);
+        
+        // Extract unique property names and types
+        const interestedProperties = [...new Set(
+          customerTxns.map(tx => tx.property?.name).filter(Boolean)
+        )];
+        const propertyTypes = [...new Set(
+          customerTxns.map(tx => tx.property?.type).filter(Boolean)
+        )];
+        
+        // Build customer data object
+        const customer = {
+          name: latestTxn.customerName || 'N/A',
+          phone: latestTxn.customerPhone || 'N/A',
+          email: latestTxn.customerEmail || 'N/A',
+          address: latestTxn.customerAddress || 'N/A',
+          photo: latestTxn.customerPhoto || DEFAULTS.PLACEHOLDER_IMAGE,
+          status: 'Available',
+          lastContacted: latestTxn.createdAt,
+          preferences: latestTxn.customerPreferences || 'No preferences specified',
+          interestedProperties: interestedProperties,
+          propertyTypes: propertyTypes,
+          totalTransactions: customerTxns.length,
+          totalAmount: customerTxns.reduce((sum, tx) => sum + (tx.amount || 0), 0),
+        };
+        
+        console.log('Customer data built:', customer);
+        
+        setCustomerData(customer);
+        setCustomerTransactions(customerTxns);
+        
       } catch (err) {
-        console.error('Failed to fetch customer details:', err);
-        setError(err.response?.data?.error || err.message || 'Failed to fetch customer details');
+        console.error('Error in fetchCustomerData:', err);
+        setError(err.message);
       } finally {
         setIsLoading(false);
       }
     };
 
-    if (customerPhone) {
-      loadCustomerData();
-    }
-  }, [customerPhone]);
+    fetchCustomerData();
+  }, [customerPhone, location.pathname]);
 
-  const handleRetry = () => {
-    setIsLoading(true);
-    setError(null);
-    window.location.reload();
-  };
-
-  // Loading State
+  // Loading state
   if (isLoading) {
     return (
       <div className="page-with-layout">
         <div className="main-content-panel">
           <Header title="Customer Detail" />
           <div className="customer-detail-container">
-            <div className="loading-state" style={{ 
-              textAlign: 'center', 
-              padding: '40px',
-              fontSize: '16px',
-              color: '#666'
-            }}>
-              Loading customer details...
+            <div className="loading-state">
+              <p>Loading customer details...</p>
+              {customerPhone && <p style={{fontSize: '12px', color: '#666'}}>Phone: {customerPhone}</p>}
             </div>
           </div>
         </div>
@@ -120,29 +213,34 @@ export default function CustomerDetail() {
     );
   }
 
-  // Error State
+  // Error state
   if (error) {
     return (
       <div className="page-with-layout">
         <div className="main-content-panel">
           <Header title="Customer Detail" />
           <div className="customer-detail-container">
-            <div className="error-state" style={{
-              textAlign: 'center',
-              padding: '40px',
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              gap: '20px'
-            }}>
-              <p style={{ color: '#e74c3c', fontSize: '16px' }}>Error: {error}</p>
-              <GradientButton 
-                onClick={handleRetry}
-                width="120px"
-                height="40px"
+            <div className="error-state">
+              <p>Error: {error}</p>
+              <p style={{fontSize: '12px', color: '#666', marginTop: '10px'}}>
+                URL: {location.pathname}<br/>
+                Phone param: {customerPhone || 'Not found'}<br/>
+                Available params: {JSON.stringify(params)}
+              </p>
+              <button 
+                onClick={() => window.history.back()} 
+                style={{
+                  marginTop: '15px',
+                  padding: '8px 16px',
+                  backgroundColor: '#000',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: '6px',
+                  cursor: 'pointer'
+                }}
               >
-                Retry
-              </GradientButton>
+                Go Back
+              </button>
             </div>
           </div>
         </div>
@@ -150,21 +248,14 @@ export default function CustomerDetail() {
     );
   }
 
-  // No Data Found
+  // No customer found
   if (!customerData) {
     return (
       <div className="page-with-layout">
         <div className="main-content-panel">
           <Header title="Customer Detail" />
           <div className="customer-detail-container">
-            <div className="no-data-cell" style={{
-              textAlign: 'center',
-              padding: '40px',
-              fontSize: '16px',
-              color: '#666'
-            }}>
-              No customer found with phone: {customerPhone}
-            </div>
+            <div className="no-data-cell">Customer not found.</div>
           </div>
         </div>
       </div>
@@ -172,226 +263,114 @@ export default function CustomerDetail() {
   }
 
   const c = customerData;
-  const stats = calculateCustomerStats(customerTransactions);
 
-  // Mock Reviews
-  const mockReviews = [
-    {
-      name: 'System Review',
-      handle: '@system',
-      photo: '/assets/placeholder.png',
-      stars: 5,
-      body: `Customer has completed ${c.totalTransactions || 0} transactions with a total amount of $${(c.totalAmount || 0).toLocaleString()}.`,
-      date: 'Recent',
-    },
-  ];
+  // Calculate stats based on transaction data
+  const totalListing = customerTransactions.length;
+  const propertySold = customerTransactions.filter(tx => 
+    tx.type === 'sale' || tx.property?.status === 'sold'
+  ).length;
+  const propertyRent = customerTransactions.filter(tx => 
+    tx.type === 'rent' || tx.property?.status === 'rented'
+  ).length;
+
+  // Generate reviews from transactions
+  const reviews = customerTransactions.slice(0, 3).map((tx, index) => ({
+    name: tx.customerName || 'Anonymous',
+    handle: `@${(tx.customerName || 'user').toLowerCase().replace(/\s+/g, '')}`,
+    photo: tx.customerPhoto || DEFAULTS.PLACEHOLDER_IMAGE,
+    stars: 5,
+    body: `Transaction completed for ${tx.property?.name || 'property'} at $${tx.amount?.toLocaleString() || '0'}'}`,
+    date: new Date(tx.createdAt).toLocaleDateString()
+  }));
+
+  // if (reviews.length === 0) {
+  //   reviews.push({
+  //     name: 'System Review',
+  //     handle: '@system',
+  //     photo: DEFAULTS.PLACEHOLDER_IMAGE,
+  //     stars: 5,
+  //     body: `Customer has ${c.totalTransactions} transaction${c.totalTransactions !== 1 ? 's' : ''} with total value of $${c.totalAmount.toLocaleString()}.`,
+  //     date: 'Recent'
+  //   });
+  // }
 
   return (
     <div className="page-with-layout">
       <div className="main-content-panel">
         <Header title="Customer Detail" />
+
         <div className="customer-detail-container">
+<div className="customer-detail-section">
           <div className="section-title">Customer Overview</div>
 
-          {/* Customer Overview */}
+          {/* CUSTOMER OVERVIEW */}
           <div className="customer-overview-card">
-            <div className="overview-item profile-info">
-              <img 
-                src={c.photo || '/assets/placeholder.png'} 
-                alt={c.name} 
-                className="customer-photo-detail" 
-              />
-              <div>
+            
+        <img src={c.photo} alt={c.name} className="customer-photo-detail" />
+
+          
+               <div>
                 <h3 className="profile-name">{c.name}</h3>
                 <p className="profile-sub-email">{c.email}</p>
               </div>
-            </div>
             <div className="overview-item">
-              <p className="overview-label">Email Address:</p>
+              <p className="overview-label">Email Address :</p>
               <p className="overview-value">{c.email}</p>
             </div>
             <div className="overview-item">
-              <p className="overview-label">Phone Number:</p>
+              <p className="overview-label">Phone Number :</p>
               <p className="overview-value">{c.phone}</p>
             </div>
+           
             <div className="overview-item">
-              <p className="overview-label">Location:</p>
-              <p className="overview-value">{c.address || 'N/A'}</p>
+              <p className="overview-label">Status :</p>
+              <span className="status-badge-cd">{c.status}</span>
             </div>
-            <div className="overview-item">
-              <p className="overview-label">Status:</p>
-              <span className="status-badge available">{c.status || 'Active'}</span>
-            </div>
-            <div className="overview-item preferences-info">
-              <p className="overview-label">Interested Properties:</p>
-              <div className="overview-value">
-                {c.interestedProperties && c.interestedProperties.length > 0 ? (
-                  c.interestedProperties.map((property, index) => <span key={index}>{property}</span>)
-                ) : (
-                  <span>No properties found</span>
-                )}
+         
+            <div className="overview-item social-info">
+              <p className="overview-label">Social Media:</p>
+              <div className="icon-row">
+                <a href="#"><img src="/assets/fb.png" alt="facebook" /></a>
+                <a href="#"><img src="/assets/ig.png" alt="instagram" /></a>
+                <a href="#"><img src="/assets/x.png" alt="twitter" /></a>
+                <a href="#"><img src="/assets/wp.png" alt="whatsapp" /></a>
               </div>
-            </div>
-            <div className="overview-item preferences-info">
-              <p className="overview-label">Property Types:</p>
-              <div className="overview-value">
-                {c.propertyTypes && c.propertyTypes.length > 0 ? (
-                  <span>{c.propertyTypes.join(', ')}</span>
-                ) : (
-                  <span>No property types found</span>
-                )}
-              </div>
-            </div>
-            <div className="overview-item">
-              <p className="overview-label">Total Transactions:</p>
-              <p className="overview-value">{c.totalTransactions || 0}</p>
-            </div>
-            <div className="overview-item">
-              <p className="overview-label">Total Amount:</p>
-              <p className="overview-value">${(c.totalAmount || 0).toLocaleString()}</p>
-            </div>
-            <div className="overview-item">
-              <p className="overview-label">Last Contacted:</p>
-              <p className="overview-value">
-                {c.lastContacted ? new Date(c.lastContacted).toLocaleDateString() : 'N/A'}
-              </p>
             </div>
           </div>
 
-          {/* Property Stats */}
-          <div className="section-title">Property Status:</div>
+          {/* PROPERTY STATUS */}
+          <div className="section-title">Property Status :</div>
           <div className="property-status-container">
-            <StatCard
-              iconSrc="/assets/icon-listing.png"
-              label="Properties Viewed"
-              value={stats.viewPropertyCount.toString()}
-              color="#9B59B6"
-              progress={calculateStatProgress(stats.viewPropertyCount, c.totalTransactions || 0)}
-              iconBgColor="rgba(155, 89, 182, 0.1)"
+            <StatCard 
+              iconSrc="/assets/property-iconn.png" 
+              label="Total Listing" 
+              value={totalListing.toString()} 
+              color="#9B59B6" 
+              progress={100} 
+              iconBgColor="rgba(155, 89, 182, 0.1)" 
             />
-            <StatCard
-              iconSrc="/assets/icon-sold.png"
-              label="Properties Owned"
-              value={stats.ownPropertyCount.toString()}
-              color="#E67E22"
-              progress={calculateStatProgress(stats.ownPropertyCount, c.totalTransactions || 0)}
-              iconBgColor="rgba(230, 126, 34, 0.1)"
+            <StatCard 
+              iconSrc="/assets/sold.png" 
+              label="Property Sold" 
+              value={propertySold.toString()} 
+              color="#E67E22" 
+              progress={totalListing > 0 ? (propertySold / totalListing) * 100 : 0} 
+              iconBgColor="rgba(230, 126, 34, 0.1)" 
             />
-            <StatCard
-              iconSrc="/assets/icon-rent.png"
-              label="Property Investments"
-              value={stats.investPropertyCount.toString()}
-              color="#3498DB"
-              progress={calculateStatProgress(stats.investPropertyCount, c.totalTransactions || 0)}
-              iconBgColor="rgba(52, 152, 219, 0.1)"
+            <StatCard 
+              iconSrc="/assets/rent.png" 
+              label="Property Rent" 
+              value={propertyRent.toString()} 
+              color="#3498DB" 
+              progress={totalListing > 0 ? (propertyRent / totalListing) * 100 : 0} 
+              iconBgColor="rgba(52, 152, 219, 0.1)" 
             />
           </div>
 
-          {/* Recent Transactions with Pagination */}
-          <div className="section-title">Recent Transactions:</div>
-          <div className="transactions-container">
-            {currentTransactions.map((transaction, index) => (
-              <div key={index} className="transaction-card">
-                <div className="transaction-info">
-                  <p>
-                    <strong>Property:</strong> {transaction.property?.name || 'N/A'}
-                  </p>
-                  <p>
-                    <strong>Type:</strong> {transaction.property?.type || 'N/A'}
-                  </p>
-                  <p>
-                    <strong>Amount:</strong> ${transaction.amount?.toLocaleString() || '0'}
-                  </p>
-                  <p>
-                    <strong>Date:</strong> {new Date(transaction.createdAt).toLocaleDateString()}
-                  </p>
-                </div>
-              </div>
-            ))}
-            {customerTransactions.length === 0 && (
-              <div className="no-data-cell" style={{
-                textAlign: 'center',
-                padding: '20px',
-                fontSize: '14px',
-                color: '#666'
-              }}>
-                No transactions found.
-              </div>
-            )}
-          </div>
-
-          {/* Pagination for Transactions */}
-          {totalPages > 1 && (
-            <div className="pagination-wrapper" style={{ marginTop: '20px' }}>
-              <div className="pagination">
-                <button
-                  onClick={prevPage}
-                  disabled={!hasPrevPage}
-                  style={{
-                    padding: '10px 20px',
-                    background: 'white',
-                    border: '1px solid #ddd',
-                    borderRadius: '8px',
-                    cursor: hasPrevPage ? 'pointer' : 'not-allowed',
-                    opacity: hasPrevPage ? 1 : 0.5,
-                    fontSize: '14px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '5px'
-                  }}
-                >
-                  <span>‹</span> Back
-                </button>
-
-                {Array.from({ length: totalPages }, (_, i) => (
-                  <button
-                    key={i}
-                    onClick={() => handlePageChange(i + 1)}
-                    style={{
-                      width: '45px',
-                      height: '45px',
-                      padding: '10px',
-                      background: currentPage === i + 1 
-                        ? 'linear-gradient(180deg, #474747 0%, #000000 100%)' 
-                        : 'white',
-                      color: currentPage === i + 1 ? '#fff' : '#000',
-                      border: '1px solid #ddd',
-                      borderRadius: '8px',
-                      cursor: 'pointer',
-                      fontSize: '14px',
-                      fontWeight: currentPage === i + 1 ? '600' : '400'
-                    }}
-                  >
-                    {i + 1}
-                  </button>
-                ))}
-
-                <button
-                  onClick={nextPage}
-                  disabled={!hasNextPage}
-                  style={{
-                    padding: '10px 20px',
-                    background: 'white',
-                    border: '1px solid #ddd',
-                    borderRadius: '8px',
-                    cursor: hasNextPage ? 'pointer' : 'not-allowed',
-                    opacity: hasNextPage ? 1 : 0.5,
-                    fontSize: '14px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '5px'
-                  }}
-                >
-                  Next <span>›</span>
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* Reviews */}
-          <div className="section-title">Reviews:</div>
+          {/* REVIEWS */}
+          <div className="section-title">Reviews :</div>
           <div className="reviews-container">
-            {mockReviews.map((r, i) => (
+            {reviews.map((r, i) => (
               <div key={i} className="review-card">
                 <div className="review-header">
                   <div className="review-author">
@@ -402,8 +381,7 @@ export default function CustomerDetail() {
                     </div>
                   </div>
                   <div className="review-stars">
-                    {'★'.repeat(r.stars)}
-                    {'☆'.repeat(5 - r.stars)}
+                    {'★'.repeat(r.stars)}{'☆'.repeat(5 - r.stars)}
                   </div>
                   <div className="review-meta">
                     <span className="review-date">{r.date}</span>
@@ -414,6 +392,7 @@ export default function CustomerDetail() {
               </div>
             ))}
           </div>
+</div>
         </div>
       </div>
     </div>

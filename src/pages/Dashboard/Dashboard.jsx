@@ -1,21 +1,21 @@
-// Dashboard.jsx - UPDATED
-// ============================================
+// Dashboard.jsx
+
 import React, { useState, useEffect } from "react"; 
 import Header from "../../components/layout/Header";
-import Analytics from "./Analytics";
-import SalesAnalytic from "./SalesAnalytic";
-import WeeklySales from "./WeeklySales";
-import SalesLocation from "./SalesLocation";
-import SocialSource from "./SocialSource";
-import PropertyRevenue from "./PropertyRevenue";
-import Transactions from "./Transactions";
+import Analytics from "../../components/dashboard/Analytics";
+import SalesAnalytic from "../../components/dashboard/SalesAnalytic";
+import WeeklySales from "../../components/dashboard/WeeklySales";
+import SalesLocation from "../../components/dashboard/SalesLocation";
+import SocialSource from "../../components/dashboard/SocialSource";
+import PropertyRevenue from "../../components/dashboard/PropertyRevenue";
+import Transactions from "../../components/dashboard/Transactions";
 import { io as socketIO } from "socket.io-client";
 import api from "../../utils/api";
 import { SOCKET_CONFIG } from "../../utils/constants";
 import "/src/styles/Dashboard.css";
 import "bootstrap/dist/css/bootstrap.min.css";
 
-// ✅ Use SOCKET_CONFIG from constants
+// Use SOCKET_CONFIG from constants
 const socket = socketIO(SOCKET_CONFIG.URL, SOCKET_CONFIG.OPTIONS);
 
 const Dashboard = () => {
@@ -31,11 +31,11 @@ const Dashboard = () => {
 
   const toggleSidebar = () => setSidebarOpen(!isSidebarOpen);
 
-  // ✅ Centralized stats fetching function using api instance
+  // Centralized stats fetching function using api instance
   const fetchStats = async () => {
     try {
       setError(null);
-      // ✅ FIXED: Use /api/stats (with /api prefix)
+      // FIXED: Use /api/stats (with /api prefix)
       const res = await api.get('/api/stats');
       
       console.log('Dashboard stats fetched:', res.data);

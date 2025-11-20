@@ -1,0 +1,54 @@
+/* WeeklySales.css */
+
+.weekly-sales-loading {
+  text-align: center;
+  padding: 40px;
+}
+
+.weekly-sales-error {
+  color: red;
+  font-size: 14px;
+  padding: 8px;
+  background-color: #ffe6e6;
+  border-radius: 4px;
+  margin-bottom: 16px;
+}
+
+.weekly-sales-navigation {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  margin-bottom: 20px;
+}
+
+.weekly-sales-nav-btn {
+  background: #E6E8F0;
+  border: none;
+  color: black;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.2s;
+}
+
+.weekly-sales-nav-btn:hover {
+  opacity: 0.8;
+}
+
+.weekly-sales-label {
+  min-width: 120px;
+  text-align: center;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.weekly-sales-chart-container {
+  width: 100%;
+  height: 200px;
+}

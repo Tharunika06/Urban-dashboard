@@ -1,12 +1,13 @@
 /* src/styles/Orders.css */
 
-/* --- LAYOUT STYLES - ROBUST VERSION --- */
+/* ==================== LAYOUT STYLES ==================== */
 .page-with-layout {
   display: flex;
   height: 100vh;
   overflow: hidden;
   background-color: #F8F9FA;
 }
+
 .main-content-panel {
   flex-grow: 1;
   display: flex;
@@ -14,45 +15,28 @@
   min-width: 0;
   overflow: hidden;
 }
+
 .page-content-wrapper {
   flex-grow: 1;
   overflow-y: auto;
+  padding: 0;
 }
 
-/* --- ORDERS PAGE CONTAINER & CONTROLS --- */
+/* ==================== ORDERS PAGE CONTAINER ==================== */
 .orders-page-container {
   padding: 1.5rem;
+  max-width: 1600px;
+  margin: 0 auto;
 }
 
+/* ==================== CONTROLS BAR ==================== */
 .controls-bar {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 1.5rem; /* Gap to the content card */
-}
-
-.search-wrapper {
-  position: relative;
-  display: flex;
-  align-items: center;
-  flex-grow: 1;
-  max-width: 450px;
-}
-
-.search-icon {
-  position: absolute;
-  left: 1rem;
-  color: #adb5bd;
-}
-
-.search-input {
-  padding: 0.75rem 1rem 0.75rem 2.5rem;
-  border: 1px solid #dee2e6;
-  border-radius: 8px;
-  background-color: #fff;
-  font-size: 14px;
-  width: 100%;
-  font-family: 'Montserrat', sans-serif;
+  margin-bottom: 1.5rem;
+  gap: 1rem;
+  flex-wrap: wrap;
 }
 
 .header-actions {
@@ -62,6 +46,7 @@
   flex-shrink: 0;
 }
 
+/* ==================== VIEW TOGGLE ==================== */
 .view-toggle {
   display: flex;
   background-color: #f8f9fa;
@@ -69,6 +54,7 @@
   border: 1px solid #dee2e6;
   padding: 2px;
 }
+
 .view-toggle button {
   background: transparent;
   border: none;
@@ -77,14 +63,30 @@
   cursor: pointer;
   font-size: 1rem;
   color: #6c757d;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
+
+.view-toggle button:hover {
+  background-color: #e9ecef;
+}
+
 .view-toggle button.active {
   background-color: #fff;
   color: #0D6EFD;
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
-.add-button { /* Renamed for reusability */
+.view-toggle button img {
+  width: 20px;
+  height: 20px;
+  display: block;
+}
+
+/* ==================== ADD BUTTON ==================== */
+.add-button {
   background-color: #111827;
   color: #ffffff;
   padding: 0.7rem 1.5rem;
@@ -94,22 +96,33 @@
   cursor: pointer;
   font-size: 14px;
   white-space: nowrap;
+  transition: background-color 0.2s ease;
 }
 
-/* --- NEW CONTENT CARD STYLING --- */
-/* .content-card {
+.add-button:hover {
+  background-color: #1f2937;
+}
+
+.add-button:active {
+  transform: translateY(1px);
+}
+
+/* ==================== CONTENT CARD ==================== */
+.content-card {
   background-color: #fff;
-  border-radius: 8px;
+  border-radius: 12px;
   padding: 1.5rem;
   border: 1px solid #dee2e6;
-} */
-
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
 
 .card-header-flex {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+  gap: 1rem;
 }
 
 .page-title {
@@ -130,16 +143,400 @@
   gap: 0.5rem;
   cursor: pointer;
   flex-shrink: 0;
+  transition: all 0.2s ease;
+  font-size: 14px;
+  color: #495057;
 }
 
-/* --- TABLE STYLES --- */
+.filter-btn:hover {
+  border-color: #adb5bd;
+  background-color: #f8f9fa;
+}
+
+/* ==================== ORDER LIST CONTAINER ==================== */
+.order-list-container {
+  overflow-x: auto;
+
+}
+
+/* Hide scrollbar for Chrome, Safari and Opera */
+.order-list-container::-webkit-scrollbar {
+  height: 8px;
+}
+
+.order-list-container::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+.order-list-container::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 4px;
+}
+
+.order-list-container::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+/* ==================== ORDER TABLE ==================== */
+.order-table {
+  min-width: 100%;
+  border-collapse: collapse;
+}
+
+.order-table-header {
+  display: grid;
+  grid-template-columns: 120px 200px 100px 120px 120px 120px 100px;
+  gap: 12px;
+  padding: 12px 16px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 13px;
+  color: #6c757d;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 8px;
+}
+
+.order-table-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* ==================== ORDER ROW ==================== */
+.order-row {
+  display: grid;
+  grid-template-columns: 120px 200px 100px 120px 120px 120px 100px;
+  gap: 12px;
+  padding: 16px;
+  background: #fff;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+  align-items: center;
+}
+
+.order-row:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  border-color: #dee2e6;
+  transform: translateY(-1px);
+}
+
+/* ==================== ORDER COLUMNS ==================== */
+.order-col {
+  display: flex;
+  align-items: center;
+  font-size: 14px;
+  color: #495057;
+}
+
+.order-col-id {
+  justify-content: flex-start;
+}
+
+.order-col-id .order-id-text {
+  font-family: 'Courier New', monospace;
+  font-weight: 500;
+  color: #0d6efd;
+  font-size: 13px;
+}
+
+.order-col-user {
+  justify-content: flex-start;
+}
+
+.user-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.user-name {
+  font-weight: 500;
+  color: #212529;
+  font-size: 14px;
+}
+
+.user-email {
+  font-size: 12px;
+  color: #6c757d;
+}
+
+.order-col-type {
+  justify-content: center;
+}
+
+.order-col-amount {
+  justify-content: flex-end;
+}
+
+.order-col-date {
+  justify-content: center;
+}
+
+.order-col-status {
+  justify-content: center;
+}
+
+.order-col-actions {
+  justify-content: center;
+}
+
+/* ==================== TYPE BADGES ==================== */
+.type-badge {
+  display: inline-block;
+  padding: 6px 12px;
+  border-radius: 16px;
+  font-size: 12px;
+  font-weight: 500;
+  text-transform: capitalize;
+  text-align: center;
+}
+
+.type-credit {
+  background: #d1f4e0;
+  color: #0f7c3a;
+}
+
+.type-debit {
+  background: #ffe5e5;
+  color: #c41e3a;
+}
+
+.type-unknown {
+  background: #e9ecef;
+  color: #6c757d;
+}
+
+/* ==================== AMOUNT ==================== */
+.amount-text {
+  font-weight: 600;
+  color: #212529;
+  font-size: 15px;
+}
+
+/* ==================== DATE ==================== */
+.date-text {
+  color: #6c757d;
+  font-size: 13px;
+}
+
+/* ==================== STATUS BADGES ==================== */
+.status-badge {
+  display: inline-block;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 500;
+  text-align: center;
+  min-width: 80px;
+  text-transform: capitalize;
+}
+
+.status-badge.completed,
+.status-badge.success,
+.status-badge.paid,
+.status-completed {
+  background-color: rgba(40, 199, 111, 0.15);
+  color: #28C76F;
+}
+
+.status-badge.pending,
+.status-badge.processing,
+.status-pending {
+  background-color: rgba(255, 159, 67, 0.15);
+  color: #FF9F43;
+}
+
+.status-badge.failed,
+.status-badge.cancelled,
+.status-badge.refunded,
+.status-badge.unpaid,
+.status-failed {
+  background-color: rgba(234, 84, 85, 0.15);
+  color: #EA5455;
+}
+
+.status-badge.unknown,
+.status-unknown {
+  background: #e9ecef;
+  color: #6c757d;
+}
+
+/* ==================== ACTION BUTTONS ==================== */
+.order-col-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+}
+
+.action-btn {
+  padding: 8px;
+  border: 1px solid #dee2e6;
+  background: #fff;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.action-btn:hover {
+  background: #f8f9fa;
+  border-color: #adb5bd;
+  transform: translateY(-1px);
+}
+
+.action-btn:active {
+  transform: translateY(0);
+}
+
+.action-btn-view:hover {
+  background: #e7f3ff;
+  border-color: #0d6efd;
+}
+
+.action-btn-delete:hover {
+  background: #ffe5e5;
+  border-color: #dc3545;
+}
+
+.action-btn img {
+  width: 18px;
+  height: 18px;
+  display: block;
+}
+
+/* Legacy action icons support */
+.action-icons {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: center;
+}
+
+.action-icons img {
+  cursor: pointer;
+  opacity: 0.7;
+  transition: opacity 0.2s ease;
+  width: 20px;
+  height: 20px;
+}
+
+.action-icons img:hover {
+  opacity: 1;
+}
+
+/* ==================== EMPTY & LOADING STATES ==================== */
+.no-data-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 20px;
+  text-align: center;
+}
+
+.no-data-icon {
+  width: 120px;
+  height: 120px;
+  opacity: 0.3;
+  margin-bottom: 20px;
+}
+
+.no-data-text {
+  font-size: 16px;
+  color: #6c757d;
+  margin: 0;
+  font-weight: 500;
+}
+
+.loading-state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 20px;
+  font-size: 16px;
+  color: #6c757d;
+  font-weight: 500;
+}
+
+.loading-state::after {
+  content: '...';
+  animation: dots 1.5s steps(4, end) infinite;
+}
+
+@keyframes dots {
+  0%, 20% { content: '.'; }
+  40% { content: '..'; }
+  60%, 100% { content: '...'; }
+}
+
+.error-state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  font-size: 15px;
+  color: #dc3545;
+  background: #f8d7da;
+  border: 1px solid #f5c2c7;
+  border-radius: 8px;
+  font-weight: 500;
+}
+
+/* ==================== PAGINATION ==================== */
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 2rem;
+  flex-wrap: wrap;
+}
+
+.pagination button {
+  background-color: #fff;
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
+  padding: 0.6rem 1.1rem;
+  font-weight: 500;
+  color: #6C757D;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-width: 40px;
+  font-size: 14px;
+}
+
+.pagination button:hover:not(:disabled) {
+  background-color: #f8f9fa;
+  border-color: #adb5bd;
+}
+
+.pagination button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.pagination button.active {
+  background-color: #111827;
+  color: #ffffff;
+  border-color: #111827;
+}
+
+/* ==================== LEGACY TABLE SUPPORT ==================== */
 .table-container {
   overflow-x: auto;
+
 }
+
 .order-list-table {
   width: 100%;
   border-collapse: collapse;
 }
+
 .order-list-table th,
 .order-list-table td {
   padding: 1.2rem 1rem;
@@ -147,56 +544,223 @@
   vertical-align: middle;
   font-size: 14px;
   white-space: nowrap;
+  border-bottom: 1px solid #e9ecef;
 }
+
 .order-list-table th {
   background-color: #E6E8F0;
   color: #6C757D;
-  font-weight: 500;
+  font-weight: 600;
   font-size: 0.8rem;
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
+
+.order-list-table tbody tr:hover {
+  background-color: #f8f9fa;
+}
+
 .order-list-table tr:last-child td {
   border-bottom: none;
 }
+
 .customer-info-cell {
   display: flex;
   align-items: center;
   gap: 1rem;
 }
+
 .customer-info-cell span {
   font-weight: 600;
   color: #212529;
 }
+
 .customer-photo {
   width: 40px;
   height: 40px;
-  border-radius: 8px; /* Square with rounded corners like property image */
+  border-radius: 8px;
   object-fit: cover;
 }
+
 .order-list-table td {
   color: #495057;
 }
 
-/* --- STATUS, ACTIONS, PAGINATION --- */
-.status-badge { padding: 0.4rem 1rem; border-radius: 16px; font-size: 0.8rem; font-weight: 500; text-align: center; min-width: 80px; display: inline-block; }
-.status-badge.paid { background-color: rgba(40, 199, 111, 0.1); color: #28C76F; }
-.status-badge.pending { background-color: rgba(255, 159, 67, 0.1); color: #FF9F43; }
-.status-badge.unpaid { background-color: rgba(234, 84, 85, 0.1); color: #EA5455; }
-.action-icons {
-  display: flex;
-  gap: 0.75rem;
+/* ==================== GRID VIEW (Optional) ==================== */
+.order-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1.5rem;
 }
-.action-icons img {
-  cursor: pointer;
-  opacity: 0.7;
-  transition: opacity 0.2s;
-}
-.action-icons img:hover {
-  opacity: 1;
 
+.order-card {
+  background: #fff;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  padding: 1.5rem;
+  transition: all 0.2s ease;
 }
-.pagination { display: flex; justify-content: center; align-items: center; gap: 0.5rem; margin-top: 2rem; }
-.pagination button { background-color: #fff; border: 1px solid #dee2e6; border-radius: 8px; padding: 0.6rem 1.1rem; font-weight: 500; color: #6C757D; cursor: pointer; }
-.pagination button:disabled { opacity: 0.7; cursor: not-allowed; }
-.pagination button.active { background-color: #111827; color: #ffffff; border-color: #111827; }
+
+.order-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  transform: translateY(-2px);
+}
+
+/* ==================== RESPONSIVE DESIGN ==================== */
+@media (max-width: 1400px) {
+  .order-table-header,
+  .order-row {
+    grid-template-columns: 110px 180px 90px 110px 110px 110px 90px;
+    gap: 10px;
+  }
+}
+
+@media (max-width: 1200px) {
+  .order-table-header,
+  .order-row {
+    grid-template-columns: 100px 170px 85px 100px 100px 100px 85px;
+    gap: 8px;
+    font-size: 13px;
+  }
+
+  .order-row {
+    padding: 14px;
+  }
+}
+
+@media (max-width: 992px) {
+  .controls-bar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1rem;
+  }
+
+  .header-actions {
+    justify-content: space-between;
+  }
+
+  .order-table-header {
+    display: none;
+  }
+
+  .order-row {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    align-items: stretch;
+  }
+
+  .order-col {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px 0;
+    border-bottom: 1px solid #f0f0f0;
+  }
+
+  .order-col:last-child {
+    border-bottom: none;
+  }
+
+  .order-col::before {
+    content: attr(data-label);
+    font-weight: 600;
+    color: #6c757d;
+    text-transform: uppercase;
+    font-size: 11px;
+    letter-spacing: 0.5px;
+  }
+
+  .order-col-id::before { content: 'Order ID'; }
+  .order-col-user::before { content: 'User'; }
+  .order-col-type::before { content: 'Type'; }
+  .order-col-amount::before { content: 'Amount'; }
+  .order-col-date::before { content: 'Date'; }
+  .order-col-status::before { content: 'Status'; }
+  .order-col-actions::before { content: 'Actions'; }
+
+  .order-col-actions {
+    border-bottom: none;
+    padding-top: 12px;
+    justify-content: flex-end;
+  }
+}
+
+@media (max-width: 768px) {
+  .orders-page-container {
+    padding: 12px;
+  }
+
+  .content-card {
+    padding: 16px;
+  }
+
+  .card-header-flex {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .page-title {
+    font-size: 18px;
+  }
+
+  .pagination {
+    gap: 0.3rem;
+  }
+
+  .pagination button {
+    padding: 0.5rem 0.8rem;
+    font-size: 13px;
+    min-width: 36px;
+  }
+}
+
+@media (max-width: 480px) {
+  .orders-page-container {
+    padding: 8px;
+  }
+
+  .content-card {
+    padding: 12px;
+    border-radius: 8px;
+  }
+
+  .order-row {
+    padding: 12px;
+  }
+
+  .view-toggle button {
+    padding: 0.4rem 0.6rem;
+  }
+
+  .view-toggle button img {
+    width: 18px;
+    height: 18px;
+  }
+
+  .add-button {
+    padding: 0.6rem 1rem;
+    font-size: 13px;
+  }
+}
+
+/* ==================== PRINT STYLES ==================== */
+@media print {
+  .controls-bar,
+  .header-actions,
+  .view-toggle,
+  .add-button,
+  .action-btn,
+  .pagination {
+    display: none !important;
+  }
+
+  .content-card {
+    border: none;
+    box-shadow: none;
+  }
+
+  .order-row {
+    page-break-inside: avoid;
+  }
+}

@@ -3,6 +3,7 @@ import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { usePagination } from '../../hooks/usePagination';
 import { getStatusClass } from '../../utils/customerUtils';
+import '../../styles/Customers.css';
 
 const ITEMS_PER_PAGE = 6;
 
@@ -33,8 +34,15 @@ const CustomerList = ({ customers, onDelete }) => {
     'Action',
   ];
 
-  const handleRowClick = (customerPhone) => {
-    navigate(`/customers/${customerPhone}`);
+  const handleRowClick = (customer) => {
+    // Ensure we have a valid identifier
+    const identifier = customer.phone || customer._id;
+    if (identifier) {
+      console.log('Navigating to customer:', identifier);
+      navigate(`/customers/${encodeURIComponent(identifier)}`);
+    } else {
+      console.error('No valid identifier found for customer:', customer);
+    }
   };
 
   return (
@@ -50,61 +58,57 @@ const CustomerList = ({ customers, onDelete }) => {
           </thead>
           <tbody>
             {currentItems.length > 0 ? (
-              currentItems.map((customer) => (
-                <tr
-                  key={customer.phone}
-                  onClick={() => handleRowClick(customer.phone)}
-                  style={{ cursor: 'pointer' }}
-                >
-                  <td>
-                    <div className="customer-info-cell">
+              currentItems.map((customer) => {
+                const customerId = customer.phone || customer._id;
+                return (
+                  <tr 
+                    key={customerId}
+                    onClick={() => handleRowClick(customer)}
+                    className="customer-row"
+                  >
+                    <td>
+                      <div className="customer-info-cell">
+                        <img
+                          src={customer.photo || placeholderPhoto}
+                          alt={customer.name}
+                          className="customer-photo"
+                        />
+                        <span>{customer.name}</span>
+                      </div>
+                    </td>
+                    <td>{customer.email || 'N/A'}</td>
+                    <td>{customer.phone}</td>
+                    <td>{customer.proptype || 'Apartment'}</td>
+                    <td>{customer.interestedProperties || 'N/A'}</td>
+                    <td>
+                      {customer.lastContacted 
+                        ? new Date(customer.lastContacted).toLocaleDateString() 
+                        : 'N/A'
+                      }
+                    </td>
+                    <td>
+                      <span className={`status-badge ${getStatusClass(customer.status)}`}>
+                        {customer.status || 'Active'}
+                      </span>
+                    </td>
+                    <td className="action-icons" onClick={(e) => e.stopPropagation()}>
+                      <Link to={`/customers/${encodeURIComponent(customerId)}`}>
+                        <img src="/assets/view-icon.png" alt="View" title="View Details" />
+                      </Link>
                       <img
-                        src={customer.photo || placeholderPhoto}
-                        alt={customer.name}
-                        className="customer-photo"
-                        style={{
-                          width: '50px',
-                          height: '50px',
-                          objectFit: 'cover',
-                          borderRadius: '50%',
-                          marginRight: '10px'
-                        }}
+                        src="/assets/delete-icon.png"
+                        alt="Delete"
+                        title="Delete Customer"
+                        onClick={() => onDelete(customer.phone)}
+                        className="delete-icon"
                       />
-                      <span>{customer.name}</span>
-                    </div>
-                  </td>
-                  <td>{customer.email || 'N/A'}</td>
-                  <td>{customer.phone}</td>
-                  <td>{customer.proptype || 'Apartment'}</td>
-                  <td>{customer.interestedProperties || 'N/A'}</td>
-                  <td>
-                    {customer.lastContacted 
-                      ? new Date(customer.lastContacted).toLocaleDateString() 
-                      : 'N/A'
-                    }
-                  </td>
-                  <td>
-                    <span className={`status-badge ${getStatusClass(customer.status)}`}>
-                      {customer.status || 'Active'}
-                    </span>
-                  </td>
-                  <td className="action-icons" onClick={(e) => e.stopPropagation()}>
-                    <Link to={`/customers/${customer.phone}`}>
-                      <img src="/assets/view-icon.png" alt="View" title="View Details" />
-                    </Link>
-                    <img
-                      src="/assets/delete-icon.png"
-                      alt="Delete"
-                      title="Delete Customer"
-                      onClick={() => onDelete(customer.phone)}
-                      style={{ cursor: 'pointer' }}
-                    />
-                  </td>
-                </tr>
-              ))
+                    </td>
+                  </tr>
+                );
+              })
             ) : (
               <tr>
-                <td colSpan={tableHeaders.length} style={{ textAlign: 'center', padding: '20px' }}>
+                <td colSpan={tableHeaders.length} className="no-customers-cell">
                   No customers found
                 </td>
               </tr>
@@ -119,18 +123,7 @@ const CustomerList = ({ customers, onDelete }) => {
             <button
               onClick={prevPage}
               disabled={!hasPrevPage}
-              style={{
-                padding: '10px 20px',
-                background: 'white',
-                border: '1px solid #ddd',
-                borderRadius: '8px',
-                cursor: hasPrevPage ? 'pointer' : 'not-allowed',
-                opacity: hasPrevPage ? 1 : 0.5,
-                fontSize: '14px',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '5px'
-              }}
+              className={`pagination-btn ${!hasPrevPage ? 'disabled' : ''}`}
             >
               <span>‹</span> Back
             </button>
@@ -139,20 +132,7 @@ const CustomerList = ({ customers, onDelete }) => {
               <button
                 key={i}
                 onClick={() => handlePageChange(i + 1)}
-                style={{
-                  width: '45px',
-                  height: '45px',
-                  padding: '10px',
-                  background: currentPage === i + 1 
-                    ? 'linear-gradient(180deg, #474747 0%, #000000 100%)' 
-                    : 'white',
-                  color: currentPage === i + 1 ? '#fff' : '#000',
-                  border: '1px solid #ddd',
-                  borderRadius: '8px',
-                  cursor: 'pointer',
-                  fontSize: '14px',
-                  fontWeight: currentPage === i + 1 ? '600' : '400'
-                }}
+                className={`pagination-number ${currentPage === i + 1 ? 'active' : ''}`}
               >
                 {i + 1}
               </button>
@@ -161,18 +141,7 @@ const CustomerList = ({ customers, onDelete }) => {
             <button
               onClick={nextPage}
               disabled={!hasNextPage}
-              style={{
-                padding: '10px 20px',
-                background: 'white',
-                border: '1px solid #ddd',
-                borderRadius: '8px',
-                cursor: hasNextPage ? 'pointer' : 'not-allowed',
-                opacity: hasNextPage ? 1 : 0.5,
-                fontSize: '14px',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '5px'
-              }}
+              className={`pagination-btn ${!hasNextPage ? 'disabled' : ''}`}
             >
               Next <span>›</span>
             </button>

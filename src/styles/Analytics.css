@@ -1,0 +1,25 @@
+/* Analytics Container */
+.analytics-container {
+  gap: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+
+/* Individual Card Wrapper */
+.analytics-card-wrapper {
+  width: 49%;
+  height: 20%;
+  font-family: 'Montserrat', sans-serif;
+}
+
+/* Loading State */
+.analytics-loading {
+  padding: 20px;
+}
+
+/* Error State */
+.analytics-error {
+  padding: 20px;
+  color: red;
+}

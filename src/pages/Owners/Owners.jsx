@@ -14,14 +14,13 @@ import {
   MONTHS_FULL,
   DEFAULTS,
   ASSET_PATHS,
-  STYLES 
+  STYLES,
+  PLACEHOLDERS
 } from '../../utils/constants';
 import { 
   getOwnerPhotoSrc, 
   handleImageError, 
   getAvailableProperties,
-  filterOwnersByMonth,
-  filterOwnersBySearch,
   formatDate
 } from '../../utils/ownerHelpers';
 import { initializeSocket, cleanupSocket } from '../../utils/socketHelpers';
@@ -33,16 +32,15 @@ const OWNERS_PER_PAGE = 6;
 
 const Owners = () => {
   const [owners, setOwners] = useState([]);
-  const [filteredOwners, setFilteredOwners] = useState([]);
+  const [searchFilteredOwners, setSearchFilteredOwners] = useState([]);
+  const [displayOwners, setDisplayOwners] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [searchTerm, setSearchTerm] = useState(DEFAULTS.SEARCH_TERM);
   const [selectedMonth, setSelectedMonth] = useState(DEFAULTS.SELECTED_MONTH);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [showDeletePopup, setShowDeletePopup] = useState(false);
   const [ownerToDelete, setOwnerToDelete] = useState(null);
 
-  // Use pagination hook
   const {
     currentPage,
     totalPages,
@@ -53,7 +51,7 @@ const Owners = () => {
     resetPage,
     hasNextPage,
     hasPrevPage
-  } = usePagination(filteredOwners, OWNERS_PER_PAGE);
+  } = usePagination(displayOwners, OWNERS_PER_PAGE);
 
   const tableHeaders = [
     'Owner Photo & Name',
@@ -66,7 +64,6 @@ const Owners = () => {
     'Action'
   ];
 
-  // Socket.io for real-time updates
   useEffect(() => {
     const socket = initializeSocket(() => {
       loadOwners(true);
@@ -75,7 +72,6 @@ const Owners = () => {
     return () => cleanupSocket(socket);
   }, []);
 
-  // Initial fetch and auto-refresh
   useEffect(() => {
     loadOwners();
     const refreshInterval = setInterval(() => {
@@ -84,37 +80,48 @@ const Owners = () => {
     return () => clearInterval(refreshInterval);
   }, []);
 
-  // Load owners data using ownerService
+  // Apply month filter to search results
+  useEffect(() => {
+    const filterByMonth = (ownersList) => {
+      if (selectedMonth === 'all') {
+        return ownersList;
+      }
+
+      const monthIndex = MONTHS_FULL.indexOf(selectedMonth);
+      if (monthIndex === -1) return ownersList;
+
+      return ownersList.filter(owner => {
+        if (!owner.doj) return false;
+        const date = new Date(owner.doj);
+        return date.getMonth() === monthIndex;
+      });
+    };
+
+    const filtered = filterByMonth(searchFilteredOwners);
+    setDisplayOwners(filtered);
+    resetPage();
+  }, [searchFilteredOwners, selectedMonth, resetPage]);
+
   const loadOwners = async (silent = false) => {
     try {
       if (!silent) setIsLoading(true);
       
       const data = await ownerService.getAllOwners();
+      const ownersList = data.owners || data || [];
       
-      setOwners(data.owners || data || []);
-      setFilteredOwners(data.owners || data || []);
+      setOwners(ownersList);
+      setSearchFilteredOwners(ownersList);
       setError(null);
     } catch (err) {
-      console.error('❌ Failed to fetch owners:', err);
       setError(err.response?.data?.error || err.message || 'Failed to fetch owners');
     } finally {
       if (!silent) setIsLoading(false);
     }
   };
 
-  // Filter owners when search or month changes
-  useEffect(() => {
-    let ownersToFilter = Array.isArray(owners) ? owners : [];
-
-    // Filter by month
-    ownersToFilter = filterOwnersByMonth(ownersToFilter, selectedMonth, MONTHS_FULL);
-
-    // Filter by search term
-    ownersToFilter = filterOwnersBySearch(ownersToFilter, searchTerm);
-
-    setFilteredOwners(ownersToFilter);
-    resetPage(); // Reset to page 1 when filters change
-  }, [searchTerm, selectedMonth, owners, resetPage]);
+  const handleSearchResults = (filteredResults) => {
+    setSearchFilteredOwners(filteredResults);
+  };
 
   const handleMonthChange = (month) => {
     setSelectedMonth(month);
@@ -135,13 +142,10 @@ const Owners = () => {
     try {
       await ownerService.deleteOwner(ownerToDelete);
       
-      // Update local state
       setOwners((prev) => prev.filter((owner) => owner.ownerId !== ownerToDelete));
-      setFilteredOwners((prev) => prev.filter((owner) => owner.ownerId !== ownerToDelete));
+      setSearchFilteredOwners((prev) => prev.filter((owner) => owner.ownerId !== ownerToDelete));
       
-      console.log(`✅ Owner ${ownerToDelete} deleted successfully`);
     } catch (err) {
-      console.error('❌ Failed to delete owner:', err);
       alert(err.response?.data?.error || err.message || 'Failed to delete owner');
     } finally {
       setShowDeletePopup(false);
@@ -172,7 +176,7 @@ const Owners = () => {
       </tr>
     );
 
-    if (!Array.isArray(filteredOwners) || filteredOwners.length === 0)
+    if (!Array.isArray(displayOwners) || displayOwners.length === 0)
       return <tr><td colSpan={tableHeaders.length} style={{ textAlign: 'center' }}>No owners found</td></tr>;
 
     return currentOwners.map((owner) => {
@@ -241,8 +245,10 @@ const Owners = () => {
         <main className="dashboard-body p-4">
           <div className="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4 gap-3">
             <SearchBar
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              data={owners}
+              onFilteredResults={handleSearchResults}
+              searchFields={['name', 'ownerId', 'email', 'contact', 'address', 'status']}
+              placeholder={PLACEHOLDERS.SEARCH}
               className="w-100 w-md-50"
             />
 
@@ -258,7 +264,7 @@ const Owners = () => {
 
           <section className="content-section">
             <div className="content-header">
-              <h2>All Owner List <span className="subtext">({filteredOwners.length} Owners)</span></h2>
+              <h2>All Owner List <span className="subtext">({displayOwners.length} Owners)</span></h2>
               <div className="content-actions">
                 <MonthDropdown onChange={handleMonthChange} />
               </div>

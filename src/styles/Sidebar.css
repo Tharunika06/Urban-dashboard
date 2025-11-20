@@ -61,6 +61,22 @@
 .sidebar-nav li {
   padding: 3px 10px;
   gap: 0rem;
+  border-radius: 8px;
+  transition: background 0.3s ease;
+}
+
+/* Active tab gradient background */
+
+
+/* Active tab text and icon color */
+.sidebar-nav li.active a {
+  background: linear-gradient(180deg, #4C9FFF 0%, #0075FF 100%);
+  color: #ffffff;
+}
+
+/* Active tab icon filter to make it white */
+.sidebar-nav li.active .icon-img {
+  filter: brightness(0) invert(1);
 }
 
 .sidebar-nav a {
@@ -68,7 +84,9 @@
   align-items: center;
   text-decoration: none;
   color: #333;
-  transition: background 0.3s;
+  transition: color 0.3s;
+  padding: 8px 12px;
+  border-radius: 8px;
 }
 
 /* Remove hover background in collapsed mode */
@@ -89,15 +107,16 @@
 .icon-img {
   width: 15px;
   height: 20px;
+  transition: filter 0.3s ease;
 }
 
 /* Label Text */
 .label-text {
   margin-left: 16px;
   font-size: 14px;
-  transition: opacity 0.3s ease;
+  /* transition: opacity 0.3s ease; */
   white-space: nowrap;
-  opacity: 1;
+  /* opacity: 1; */
   font-family: 'Montserrat', sans-serif;
 }
 
@@ -106,6 +125,7 @@
   pointer-events: none;
   display: none;
 }
+
 /* Logo image */
 .logo-icon {
   height: 30px;

@@ -1,10 +1,20 @@
 import React, { useState } from 'react';
+import GradientButton from '../../components/common/GradientButton';
 import '../../styles/Notification.css';
 
 const Notifications = () => {
   const [emailAlerts, setEmailAlerts] = useState(true);
   const [smsAlerts, setSmsAlerts] = useState(true);
   const [webPushNotifications, setWebPushNotifications] = useState(false);
+
+  const handleSaveChanges = () => {
+    // Add your save logic here
+    console.log('Saving notification preferences:', {
+      emailAlerts,
+      smsAlerts,
+      webPushNotifications
+    });
+  };
 
   const Toggle = ({ isOn, onToggle }) => (
     <button
@@ -18,7 +28,6 @@ const Notifications = () => {
   return (
     <div className="notifications-content">
     
-
       {/* Notification Preferences Section */}
       <div className="notification-preferences">
         <h2 className="section-title">Notification Preferences</h2>
@@ -68,7 +77,9 @@ const Notifications = () => {
 
       {/* Save Button */}
       <div className="save-section">
-        <button className="save-button">Save Changes</button>
+        <GradientButton onClick={handleSaveChanges}>
+          Save Changes
+        </GradientButton>
       </div>
     </div>
   );

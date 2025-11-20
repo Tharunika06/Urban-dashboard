@@ -11,7 +11,6 @@ import SearchBar from '../../components/common/SearchBar';
 import propertyService from '../../services/propertyService';
 import {
   API_CONFIG,
-  MONTHS_FULL,
   DEFAULTS,
   PROPERTY_VIEW,
   PROPERTY_PAGE_TITLES,
@@ -20,16 +19,16 @@ import {
   BUTTON_LABELS,
   PLACEHOLDERS,
   STYLES,
+  MONTHS_FULL,
 } from '../../utils/constants';
-import { applyPropertyFilters } from '../../utils/propertyHelpers';
 import '../../styles/Property.css';
 
 const Property = () => {
   const [view, setView] = useState(DEFAULTS.VIEW_MODE);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [propertyList, setPropertyList] = useState([]);
-  const [filteredList, setFilteredList] = useState([]);
-  const [searchTerm, setSearchTerm] = useState(DEFAULTS.SEARCH_TERM);
+  const [searchFilteredList, setSearchFilteredList] = useState([]);
+  const [displayList, setDisplayList] = useState([]);
   const [selectedMonth, setSelectedMonth] = useState(DEFAULTS.SELECTED_MONTH);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -42,7 +41,7 @@ const Property = () => {
   useEffect(() => {
     fetchProperties();
     const refreshInterval = setInterval(() => {
-      fetchProperties(true); // silent refresh
+      fetchProperties(true);
     }, API_CONFIG.AUTO_REFRESH_INTERVAL);
     return () => clearInterval(refreshInterval);
   }, []);
@@ -52,37 +51,48 @@ const Property = () => {
       if (!silent) setIsLoading(true);
       setError(null);
       
-      console.log('🔄 Fetching properties...');
-      
       const data = await propertyService.getAllProperties();
-      
-      console.log('📦 Response data:', data);
-      
       const propertiesArray = data.properties || data || [];
       
-      console.log(`✅ Loaded ${propertiesArray.length} properties`);
-      
       setPropertyList(propertiesArray);
+      setSearchFilteredList(propertiesArray);
     } catch (err) {
       setError(err.message);
-      console.error(`❌ ${UI_MESSAGES.FETCH_FAILED}:`, err);
+      console.error(`${UI_MESSAGES.FETCH_FAILED}:`, err);
     } finally {
       if (!silent) setIsLoading(false);
     }
   };
 
-  // Filter properties when search or month changes
-  useEffect(() => {
-    const filtered = applyPropertyFilters(propertyList, {
-      searchTerm,
-      month: selectedMonth,
-      monthsArray: MONTHS_FULL,
-    });
-    setFilteredList(filtered);
-  }, [searchTerm, selectedMonth, propertyList]);
+  // Handle search results from SearchBar
+  const handleSearchResults = (filtered) => {
+    setSearchFilteredList(filtered);
+  };
 
-  const handleSearch = (event) => setSearchTerm(event.target.value);
-  const handleMonthChange = (month) => setSelectedMonth(month);
+  // Apply month filter to search results
+  useEffect(() => {
+    const filterByMonth = (properties) => {
+      if (selectedMonth === 'all') {
+        return properties;
+      }
+
+      const monthIndex = MONTHS_FULL.indexOf(selectedMonth);
+      if (monthIndex === -1) return properties;
+
+      return properties.filter(property => {
+        if (!property.createdAt) return false;
+        const date = new Date(property.createdAt);
+        return date.getMonth() === monthIndex;
+      });
+    };
+
+    const filtered = filterByMonth(searchFilteredList);
+    setDisplayList(filtered);
+  }, [searchFilteredList, selectedMonth]);
+
+  const handleMonthChange = (month) => {
+    setSelectedMonth(month);
+  };
   
   const handleSaveProperty = async (newProperty) => {
     if (newProperty) {
@@ -115,16 +125,14 @@ const Property = () => {
         setPropertyList(prevList => 
           prevList.filter((prop) => !propertyToDelete.includes(prop._id))
         );
-        console.log(`✅ ${propertyToDelete.length} ${UI_MESSAGES.PROPERTIES_DELETED}`);
       } else {
         await propertyService.deleteProperty(propertyToDelete);
         setPropertyList(prevList => 
           prevList.filter((prop) => prop._id !== propertyToDelete)
         );
-        console.log(`✅ ${UI_MESSAGES.PROPERTY_DELETED}`);
       }
     } catch (err) {
-      console.error('❌ Failed to delete property:', err);
+      console.error('Failed to delete property:', err);
       fetchProperties();
     } finally {
       setDeleteModalOpen(false);
@@ -166,7 +174,7 @@ const Property = () => {
       );
     }
 
-    if (!Array.isArray(filteredList) || filteredList.length === 0) {
+    if (!Array.isArray(displayList) || displayList.length === 0) {
       return (
         <div className="empty-state" style={STYLES.EMPTY_STATE}>
           {UI_MESSAGES.NO_PROPERTIES_FOUND}
@@ -177,14 +185,14 @@ const Property = () => {
     if (view === PROPERTY_VIEW.LIST) {
       return (
         <PropertyList 
-          properties={filteredList} 
+          properties={displayList} 
           handleDelete={confirmDelete}
           handleBulkDelete={confirmBulkDelete}
         />
       );
     }
     
-    return <PropertyGrid properties={filteredList} />;
+    return <PropertyGrid properties={displayList} />;
   };
 
   return (
@@ -195,8 +203,9 @@ const Property = () => {
           {/* Search + Actions */}
           <div className="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4 gap-3">
             <SearchBar
-              value={searchTerm}
-              onChange={handleSearch}
+              data={propertyList}
+              onFilteredResults={handleSearchResults}
+              searchFields={['name', 'propertyId', 'address', 'price', 'status']}
               placeholder={PLACEHOLDERS.SEARCH}
               className="w-100 w-md-50 d-flex align-items-center"
             />
@@ -221,7 +230,7 @@ const Property = () => {
                   />
                 </button>
               </div>
-              <GradientButton onClick={() => setIsModalOpen(true)}>
+              <GradientButton onClick={() => setIsModalOpen(true)} >
                 {BUTTON_LABELS.ADD_PROPERTY}
               </GradientButton>
             </div>

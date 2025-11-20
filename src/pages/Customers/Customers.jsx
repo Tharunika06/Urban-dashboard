@@ -53,7 +53,6 @@ const Customers = () => {
 
   // Show delete confirmation
   const handleConfirmDelete = (customerPhone) => {
-    console.log('Customer selected for deletion:', customerPhone);
     setCustomerToDelete(customerPhone);
     setShowDeletePopup(true);
   };
@@ -160,9 +159,7 @@ const Customers = () => {
                   />
                 </button>
               </div>
-              <GradientButton width="160px" height="40px">
-                {BUTTON_LABELS.ADD_CUSTOMER}
-              </GradientButton>
+           
             </div>
           </div>
 

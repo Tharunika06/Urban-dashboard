@@ -11,7 +11,7 @@ import Signup from "./pages/Auth/Signup";
 import Login from "./pages/Auth/Login";
 import ForgotPassword from "./pages/Auth/ForgotPassword";
 import ResetPassword from './pages/Auth/ResetPassword';
-import Verification from './pages/Verification';
+import Verification from './pages/Auth/Verification';
 import Congratulations from './pages/Congratulations';
 import Dashboard from "./pages/Dashboard/Dashboard";
 import Property from "./pages/Property/Property";
@@ -30,10 +30,10 @@ const PrivateRoute = ({ children }) => {
   const user = localStorage.getItem("user");
   const isLoggedIn = Boolean(user);
 
-  console.log("🔐 PrivateRoute check:", { isLoggedIn, user: user ? JSON.parse(user) : null });
+  console.log("PrivateRoute check:", { isLoggedIn, user: user ? JSON.parse(user) : null });
 
   if (!isLoggedIn) {
-    console.log("❌ No user found, redirecting to login");
+    console.log("No user found, redirecting to login");
     return <Navigate to="/login" replace />;
   }
 

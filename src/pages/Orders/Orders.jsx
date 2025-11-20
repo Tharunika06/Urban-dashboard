@@ -13,38 +13,34 @@ import {
   API_CONFIG, 
   DEFAULTS, 
   ASSET_PATHS,
-  UI_MESSAGES 
+  UI_MESSAGES,
+  PLACEHOLDERS
 } from '../../utils/constants';
-import { applyFilters } from '../../utils/filterUtils';
 
 const Orders = () => {
   const [view, setView] = useState(DEFAULTS.VIEW_MODE);
-  const [searchTerm, setSearchTerm] = useState(DEFAULTS.SEARCH_TERM);
   
-  // --- STATE MANAGEMENT for live data ---
   const [allTransactions, setAllTransactions] = useState([]);
-  const [filteredTransactions, setFilteredTransactions] = useState([]);
+  const [searchFilteredTransactions, setSearchFilteredTransactions] = useState([]);
+  const [displayTransactions, setDisplayTransactions] = useState([]);
   const [selectedMonth, setSelectedMonth] = useState(DEFAULTS.SELECTED_MONTH);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Popup state management
   const [showDeletePopup, setShowDeletePopup] = useState(false);
   const [orderToDelete, setOrderToDelete] = useState(null);
 
-  // --- DATA FETCHING using transactionService ---
   useEffect(() => {
     const fetchTransactions = async () => {
       try {
         setIsLoading(true);
         setError(null);
         
-        // ✅ Use transactionService instead of fetchData
         const data = await transactionService.getAllTransactions();
         
         setAllTransactions(data);
+        setSearchFilteredTransactions(data);
       } catch (err) {
-        console.error('❌ Failed to fetch transactions:', err);
         setError(err.response?.data?.error || err.message || 'Failed to fetch transactions');
       } finally {
         setIsLoading(false);
@@ -53,7 +49,6 @@ const Orders = () => {
 
     fetchTransactions();
 
-    // Auto-refresh every 30 seconds
     const refreshInterval = setInterval(() => {
       fetchTransactions();
     }, API_CONFIG.AUTO_REFRESH_INTERVAL);
@@ -61,46 +56,52 @@ const Orders = () => {
     return () => clearInterval(refreshInterval);
   }, []);
 
-  // --- FILTERING LOGIC for both month and search term ---
+  // Handle search results from SearchBar
+  const handleSearchResults = (filtered) => {
+    setSearchFilteredTransactions(filtered);
+  };
+
+  // Apply month filter to search results
   useEffect(() => {
-    const results = applyFilters(allTransactions, {
-      searchTerm,
-      month: selectedMonth,
-      monthsArray: MONTHS_FULL
-    });
-    
-    setFilteredTransactions(results);
-  }, [searchTerm, selectedMonth, allTransactions]);
+    const filterByMonth = (transactions) => {
+      if (selectedMonth === 'all') {
+        return transactions;
+      }
+
+      const monthIndex = MONTHS_FULL.indexOf(selectedMonth);
+      if (monthIndex === -1) return transactions;
+
+      return transactions.filter(transaction => {
+        const date = new Date(transaction.date || transaction.createdAt);
+        return date.getMonth() === monthIndex;
+      });
+    };
+
+    const filtered = filterByMonth(searchFilteredTransactions);
+    setDisplayTransactions(filtered);
+  }, [searchFilteredTransactions, selectedMonth]);
 
   const handleMonthChange = (month) => {
     setSelectedMonth(month);
   };
 
-  // Show confirmation popup
   const handleConfirmDelete = (orderId) => {
-    console.log('Order selected for deletion:', orderId);
     setOrderToDelete(orderId);
     setShowDeletePopup(true);
   };
 
-  // Actual delete handler with API call using transactionService
   const handleDelete = async () => {
     if (!orderToDelete) return;
     
     try {
-      // ✅ Use transactionService instead of deleteResource
       await transactionService.deleteTransaction(orderToDelete);
       
-      // Update local state - remove from both arrays
       setAllTransactions(prev => prev.filter(t => t.customTransactionId !== orderToDelete));
-      setFilteredTransactions(prev => prev.filter(t => t.customTransactionId !== orderToDelete));
-      
-      console.log(`✅ Transaction ${orderToDelete} deleted successfully`);
+      setSearchFilteredTransactions(prev => prev.filter(t => t.customTransactionId !== orderToDelete));
       
       setShowDeletePopup(false);
       setOrderToDelete(null);
     } catch (err) {
-      console.error('❌ Failed to delete transaction:', err);
       alert(`Failed to delete transaction: ${err.response?.data?.error || err.message}`);
       setError(err.response?.data?.error || err.message);
       
@@ -109,7 +110,6 @@ const Orders = () => {
     }
   };
 
-  // Cancel delete popup
   const handleCancelDelete = () => {
     setShowDeletePopup(false);
     setOrderToDelete(null);
@@ -122,8 +122,8 @@ const Orders = () => {
     if (error) {
       return <div className="error-state">Error: {error}</div>;
     }
-    return <OrderList orders={filteredTransactions} onDelete={handleConfirmDelete} />;
-  }
+    return <OrderList orders={displayTransactions} onDelete={handleConfirmDelete} />;
+  };
 
   return (
     <div className="page-with-layout">
@@ -133,32 +133,33 @@ const Orders = () => {
           <div className="orders-page-container">
             <div className="controls-bar">
               <SearchBar
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                data={allTransactions}
+                onFilteredResults={handleSearchResults}
+                searchFields={['customTransactionId', 'userName', 'userEmail', 'type', 'status']}
+                placeholder={PLACEHOLDERS.SEARCH}
                 className="search-wrapper"
               />
               <div className="header-actions">
-               <div className="view-toggle">
-                <button
-                  className={view === 'list' ? 'active' : ''}
-                  onClick={() => setView('list')}
-                >
-                  <img 
-                    src={view === 'list' ? ASSET_PATHS.LIST_ACTIVE : ASSET_PATHS.LIST_INACTIVE} 
-                    alt="List View" 
-                  />
-                </button>
-                <button
-                  className={view === 'grid' ? 'active' : ''}
-                  onClick={() => setView('grid')}
-                >
-                  <img 
-                    src={view === 'grid' ? ASSET_PATHS.GRID_ACTIVE : ASSET_PATHS.GRID_INACTIVE} 
-                    alt="Grid View" 
-                  />
-                </button>
-              </div>
-                {/* <button className="add-button">Add Order</button> */}
+                <div className="view-toggle">
+                  <button
+                    className={view === 'list' ? 'active' : ''}
+                    onClick={() => setView('list')}
+                  >
+                    <img 
+                      src={view === 'list' ? ASSET_PATHS.LIST_ACTIVE : ASSET_PATHS.LIST_INACTIVE} 
+                      alt="List View" 
+                    />
+                  </button>
+                  <button
+                    className={view === 'grid' ? 'active' : ''}
+                    onClick={() => setView('grid')}
+                  >
+                    <img 
+                      src={view === 'grid' ? ASSET_PATHS.GRID_ACTIVE : ASSET_PATHS.GRID_INACTIVE} 
+                      alt="Grid View" 
+                    />
+                  </button>
+                </div>
               </div>
             </div>
 
@@ -174,7 +175,6 @@ const Orders = () => {
         </div>
       </div>
 
-      {/* Delete confirmation popup */}
       {showDeletePopup && (
         <PopupMessage
           onConfirm={handleDelete}

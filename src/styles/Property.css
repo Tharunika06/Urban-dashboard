@@ -1,236 +1,4 @@
-/* --- Property Page External Header --- */
-.property-page-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1.5rem;
-}
-
-.header-actions {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-.view-toggle {
-  display: flex;
-  background: #f7f7f7;
-  padding: 4px;
-}
-.view-toggle button {
-  background: transparent;
-  padding: 0.5rem;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  border-radius: 6px;
-  border: none;
-}
-.view-toggle button.active {
-  background-color: #fff;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-}
-.view-toggle button img {
-  width: 25px;
-  height: 25px;
-}
-.add-property-btn {
-  background-color: black;
-  color: white;
-  border: none;
-  border-radius: 8px;
-  padding: 0.85rem 1.5rem;
-  font-weight: 500;
-  cursor: pointer;
-}
-
-/* --- Main Content Card & Internal Header --- */
-.content-card {
-  background-color: #fff;
-  border-radius: 12px;
-  padding: 1.5rem;
-  border: 1px solid var(--border-color);
-}
-.content-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1.5rem;
-}
-.content-header h3 {
-  margin: 0;
-  font-size: 20px;
-  font-weight: 600;
-}
-/* Add this to your Property.css file */
-
-/* Bulk Actions Bar */
-.bulk-actions-bar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  background-color: #f0f4ff;
-  border: 1px solid #d0e0ff;
-  border-radius: 8px;
-  padding: 12px 20px;
-  margin-bottom: 16px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-}
-
-.selected-count {
-  font-size: 14px;
-  font-weight: 500;
-  color: #333;
-}
-
-.bulk-delete-btn {
-  background-color: #dc3545;
-  color: white;
-  border: none;
-  border-radius: 6px;
-  padding: 8px 20px;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.bulk-delete-btn:hover {
-  background-color: #c82333;
-  box-shadow: 0 4px 8px rgba(220, 53, 69, 0.3);
-  transform: translateY(-1px);
-}
-
-.bulk-delete-btn:active {
-  transform: translateY(0);
-  box-shadow: 0 2px 4px rgba(220, 53, 69, 0.2);
-}
-
-/* Checkbox Styling */
-.checkbox-wrapper {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.checkbox-input {
-  width: 18px;
-  height: 18px;
-  cursor: pointer;
-  accent-color: #000000a0;
-}
-
-.checkbox-input:disabled {
-  cursor: not-allowed;
-  opacity: 0.5;
-}
-
-.checkbox-label {
-  cursor: pointer;
-  -webkit-user-select: none; /* Safari */
-  -moz-user-select: none;    /* Firefox */
-  -ms-user-select: none;     /* IE 10+ */
-  user-select: none;         /* Standard */
-  font-size: 14px;
-  color: #333;
-}
-
-.checkbox-input:disabled + .checkbox-label {
-  cursor: not-allowed;
-  opacity: 0.5;
-}
-/* --- Table Styles --- */
-.table-container {
-  overflow-x: auto;
-}
-.property-table {
-  width: 100%;
-  /* border-collapse: collapse; */
-}
-.property-table th,
-.property-table td {
-  padding: 1rem 1.25rem;
-  text-align: left;
-  vertical-align:middle;
-}
-/* .property-table tr:last-child td {
-  border-bottom: 1px solid var(--border-color);
-} */
-.property-table thead th {
-  color: var(--text-secondary);
-  font-weight: 500;
-  text-transform: none;
-  font-size: 0.9rem;
-  padding-bottom: 1.25rem;
-}
-.property-table a {
-  color: #000;
-  text-decoration: none; /* optional: removes underline */
-}
-
-.prop-name-cell {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  font-weight: 500;
-}
-
-.prop-photo {
-  width: 50px;
-  height: 50px;
-  border-radius: 8px;
-  object-fit: cover;
-}
-.owner-link {
-  color: #000;
-  text-decoration: none;
-  font-weight: 500;
-}
-.action-icons {
-  display: flex;  
-  gap: 0.75rem;
-}
-.action-icons img {
-  cursor: pointer;
-  opacity: 0.7;
-  transition: opacity 0.2s;
-  vertical-align:middle;
-}
-.action-icons img:hover {
-  opacity: 1;
-}
-
-/* --- Status Badges --- */
-.status-badge {
-  padding: 4px 12px;
-  border-radius: 12px;
-  font-size: 12px;
-  font-weight: 600;
-  text-transform: uppercase;
-  display: inline-block;
-}
-.status-badge.status-rent{
-    background-color: #fdfce3;
-  color: #74710f;
-}
-.status-badge.status-sale {
-   background-color: #e8f5e9;
-  color: #388e3c;
-}
-.status-badge.status-both {
-  background: #e3f2fd;
-  color: #1d4eb9;
-  /* border: 1px solid #ddd; */
-
-}
-.status-badge.status-sold {
-  background: #fde3e3;
-  color: #b91d1d;
-  /* border: 1px solid #ddd; */
-
-}
+/* ================= ROOT VARIABLES ================= */
 :root {
   --primary-blue: #007bff;
   --text-primary: #1a2238;
@@ -238,7 +6,7 @@
   --border-color: #e9ecef;
 }
 
-/* --- Property Page Header --- */
+/* ================= PROPERTY PAGE EXTERNAL HEADER ================= */
 .property-page-header {
   display: flex;
   justify-content: space-between;
@@ -299,7 +67,7 @@
 
 .view-toggle button.active {
   background-color: #fff;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
 }
 
 .view-toggle button img {
@@ -317,12 +85,207 @@
   cursor: pointer;
 }
 
-/* --- Grid Card Layout --- */
+/* ================= MAIN CONTENT CARD & INTERNAL HEADER ================= */
+.content-card {
+  background-color: #fff;
+  border-radius: 12px;
+  padding: 1.5rem;
+  border: 1px solid var(--border-color);
+}
+
+.content-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.content-header h3 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+/* ================= BULK ACTIONS BAR ================= */
+.bulk-actions-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background-color: #f0f4ff;
+  border: 1px solid #d0e0ff;
+  border-radius: 8px;
+  padding: 12px 20px;
+  margin-bottom: 16px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.selected-count {
+  font-size: 14px;
+  font-weight: 500;
+  color: #333;
+}
+
+.bulk-delete-btn {
+  background-color: #dc3545;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 20px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.bulk-delete-btn:hover {
+  background-color: #c82333;
+  box-shadow: 0 4px 8px rgba(220, 53, 69, 0.3);
+  transform: translateY(-1px);
+}
+
+.bulk-delete-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 4px rgba(220, 53, 69, 0.2);
+}
+
+/* ================= CHECKBOX STYLING ================= */
+.checkbox-wrapper {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.checkbox-input {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  accent-color: #000000a0;
+}
+
+.checkbox-input:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.checkbox-label {
+  cursor: pointer;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  font-size: 14px;
+  color: #333;
+}
+
+.checkbox-input:disabled + .checkbox-label {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+/* ================= TABLE STYLES ================= */
+.table-container {
+  overflow-x: auto;
+}
+
+.property-table {
+  width: 100%;
+}
+
+.property-table th,
+.property-table td {
+  padding: 1rem 1.25rem;
+  text-align: center;
+  vertical-align: middle;
+}
+
+.property-table thead th {
+  color: var(--text-secondary);
+  font-weight: 500;
+  text-transform: none;
+  font-size: 0.9rem;
+  padding-bottom: 1.25rem;
+}
+
+.property-table a {
+  color: #000;
+  text-decoration: none;
+}
+
+.prop-name-cell {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  font-weight: 500;
+}
+
+.prop-photo {
+  width: 50px;
+  height: 50px;
+  border-radius: 8px;
+  object-fit: cover;
+}
+
+.owner-link {
+  color: #000;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.action-icons {
+  display: flex;  
+  gap: 0.75rem;
+}
+
+.action-icons img {
+  cursor: pointer;
+  opacity: 0.7;
+  transition: opacity 0.2s;
+  vertical-align: middle;
+}
+
+.action-icons img:hover {
+  opacity: 1;
+}
+
+/* ================= STATUS BADGES ================= */
+.status-badge {
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  display: inline-block;
+}
+
+.status-badge.status-rent {
+  background-color: #fdfce3;
+  color: #74710f;
+}
+
+.status-badge.status-sale {
+  background-color: #e8f5e9;
+  color: #388e3c;
+}
+
+.status-badge.status-both {
+  background: #e3f2fd;
+  color: #1d4eb9;
+}
+
+.status-badge.status-sold {
+  background: #fde3e3;
+  color: #b91d1d;
+}
+
+/* ================= GRID CARD LAYOUT ================= */
 .property-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
   gap: 20px;
-  padding:2ch;
+  padding: 2ch;
 }
 
 .property-card {
@@ -354,106 +317,6 @@
   align-items: flex-start;
   gap: 1rem;
 }
-.close-btn{
-  border:none;
-  background-color: #c2deff;
-  color:#0075FF;
-  width:40px;
-  height:40px;
-  border-radius: 22px;
-}
-.close-btn span
-{
-  font-size:18px;
-}
-.btn-next{
-   margin-top: 10px;
-  background-color: #000;
-  color:#dee2e6;
-}
-.btn-next:hover {
-  background-color: #000 !important;
-  color: #dee2e6 !important;
-  box-shadow: none !important;
-  border: none !important;
-  cursor: default;
-}
-.btn-back{
-   margin-top: 10px;
-  background-color: #000;
-  color:#dee2e6;
-  margin-right:10px;
-}
-.btn-back:hover {
-  background-color: #000 !important;
-  color: #dee2e6 !important;
-  box-shadow: none !important;
-  border: none !important;
-  cursor: default;
-}
-.btn-save{
-  margin-top: 10px;
-  background-color: #000;
-  color:#dee2e6
-}
-.btn-save:hover {
-  background-color: #000 !important;
-  color: #dee2e6 !important;
-  box-shadow: none !important;
-  border: none !important;
-  cursor: default;
-}
-.facility-tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin-top: 10px;
-}
-
-.tag {
-  padding: 8px 14px;
-  border: 1px solid #ccc;
-  border-radius: 25px;
-  background-color: white;
-  color: black;
-  font-size: 14px;
-  cursor: pointer;
-  transition: all 0.2s ease-in-out;
-}
-
-.tag.selected {
-  background-color: #000;
-  color: #fff;
-}
-
-.tag.add-your-own {
-  font-weight: bold;
-}
-
-.custom-input {
-  display: flex;
-  gap: 10px;
-  margin-top: 10px;
-  align-items: center;
-}
-
-.custom-input input {
-  flex: 1;
-  padding: 8px;
-  font-size: 14px;
-  border: 1px solid #ccc;
-  border-radius: 6px;
-}
-
-.save-btn {
-  padding: 8px 14px;
-  background-color: #000;
-  color: white;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-}
-
 
 .icon-title {
   display: flex;
@@ -530,7 +393,7 @@
 .property-price {
   font-size: 16px;
   font-weight: 600;
-color: #333;
+  color: #333;
 }
 
 .view-more {
@@ -540,14 +403,376 @@ color: #333;
   text-decoration: none;
 }
 
+/* ================= ADD PROPERTY MODAL STYLES ================= */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
 
-/* --- Pagination --- */
-.pagination { display: flex; justify-content: center; align-items: center; gap: 0.5rem; margin-top: 2rem; }
-.pagination button { background-color: #fff; border: 1px solid #dee2e6; border-radius: 8px; padding: 0.6rem 1.1rem; font-weight: 500; color: #6C757D; cursor: pointer; }
-.pagination button:disabled { opacity: 0.7; cursor: not-allowed; }
-.pagination button.active { background-color: #111827; color: #ffffff; border-color: #111827; }
-/* ================= Property Detail Page ================= */
+.modal-content {
+  background: #fff;
+  border-radius: 8px;
+  width: 90%;
+  max-width: 800px;
+  max-height: 90vh;
+  overflow-y: auto;
+  padding: 20px;
+  position: relative;
+}
 
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 15px;
+}
+
+.modal-header h3 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.close-btn {
+  border: none;
+  background-color: #c2deff;
+  color: #0075FF;
+  width: 40px;
+  height: 40px;
+  border-radius: 22px;
+  cursor: pointer;
+  font-size: 18px;
+}
+
+.modal-body {
+  margin-bottom: 20px;
+}
+
+.modal-footer {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  margin-top: 20px;
+  padding-top: 15px;
+  border-top: 1px solid var(--border-color);
+}
+
+/* ================= FORM STYLES FOR ADD PROPERTY ================= */
+.form-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 15px;
+  margin-bottom: 15px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.form-group.full-width {
+  grid-column: 1 / -1;
+}
+
+.form-group label {
+  font-size: 14px;
+  font-weight: 500;
+  margin-bottom: 6px;
+  color: #444;
+  font-family: 'Montserrat', sans-serif;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+  padding: 10px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 14px;
+  outline: none;
+  transition: 0.2s;
+  font-family: 'Lato', sans-serif;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+  border-color: #4f46e5;
+}
+
+/* ================= PRICE INPUT STYLES ================= */
+.price-input-wrapper {
+  position: relative;
+}
+
+.price-input-symbol {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #666;
+  font-weight: 500;
+}
+
+.price-input-field {
+  padding-left: 25px;
+}
+
+/* ================= FACILITIES SECTION STYLES ================= */
+.facilities-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 10px;
+  margin-bottom: 15px;
+}
+
+.facility-checkbox-label {
+  display: flex;
+  align-items: center;
+  padding: 5px;
+  cursor: pointer;
+}
+
+.facility-checkbox {
+  margin-right: 8px;
+}
+
+.custom-facility-wrapper {
+  margin-top: 15px;
+  position: relative;
+  width: 100%;
+}
+
+.custom-facility-input {
+  padding: 10px 180px 10px 10px;
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.custom-facility-button-wrapper {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.selected-facilities-wrapper {
+  margin-top: 15px;
+}
+
+.selected-facilities-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.facility-tag {
+  display: inline-flex;
+  align-items: center;
+  background-color: #e3f2fd;
+  color: #1976d2;
+  padding: 4px 8px;
+  border-radius: 16px;
+  font-size: 14px;
+  border: 1px solid #bbdefb;
+}
+
+.facility-remove-btn {
+  margin-left: 6px;
+  background: none;
+  border: none;
+  color: #1976d2;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: bold;
+}
+
+.facility-remove-btn:hover {
+  color: #0d47a1;
+}
+
+/* ================= FILE INPUT STYLES ================= */
+.file-input-custom {
+  padding: 8px;
+}
+
+.file-selected-info {
+  color: #666;
+  margin-top: 4px;
+  display: block;
+  font-size: 12px;
+}
+
+/* ================= OWNER NAME INPUT (READ-ONLY) ================= */
+.owner-name-readonly {
+  background-color: #f5f5f5;
+  cursor: not-allowed;
+}
+
+/* ================= ABOUT TEXTAREA STYLES ================= */
+.about-textarea-full {
+  width: 100%;
+  min-height: 100px;
+}
+
+/* ================= FACILITY TAGS (ALTERNATIVE STYLE) ================= */
+.facility-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.tag {
+  padding: 8px 14px;
+  border: 1px solid #ccc;
+  border-radius: 25px;
+  background-color: white;
+  color: black;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+}
+
+.tag.selected {
+  background-color: #000;
+  color: #fff;
+}
+
+.tag.add-your-own {
+  font-weight: bold;
+}
+
+.custom-input {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+  align-items: center;
+}
+
+.custom-input input {
+  flex: 1;
+  padding: 8px;
+  font-size: 14px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+}
+
+.save-btn {
+  padding: 8px 14px;
+  background-color: #000;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+/* ================= BUTTON STYLES ================= */
+.btn-next {
+  margin-top: 10px;
+  background-color: #000;
+  color: #dee2e6;
+}
+
+.btn-next:hover {
+  background-color: #000 !important;
+  color: #dee2e6 !important;
+  box-shadow: none !important;
+  border: none !important;
+  cursor: default;
+}
+
+.btn-back {
+  margin-top: 10px;
+  background-color: #000;
+  color: #dee2e6;
+  margin-right: 10px;
+}
+
+.btn-back:hover {
+  background-color: #000 !important;
+  color: #dee2e6 !important;
+  box-shadow: none !important;
+  border: none !important;
+  cursor: default;
+}
+
+.btn-save {
+  margin-top: 10px;
+  background-color: #000;
+  color: #dee2e6;
+}
+
+.btn-save:hover {
+  background-color: #000 !important;
+  color: #dee2e6 !important;
+  box-shadow: none !important;
+  border: none !important;
+  cursor: default;
+}
+
+.btn-cancel {
+  background: #6c757d;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.btn-delete {
+  background: #dc3545;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+/* ================= PAGINATION ================= */
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 2rem;
+}
+
+.pagination button {
+  background-color: #fff;
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
+  padding: 0.6rem 1.1rem;
+  font-weight: 500;
+  color: #6C757D;
+  cursor: pointer;
+}
+
+.pagination button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.pagination button.active {
+  background-color: #111827;
+  color: #ffffff;
+  border-color: #111827;
+}
+
+/* ================= PROPERTY DETAIL PAGE ================= */
 .property-detail-container {
   display: flex;
   gap: 20px;
@@ -635,7 +860,6 @@ color: #333;
 .schedule-card h4 {
   font-size: 16px;
   margin-bottom: 10px;
-
   font-family: 'Prompt', sans-serif;
   color: #283D56;
 }
@@ -649,8 +873,8 @@ color: #333;
   border-radius: 6px;
   font-size: 12px;
   font-family: 'Montserrat', sans-serif;
-  color:#696F8C;
-  background-color:#EDEFF5;
+  color: #696F8C;
+  background-color: #EDEFF5;
 }
 
 .schedule-card textarea {
@@ -678,7 +902,6 @@ color: #333;
   margin-bottom: 15px;
 }
 
-/* START: MODIFIED STYLES */
 .detail-header {
   display: flex;
   justify-content: space-between;
@@ -696,8 +919,6 @@ color: #333;
   cursor: pointer;
 }
 
-/* END: MODIFIED STYLES */
-
 .detail-header h4 {
   font-size: 20px;
   font-weight: 700;
@@ -706,21 +927,16 @@ color: #333;
 }
 
 .property-address {
-  
   font-size: 14px;
   color: #6b7280;
   margin-top: 4px; 
-  flex-wrap:wrap;
-
-  
+  flex-wrap: wrap;
 }
 
 .detail-stats {
-
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
- 
 }
 
 .stat-pill {
@@ -735,18 +951,16 @@ color: #333;
   margin-bottom: 10px;
 }
 
-
 .stat-pill img {
   width: 15px;
   height: 15px;
   object-fit: contain;
   margin-right: 5px;
-  
 }
+
 .detail-stats .price-pill img {
-  width: 30px;   /* Increase width */
-  height: 30px; 
-   /* Increase height */
+  width: 30px;
+  height: 30px;
 }
 
 .price-pill {
@@ -769,9 +983,7 @@ color: #333;
 .status-pill span {
   color: #6c757d;
   font-weight: 500;
-  
-  margin: 1px 10px ;
-
+  margin: 1px 10px;
 }
 
 .facilities h5 {
@@ -780,19 +992,6 @@ color: #333;
   font-family: 'Prompt', sans-serif;
   color: #283D56;
   font-size: 18px;
-}
-
-.facility-tag {
-  background: #FAFBFF;
-  color: #374151;
-  padding: 6px 10px;
-  margin: 4px;
-  border: 1px solid #E6E8F0;
-  border-radius: 6px;
-  display: inline-block;
-  font-size: 13px;
-  
-  font-family: 'Montserrat', sans-serif;
 }
 
 /* Description */
@@ -805,7 +1004,8 @@ color: #333;
   margin-bottom: 10px;
   font-family: 'Prompt', sans-serif;
   color: #283D56;
-  font-size: 18px;}
+  font-size: 18px;
+}
 
 .description p {
   font-size: 14px;
@@ -822,45 +1022,11 @@ color: #333;
   color: #3b82f6;
   text-decoration: none;
 }
-/* Modal overlay */
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0,0,0,0.6);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 9999;
-}
 
-/* Modal box */
-.modal-content {
-  background: #fff;
-  border-radius: 8px;
-  width: 400px;
-  padding: 20px;
-  text-align: center;
-  position: relative;
-}
-
-/* Close button */
-.close-btn {
-  position: absolute;
-  top: 12px;
-  right: 15px;
-  font-size: 20px;
-  cursor: pointer;
-}
-
-/* Icon */
 .modal-icon {
   margin-bottom: 15px;
 }
 
-/* Actions */
 .modal-actions {
   margin-top: 20px;
   display: flex;
@@ -868,28 +1034,8 @@ color: #333;
   gap: 10px;
 }
 
-.btn-cancel {
-  background: #6c757d;
-  color: white;
-  border: none;
-  padding: 8px 16px;
-  border-radius: 4px;
-  cursor: pointer;
-}
-
-.btn-delete {
-  background: #dc3545;
-  color: white;
-  border: none;
-  padding: 8px 16px;
-  border-radius: 4px;
-  cursor: pointer;
-}
-
-
 /* Map Card */
 .map-card {
-  /* background: #fff; */
   border-radius: 12px;
   box-shadow: 0 2px 8px rgba(0,0,0,0.05);
   overflow: hidden;
@@ -902,7 +1048,13 @@ color: #333;
   border-radius: 12px;
 }
 
-/* Responsive for Detail Page */
+/* ================= RESPONSIVE STYLES ================= */
+@media (max-width: 1400px) {
+  .property-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
 @media (max-width: 992px) {
   .property-detail-container {
     flex-direction: column;
@@ -930,16 +1082,6 @@ color: #333;
   }
 }
 
-
-/* --- Responsive --- */
-@media (max-width: 1400px) {
-  .property-grid {
-    grid-template-columns: repeat(3, 1fr);
-  }
-}
-
-
-
 @media (max-width: 768px) {
   .property-grid {
     grid-template-columns: 1fr;
@@ -954,5 +1096,14 @@ color: #333;
 
   .search-bar {
     max-width: none;
+  }
+
+  .modal-content {
+    width: 95%;
+    padding: 15px;
+  }
+
+  .form-row {
+    grid-template-columns: 1fr;
   }
 }

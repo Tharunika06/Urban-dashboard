@@ -11,7 +11,6 @@ const ownerService = {
    * @returns {Promise} Response with array of owners
    */
   getAllOwners: async () => {
-    console.log("👥 Fetching all owners...");
     const response = await api.get('/api/owners');
     return response.data;
   },
@@ -22,7 +21,6 @@ const ownerService = {
    * @returns {Promise} Response with owner details
    */
   getOwnerById: async (ownerId) => {
-    console.log(`👤 Fetching owner ${ownerId}...`);
     const response = await api.get(`/api/owners/${ownerId}`);
     return response.data;
   },
@@ -33,7 +31,6 @@ const ownerService = {
    * @returns {Promise} Response with created owner
    */
   createOwner: async (ownerData) => {
-    console.log("➕ Creating new owner...");
     const response = await api.post('/api/owners/add-owner', ownerData, {
       headers: {
         'Content-Type': 'application/json'
@@ -49,7 +46,6 @@ const ownerService = {
    * @returns {Promise} Response with updated owner
    */
   updateOwner: async (ownerId, ownerData) => {
-    console.log(`✏️ Updating owner ${ownerId}...`);
     const response = await api.put(`/api/owners/${ownerId}`, ownerData);
     return response.data;
   },
@@ -60,7 +56,6 @@ const ownerService = {
    * @returns {Promise} Response indicating deletion success
    */
   deleteOwner: async (ownerId) => {
-    console.log(`🗑️ Deleting owner ${ownerId}...`);
     const response = await api.delete(`/api/owners/${ownerId}`);
     return response.data;
   },
@@ -72,7 +67,6 @@ const ownerService = {
    * @returns {Promise} Response with array of properties
    */
   getOwnerProperties: async (ownerId) => {
-    console.log(`🏠 Fetching properties for owner ${ownerId}...`);
     const response = await api.get(`/api/owners/${ownerId}/properties`);
     return response.data;
   },
@@ -83,7 +77,6 @@ const ownerService = {
    * @returns {Promise} Response with updated statistics
    */
   recalculateStats: async (ownerId) => {
-    console.log(`📊 Recalculating stats for owner ${ownerId}...`);
     const response = await api.post(`/api/owners/${ownerId}/recalculate-stats`);
     return response.data;
   },
@@ -93,7 +86,6 @@ const ownerService = {
    * @returns {Promise} Response with recalculation results
    */
   recalculateAllStats: async () => {
-    console.log(`📊 Recalculating stats for all owners...`);
     const response = await api.post(`/api/owners/utils/recalculate-all`);
     return response.data;
   }

@@ -4,6 +4,7 @@ import { useNavigate, Link } from "react-router-dom";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "../../styles/Auth.css";
 import authService, { handleAuthError, storage } from "../../services/authService";
+import GradientButton from "../../components/common/GradientButton";
 import logo from "/assets/logo.png";
 import userIcon from "/assets/user-icon.png";
 import lockIcon from "/assets/lock-icon.png";
@@ -20,27 +21,24 @@ const Login = () => {
   const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // ✅ Clear any stale data on mount
+  // Clear any stale data on mount
   useEffect(() => {
-    console.log("🔄 Login component mounted");
     
     // Load remembered email
     const rememberedEmail = storage.getRememberedEmail();
     if (rememberedEmail) {
       setEmail(rememberedEmail);
       setRememberMe(true);
-      console.log("📧 Loaded remembered email:", rememberedEmail);
     }
   }, []);
 
 
   const handleLogin = async (e) => {
-    e.preventDefault(); // ✅ Prevent form default submission
-    e.stopPropagation(); // ✅ Stop event bubbling
+    e.preventDefault(); // Prevent form default submission
+    e.stopPropagation(); // Stop event bubbling
     
     // Prevent multiple submissions
     if (loading) {
-      console.log("⚠️ Already processing login, ignoring duplicate submission");
       return;
     }
     
@@ -48,14 +46,12 @@ const Login = () => {
     setSuccess("");
     setLoading(true);
 
-    console.log("🔐 Starting admin login for:", email);
 
     try {
       const data = await authService.adminLogin(email, password);
-      console.log("✅ Login response:", data);
 
       if (data.ok) {
-        // ✅ Store only non-sensitive user data for UI display
+        // Store only non-sensitive user data for UI display
         const userData = {
           email: data.user.email,
           name: data.user.firstName || data.user.email.split('@')[0],
@@ -75,9 +71,8 @@ const Login = () => {
 
         setSuccess(data.message || "Login successful! Redirecting...");
         
-        // ✅ Redirect after short delay
+        // Redirect after short delay
         setTimeout(() => {
-          console.log("🚀 Redirecting to dashboard...");
           navigate("/dashboard", { replace: true });
         }, 1200);
       } else {
@@ -86,7 +81,7 @@ const Login = () => {
         setLoading(false);
       }
     } catch (err) {
-      console.error("❌ Admin login error:", err);
+      console.error("Admin login error:", err);
       console.error("Error details:", err.response?.data);
       setError(handleAuthError(err));
       setLoading(false);
@@ -104,7 +99,7 @@ const Login = () => {
               Welcome back, Admin! Please log in with your admin credentials to access the dashboard.
             </p>
 
-            {/* ✅ CRITICAL FIX: Added onSubmit handler and prevented default */}
+            {/* CRITICAL FIX: Added onSubmit handler and prevented default */}
             <form onSubmit={handleLogin} autoComplete="off" noValidate>
               <div className="mb-3 position-relative">
                 <img src={userIcon} alt="User Icon" className="input-icon" />
@@ -132,7 +127,7 @@ const Login = () => {
                   disabled={loading}
                   autoComplete="current-password"
                   onKeyDown={(e) => {
-                    // ✅ Prevent Enter key from submitting if already loading
+                    // Prevent Enter key from submitting if already loading
                     if (e.key === 'Enter' && loading) {
                       e.preventDefault();
                     }
@@ -179,15 +174,13 @@ const Login = () => {
                 </p>
               </div>
 
-              {/* ✅ CRITICAL: Button type="submit" to trigger form submission */}
-              <button 
+              {/*CRITICAL: Button type="submit" to trigger form submission */}
+              <GradientButton 
                 type="submit" 
-                className="btn btn-dark w-100 mb-3"
+                className="w-100 mb-3"
                 disabled={loading}
-                style={{
-                  opacity: loading ? 0.7 : 1,
-                  cursor: loading ? 'not-allowed' : 'pointer'
-                }}
+                width="100%"
+                height="48px"
               >
                 {loading ? (
                   <>
@@ -201,7 +194,7 @@ const Login = () => {
                 ) : (
                   "Log In"
                 )}
-              </button>
+              </GradientButton>
 
               <div className="divider d-flex align-items-center">
                 <hr />

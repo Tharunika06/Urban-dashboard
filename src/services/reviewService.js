@@ -11,7 +11,6 @@ const reviewService = {
    * @returns {Promise} Response with array of reviews
    */
   getAllReviews: async () => {
-    console.log("⭐ Fetching all reviews...");
     const response = await api.get('/api/reviews');
     return response.data;
   },
@@ -22,7 +21,6 @@ const reviewService = {
    * @returns {Promise} Response with review details
    */
   getReviewById: async (reviewId) => {
-    console.log(`📄 Fetching review ${reviewId}...`);
     const response = await api.get(`/api/reviews/${reviewId}`);
     return response.data;
   },
@@ -33,7 +31,6 @@ const reviewService = {
    * @returns {Promise} Response with created review
    */
   createReview: async (reviewData) => {
-    console.log("➕ Creating new review...");
     const response = await api.post('/api/reviews', reviewData, {
       headers: {
         'Content-Type': 'application/json'
@@ -49,7 +46,6 @@ const reviewService = {
    * @returns {Promise} Response with updated review
    */
   updateReview: async (reviewId, reviewData) => {
-    console.log(`✏️ Updating review ${reviewId}...`);
     const response = await api.put(
       `/api/reviews/${reviewId}`,
       reviewData
@@ -63,7 +59,6 @@ const reviewService = {
    * @returns {Promise} Response indicating deletion success
    */
   deleteReview: async (reviewId) => {
-    console.log(`🗑️ Deleting review ${reviewId}...`);
     const response = await api.delete(`/api/reviews/${reviewId}`);
     return response.data;
   },
@@ -74,7 +69,6 @@ const reviewService = {
    * @returns {Promise} Response with array of reviews
    */
   getReviewsByProperty: async (propertyId) => {
-    console.log(`🏠 Fetching reviews for property ${propertyId}...`);
     const response = await api.get(`/api/reviews/property/${propertyId}`);
     return response.data;
   },
@@ -85,7 +79,6 @@ const reviewService = {
    * @returns {Promise} Response with array of reviews
    */
   getReviewsByCustomer: async (customerId) => {
-    console.log(`👤 Fetching reviews for customer ${customerId}...`);
     const response = await api.get(`/api/reviews/customer/${customerId}`);
     return response.data;
   },
@@ -96,7 +89,6 @@ const reviewService = {
    * @returns {Promise} Response with filtered reviews
    */
   getReviewsByRating: async (rating) => {
-    console.log(`⭐ Fetching reviews with rating ${rating}...`);
     const response = await api.get('/api/reviews', {
       params: { rating }
     });
@@ -110,7 +102,6 @@ const reviewService = {
    * @returns {Promise} Response with filtered reviews
    */
   getReviewsByDateRange: async (startDate, endDate) => {
-    console.log(`📅 Fetching reviews from ${startDate} to ${endDate}...`);
     const response = await api.get('/api/reviews', {
       params: { startDate, endDate }
     });
@@ -123,7 +114,6 @@ const reviewService = {
    * @returns {Promise} Response with filtered reviews
    */
   searchReviews: async (query) => {
-    console.log(`🔍 Searching reviews: ${query}...`);
     const response = await api.get('/api/reviews/search', {
       params: { q: query }
     });
@@ -135,7 +125,6 @@ const reviewService = {
    * @returns {Promise} Response with review statistics
    */
   getReviewStats: async () => {
-    console.log("📊 Fetching review statistics...");
     const response = await api.get('/api/reviews/stats');
     return response.data;
   },
@@ -146,7 +135,6 @@ const reviewService = {
    * @returns {Promise} Response with updated review
    */
   approveReview: async (reviewId) => {
-    console.log(`✅ Approving review ${reviewId}...`);
     const response = await api.patch(`/api/reviews/${reviewId}/approve`);
     return response.data;
   },
@@ -157,7 +145,6 @@ const reviewService = {
    * @returns {Promise} Response with updated review
    */
   rejectReview: async (reviewId) => {
-    console.log(`❌ Rejecting review ${reviewId}...`);
     const response = await api.patch(`/api/reviews/${reviewId}/reject`);
     return response.data;
   }

@@ -26,7 +26,7 @@ export const formatTableDate = (date, options = {}) => {
   try {
     const defaultOptions = {
       year: 'numeric',
-      month: 'short',
+      month: 'numeric',
       day: 'numeric',
       ...options
     };

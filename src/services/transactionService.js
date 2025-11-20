@@ -23,7 +23,6 @@ const transactionService = {
    * @returns {Promise} Response with transaction details
    */
   getTransactionById: async (transactionId) => {
-    console.log(`📄 Fetching transaction ${transactionId}...`);
     const response = await api.get(`${API_ENDPOINTS.TRANSACTIONS}/${transactionId}`);
     return response.data;
   },
@@ -34,7 +33,6 @@ const transactionService = {
    * @returns {Promise} Response with created transaction
    */
   createTransaction: async (transactionData) => {
-    console.log("➕ Creating new transaction...");
     const response = await api.post(API_ENDPOINTS.TRANSACTIONS, transactionData, {
       headers: {
         'Content-Type': 'application/json'
@@ -50,7 +48,6 @@ const transactionService = {
    * @returns {Promise} Response with updated transaction
    */
   updateTransaction: async (transactionId, transactionData) => {
-    console.log(`✏️ Updating transaction ${transactionId}...`);
     const response = await api.put(
       `${API_ENDPOINTS.TRANSACTIONS}/${transactionId}`,
       transactionData
@@ -64,7 +61,6 @@ const transactionService = {
    * @returns {Promise} Response indicating deletion success
    */
   deleteTransaction: async (transactionId) => {
-    console.log(`🗑️ Deleting transaction ${transactionId}...`);
     const response = await api.delete(`${API_ENDPOINTS.TRANSACTIONS}/${transactionId}`);
     return response.data;
   },
@@ -75,7 +71,6 @@ const transactionService = {
    * @returns {Promise} Response with array of transactions
    */
   getTransactionsByCustomer: async (customerPhone) => {
-    console.log(`📋 Fetching transactions for customer ${customerPhone}...`);
     const response = await api.get(`${API_ENDPOINTS.TRANSACTIONS}/customer/${customerPhone}`);
     return response.data;
   },
@@ -86,7 +81,6 @@ const transactionService = {
    * @returns {Promise} Response with array of transactions
    */
   getTransactionsByProperty: async (propertyId) => {
-    console.log(`🏠 Fetching transactions for property ${propertyId}...`);
     const response = await api.get(`${API_ENDPOINTS.TRANSACTIONS}/property/${propertyId}`);
     return response.data;
   },
@@ -98,7 +92,6 @@ const transactionService = {
    * @returns {Promise} Response with filtered transactions
    */
   getTransactionsByDateRange: async (startDate, endDate) => {
-    console.log(`📅 Fetching transactions from ${startDate} to ${endDate}...`);
     const response = await api.get(API_ENDPOINTS.TRANSACTIONS, {
       params: { startDate, endDate }
     });
@@ -111,7 +104,6 @@ const transactionService = {
    * @returns {Promise} Response with filtered transactions
    */
   searchTransactions: async (query) => {
-    console.log(`🔍 Searching transactions: ${query}...`);
     const response = await api.get(`${API_ENDPOINTS.TRANSACTIONS}/search`, {
       params: { q: query }
     });
@@ -123,7 +115,6 @@ const transactionService = {
    * @returns {Promise} Response with transaction statistics
    */
   getTransactionStats: async () => {
-    console.log("📊 Fetching transaction statistics...");
     const response = await api.get(`${API_ENDPOINTS.TRANSACTIONS}/stats`);
     return response.data;
   }

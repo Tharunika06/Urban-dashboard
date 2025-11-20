@@ -242,26 +242,42 @@ const authService = {
    * @returns {Promise} Response with admin profile data
    */
   getAdminProfile: async () => {
-    // console.log("👨‍💼 Fetching admin profile...");
-    // console.log("🍪 Cookies available:", document.cookie);
+   
     
     try {
       const response = await api.get('/api/admin/profile');
       return response.data;
     } catch (error) {
-      console.error("❌ Error fetching admin profile:", error.response?.status, error.response?.data);
+      console.error("Error fetching admin profile:", error.response?.status, error.response?.data);
       throw error; // Re-throw so component can handle it
     }
   },
 
   /**
+   * Create Admin Profile (for new profiles without ID)
+   * @param {FormData} formData - Form data with profile info
+   * @returns {Promise} Response with created profile
+   */
+  createAdminProfile: async (formData) => {
+    
+    const response = await api.post('/api/admin/profile', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    });
+    return response.data;
+  },
+
+  /**
    * Update Admin Profile
+   * @param {string} adminId - Admin ID
    * @param {FormData} formData - Form data with profile info
    * @returns {Promise} Response with updated profile
    */
-  updateAdminProfile: async (formData) => {
-    // console.log("💾 Updating admin profile...");
-    const response = await api.put('/api/admin/profile', formData, {
+  updateAdminProfile: async (adminId, formData) => {
+    
+    // ✅ Use the actual admin ID in the URL
+    const response = await api.put(`/api/admin/profile/${adminId}`, formData, {
       headers: {
         'Content-Type': 'multipart/form-data'
       }
@@ -271,11 +287,13 @@ const authService = {
 
   /**
    * Delete Admin Photo
+   * @param {string} adminId - Admin ID
    * @returns {Promise} Response indicating photo deletion
    */
-  deleteAdminPhoto: async () => {
-    // console.log("🗑️ Deleting admin photo...");
-    const response = await api.delete('/api/admin/profile/photo');
+  deleteAdminPhoto: async (adminId) => {
+    
+    // ✅ Use the actual admin ID in the URL
+    const response = await api.delete(`/api/admin/profile/${adminId}/photo`);
     return response.data;
   },
 
@@ -284,7 +302,6 @@ const authService = {
    * @returns {Promise} Response with current user data
    */
   getCurrentUser: async () => {
-    // console.log("👤 Fetching current user profile...");
     const response = await api.get('/api/me');
     return response.data;
   },

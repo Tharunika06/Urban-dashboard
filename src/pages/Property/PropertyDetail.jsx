@@ -29,7 +29,7 @@ const PropertyDetail = () => {
       try {
         setLoading(true);
         
-        // ✅ Use propertyService instead of fetch
+        // Use propertyService instead of fetch
         const data = await propertyService.getPropertyById(propertyId);
         setProperty(data);
         setError(null);
@@ -122,7 +122,14 @@ const PropertyDetail = () => {
                 <h4>{ownerInfo.name}</h4>
                 <p className="agent-title">[Owner]</p>
                 {ownerInfo.phone && (
-                  <p className="owner-contact">📞 {ownerInfo.phone}</p>
+<p className="owner-contact">
+  <img 
+    src="/assets/phone.png" 
+    alt="phone" 
+    className="phone-icon"
+  />
+  {ownerInfo.phone}
+</p>
                 )}
                 <div className="agent-socials">
                   <a href="#"><img src="/assets/fb.png" alt="facebook" /></a>
@@ -133,9 +140,10 @@ const PropertyDetail = () => {
                 <div className="agent-actions">
                   <GradientButton
                     onClick={handleCallUs}
-                    width="120px"
+                    width="250px"
                     height="38px"
                     style={{
+                      marginLeft:'20px',
                       padding: '10px 20px'
                     }}
                   >
@@ -143,9 +151,10 @@ const PropertyDetail = () => {
                   </GradientButton>
                   <GradientButton
                     onClick={handleMessage}
-                    width="120px"
+                    width="250px"
                     height="38px"
                     style={{
+                      marginLeft:'20px',
                       padding: '10px 20px'
                     }}
                   >

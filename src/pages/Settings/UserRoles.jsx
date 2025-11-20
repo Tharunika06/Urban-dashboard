@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import "../../styles/UserRoles.css";
+import GradientButton from "../../components/common/GradientButton";
 
 const UserRoles = () => {
   const [showRoleModal, setShowRoleModal] = useState(false);
@@ -115,12 +116,12 @@ const UserRoles = () => {
             Manage user roles and their permissions across the system.
           </p>
         </div>
-        <button
-          className="btn ur-btn-black ur-add-btn"
+        <GradientButton
           onClick={() => setShowRoleModal(true)}
+          width="120px"
         >
           Add Role
-        </button>
+        </GradientButton>
       </div>
 
       {/* Roles Table */}
@@ -154,7 +155,9 @@ const UserRoles = () => {
       </div>
 
       <div className="d-flex justify-content-end mt-4">
-        <button className="btn ur-save-btn">Save Changes</button>
+        <GradientButton width="161px">
+          Save Changes
+        </GradientButton>
       </div>
 
       {/* Add Role Modal */}
@@ -234,16 +237,16 @@ const UserRoles = () => {
                 >
                   Cancel
                 </button>
-                <button
-                  className="btn ur-create-btn"
+                <GradientButton
                   onClick={() => {
                     console.log(newRole);
                     setShowRoleModal(false);
                     setNewRole({ name: "", desc: "", permissions: [] });
                   }}
+                  width="140px"
                 >
                   Create Role
-                </button>
+                </GradientButton>
               </div>
             </div>
           </div>

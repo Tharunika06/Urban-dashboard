@@ -39,7 +39,6 @@ const Transaction = () => {
     // Listen for transaction updates
     socket.on('update-analytics', (data) => {
       if (data.type === 'transaction-updated' || data.type === 'owner-stats-updated') {
-        console.log('🔔 Received update event:', data.type);
         fetchTransactions(true); // Silent refresh
       }
     });
@@ -47,7 +46,6 @@ const Transaction = () => {
     // Cleanup Socket.io connection
     return () => {
       socket.disconnect();
-      console.log('🔌 Socket.io disconnected');
     };
   }, []);
 

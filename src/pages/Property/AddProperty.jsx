@@ -16,7 +16,7 @@ import {
   IMAGE_CONFIG,
   VALIDATION_MESSAGES,
   POPUP_MESSAGES,
-  ICONS,
+  ASSET_PATHS,
   PLACEHOLDERS,
   FORM_LABELS,
   BUTTON_LABELS,
@@ -30,25 +30,15 @@ const PriceInput = ({ label, name, value, onChange, required, placeholder }) => 
     <label>
       {label} {required && '*'}
     </label>
-    <div style={{ position: 'relative' }}>
-      <span
-        style={{
-          position: 'absolute',
-          left: '10px',
-          top: '50%',
-          transform: 'translateY(-50%)',
-          color: '#666',
-        }}
-      >
-        ₹
-      </span>
+    <div className="price-input-wrapper">
+      <span className="price-input-symbol">₹</span>
       <input
         type="text"
         name={name}
         value={value}
         onChange={onChange}
         placeholder={placeholder}
-        style={{ paddingLeft: '25px' }}
+        className="price-input-field"
         required={required}
       />
     </div>
@@ -67,106 +57,49 @@ const FacilitiesSection = ({
   return (
     <div className="form-group">
       <label>{FORM_LABELS.FACILITIES}</label>
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-          gap: '10px',
-          marginBottom: '15px',
-        }}
-      >
+      <div className="facilities-grid">
         {STATIC_FACILITIES.map((facility) => (
-          <label
-            key={facility}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              padding: '5px',
-              cursor: 'pointer',
-            }}
-          >
+          <label key={facility} className="facility-checkbox-label">
             <input
               type="checkbox"
               checked={facilities.includes(facility)}
               onChange={() => onToggle(facility)}
-              style={{ marginRight: '8px' }}
+              className="facility-checkbox"
             />
             {facility}
           </label>
         ))}
       </div>
-      <div style={{ marginTop: '15px', position: 'relative', width: '100%' }}>
+      <div className="custom-facility-wrapper">
         <input
           type="text"
           placeholder={PLACEHOLDERS.CUSTOM_FACILITY}
           value={customFacility}
           onChange={(e) => setCustomFacility(e.target.value)}
-          style={{
-            padding: '10px 180px 10px 10px',
-            width: '100%',
-            boxSizing: 'border-box',
-            border: '1px solid #ddd',
-            borderRadius: '4px',
-          }}
+          className="custom-facility-input"
           onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), onAdd())}
         />
-        <div style={{
-          position: 'absolute',
-          right: '8px',
-          top: '50%',
-          transform: 'translateY(-50%)',
-        }}>
+        <div className="custom-facility-button-wrapper">
           <GradientButton 
             onClick={onAdd}
             width="80px"
             height="32px"
-            style={{ 
-              padding: '8px 16px',
-              fontSize: '14px'
-            }}
           >
             {BUTTON_LABELS.ADD}
           </GradientButton>
         </div>
       </div>
       {facilities.length > 0 && (
-        <div style={{ marginTop: '15px' }}>
+        <div className="selected-facilities-wrapper">
           <strong>Selected Facilities:</strong>
-          <div
-            style={{
-              display: 'flex',
-              flexWrap: 'wrap',
-              gap: '8px',
-              marginTop: '8px',
-            }}
-          >
+          <div className="selected-facilities-grid">
             {facilities.map((facility, idx) => (
-              <span
-                key={idx}
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  backgroundColor: '#e3f2fd',
-                  color: '#1976d2',
-                  padding: '4px 8px',
-                  borderRadius: '16px',
-                  fontSize: '14px',
-                  border: '1px solid #bbdefb',
-                }}
-              >
+              <span key={idx} className="facility-tag">
                 {facility}
                 <button
                   type="button"
                   onClick={() => onRemove(facility)}
-                  style={{
-                    marginLeft: '6px',
-                    background: 'none',
-                    border: 'none',
-                    color: '#1976d2',
-                    cursor: 'pointer',
-                    fontSize: '16px',
-                    fontWeight: 'bold',
-                  }}
+                  className="facility-remove-btn"
                 >
                   ×
                 </button>
@@ -219,12 +152,19 @@ const AddProperty = ({ isOpen, onClose, onSave }) => {
   const hidePopup = () =>
     setPopup({ show: false, type: '', title: '', message: '' });
 
+  // Fetch owners when modal opens
   useEffect(() => {
     const fetchOwners = async () => {
       try {
-        // ✅ Use propertyService to fetch owners
+        console.log('Fetching owners...');
         const data = await propertyService.getAllOwners();
-        setOwners(data.owners || []);
+        console.log('Fetched owners data:', data);
+        
+        // Handle different response structures
+        const ownersList = data.owners || data.data || data || [];
+        console.log('Processed owners list:', ownersList);
+        
+        setOwners(Array.isArray(ownersList) ? ownersList : []);
       } catch (err) {
         console.error('Failed to fetch owners:', err);
         showPopup(
@@ -234,19 +174,34 @@ const AddProperty = ({ isOpen, onClose, onSave }) => {
         );
       }
     };
-    if (isOpen) fetchOwners();
+    
+    if (isOpen) {
+      fetchOwners();
+    }
   }, [isOpen]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
+    
     if (name === 'ownerId') {
+      console.log('Selected owner ID:', value);
+      console.log('Available owners:', owners);
+      
+      // Find the selected owner - try multiple field names
       const selectedOwner = Array.isArray(owners)
-        ? owners.find((o) => String(o.ownerId) === value)
+        ? owners.find((o) => {
+            // Try different possible field names for owner ID
+            const ownerIdValue = o.ownerId || o.id || o.userId || o._id;
+            return String(ownerIdValue) === String(value);
+          })
         : null;
+      
+      console.log('Selected owner:', selectedOwner);
+      
       setForm((prev) => ({
         ...prev,
         ownerId: value,
-        ownerName: selectedOwner ? selectedOwner.name : '',
+        ownerName: selectedOwner ? (selectedOwner.name || selectedOwner.ownerName || '') : '',
       }));
     } else if (name === 'status') {
       setForm((prev) => ({
@@ -394,10 +349,9 @@ const AddProperty = ({ isOpen, onClose, onSave }) => {
         }
       }
 
-      // ✅ Use propertyService to create property
+      // Use propertyService to create property
       const response = await propertyService.createProperty(payload);
 
-      console.log('✅ Property created successfully:', response);
       showPopup(
         POPUP_MESSAGES.PROPERTY_ADDED.type,
         POPUP_MESSAGES.PROPERTY_ADDED.title,
@@ -409,7 +363,7 @@ const AddProperty = ({ isOpen, onClose, onSave }) => {
         onSave(response);
       }
     } catch (err) {
-      console.error('❌ Failed to add property:', err);
+      console.error('Failed to add property:', err);
 
       let errorMsg = POPUP_MESSAGES.PROPERTY_ADD_FAILED.message;
       let errorTitle = POPUP_MESSAGES.PROPERTY_ADD_FAILED.title;
@@ -676,16 +630,10 @@ const AddProperty = ({ isOpen, onClose, onSave }) => {
                       type="file"
                       accept={IMAGE_CONFIG.ACCEPT_STRING}
                       onChange={(e) => setPhotoFile(e.target.files[0])}
-                      style={{ padding: '8px' }}
+                      className="file-input-custom"
                     />
                     {photoFile && (
-                      <small
-                        style={{
-                          color: '#666',
-                          marginTop: '4px',
-                          display: 'block',
-                        }}
-                      >
+                      <small className="file-selected-info">
                         Selected: {photoFile.name} (
                         {(photoFile.size / 1024).toFixed(2)} KB)
                       </small>
@@ -705,11 +653,17 @@ const AddProperty = ({ isOpen, onClose, onSave }) => {
                     >
                       <option value="">Select Owner ID</option>
                       {Array.isArray(owners) && owners.length > 0 ? (
-                        owners.map((owner) => (
-                          <option key={owner._id} value={owner.ownerId}>
-                            {owner.ownerId} - {owner.name}
-                          </option>
-                        ))
+                        owners.map((owner) => {
+                          // Support multiple possible field names
+                          const ownerIdValue = owner.ownerId || owner.id || owner.userId || owner._id;
+                          const ownerNameValue = owner.name || owner.ownerName || 'Unknown';
+                          
+                          return (
+                            <option key={owner._id || owner.id} value={ownerIdValue}>
+                              {ownerIdValue} - {ownerNameValue}
+                            </option>
+                          );
+                        })
                       ) : (
                         <option disabled>No owners available</option>
                       )}
@@ -722,7 +676,8 @@ const AddProperty = ({ isOpen, onClose, onSave }) => {
                       name="ownerName"
                       value={form.ownerName}
                       readOnly
-                      style={{ backgroundColor: '#f5f5f5' }}
+                      className="owner-name-readonly"
+                      placeholder="Auto-filled from Owner ID"
                     />
                   </div>
                 </div>
@@ -748,7 +703,7 @@ const AddProperty = ({ isOpen, onClose, onSave }) => {
                     onChange={handleChange}
                     placeholder={PLACEHOLDERS.ABOUT}
                     rows="5"
-                    style={{ width: '100%', minHeight: '100px' }}
+                    className="about-textarea-full"
                   />
                 </div>
               </>
@@ -756,7 +711,7 @@ const AddProperty = ({ isOpen, onClose, onSave }) => {
           </div>
 
           {/* Footer Buttons */}
-          <div className="modal-footer" style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', marginTop: '20px' }}>
+          <div className="modal-footer">
             {step === 2 ? (
               <>
                 <GradientButton onClick={() => setStep(1)}>
@@ -779,7 +734,7 @@ const AddProperty = ({ isOpen, onClose, onSave }) => {
           <PopupMessage
             title={popup.title}
             message={popup.message}
-            icon={popup.type === 'error' ? ICONS.ERROR : ICONS.SUCCESS}
+            icon={popup.type === 'error' ? ASSET_PATHS.ERROR_ICON : ASSET_PATHS.SUCCESS_ICON}
             confirmLabel={BUTTON_LABELS.OK}
             cancelLabel=""
             onConfirm={popup.type === 'success' ? resetForm : hidePopup}
