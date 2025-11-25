@@ -1,11 +1,15 @@
 // src/components/common/NotificationMenu.jsx
 import React, { useEffect, useRef, useState } from "react";
 import { IoMdNotificationsOutline } from "react-icons/io";
-import axios from "axios";
 import { io as socketIO } from "socket.io-client";
 import { API_CONFIG } from "../../utils/constants";
+import {
+  fetchNotifications,
+  markNotificationAsRead,
+  clearAllNotifications
+} from "../../services/notificationService";
+import "../../styles/NotificationMenu.css";
 
-const API_URL = import.meta.env.VITE_API_URL || API_CONFIG;
 const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || API_CONFIG;
 
 const NotificationMenu = () => {
@@ -15,90 +19,69 @@ const NotificationMenu = () => {
   const socketRef = useRef(null);
 
   useEffect(() => {
-  console.log("[INIT] NotificationMenu mounted");
-  console.log("API URL =", API_URL);
-  console.log("SOCKET URL =", SOCKET_URL);
-  console.log("Connecting socket...");
+    console.log("[INIT] NotificationMenu mounted");
+    console.log("SOCKET URL =", SOCKET_URL);
+    console.log("Connecting socket...");
 
-  socketRef.current = socketIO(SOCKET_URL.BASE_URL, {
-    withCredentials: true,
-    transports: ["websocket"],
-    reconnection: true,
-  });
+    socketRef.current = socketIO(SOCKET_URL.BASE_URL, {
+      withCredentials: true,
+      transports: ["websocket"],
+      reconnection: true,
+    });
 
-  const socket = socketRef.current; // <-- THE REQUIRED LINE
+    const socket = socketRef.current;
 
-  // Debug listeners
-  socket.on("connect", () => {
-    console.log(" SOCKET CONNECTED:", socket.id);
-  });
+    // Debug listeners
+    socket.on("connect", () => {
+    });
 
-  socket.on("connect_error", (err) => {
-    console.error("SOCKET CONNECT ERROR:", err.message);
-    console.log("Full error:", err);
-    console.log("document.cookie =", document.cookie);
-  });
+    socket.on("connect_error", (err) => {
+      console.error("SOCKET CONNECT ERROR:", err.message);
+      console.log("Full error:", err);
+      console.log("document.cookie =", document.cookie);
+    });
 
-  socket.on("disconnect", (reason) => {
-    console.warn("SOCKET DISCONNECTED:", reason);
-  });
+    socket.on("disconnect", (reason) => {
+      console.warn("⚠️ SOCKET DISCONNECTED:", reason);
+    });
 
-  // Fetch notifications
-  const fetchNotifications = async () => {
-    console.log("Fetching notifications...");
-    try {
-      const res = await axios.get(`${API_URL.BASE_URL}/api/notifications`, {
-        withCredentials: true,
-      });
+    // Fetch notifications on mount
+    const loadNotifications = async () => {
+      console.log("Fetching notifications...");
+      try {
+        const data = await fetchNotifications();
+        setNotifications(data);
+      } catch (err) {
+        console.error("Failed to load notifications");
+        setNotifications([]);
+      }
+    };
 
-      console.log("Notifications received:", res.data);
-      setNotifications(Array.isArray(res.data) ? res.data : []);
-    } catch (err) {
-      console.error(" Notification fetch error:", err);
-      setNotifications([]);
-    }
-  };
+    loadNotifications();
 
-  fetchNotifications();
-
-  return () => {
-    console.log(" Cleanup: disconnecting socket...");
-    socket.disconnect();
-  };
-}, []);
-
+    return () => {
+      socket.disconnect();
+    };
+  }, []);
 
   const markAsRead = async (id) => {
-    console.log(" Marking notification as read:", id);
     try {
-      await axios.patch(
-        `${API_URL.BASE_URL}/api/notifications/${id}/read`,
-        {},
-        { withCredentials: true }
-      );
-
-      console.log(" Marked as read SUCCESS");
+      await markNotificationAsRead(id);
 
       setNotifications((prev) =>
         prev.map((n) => (n._id === id ? { ...n, isRead: true } : n))
       );
     } catch (err) {
-      console.error(" Mark-as-read FAILED:", err.response?.data || err.message);
+      console.error("Mark-as-read operation failed");
     }
   };
 
   const clearNotifications = async () => {
-    console.log("Clearing all notifications...");
     try {
-      await axios.delete(`${API_URL.BASE_URL}/api/notifications`, {
-        withCredentials: true
-      });
-
-      console.log(" Notifications cleared");
-
+      await clearAllNotifications();
       setNotifications([]);
     } catch (err) {
-      console.error("Clear notifications FAILED:", err.response?.data || err.message);
+      console.error(" Clear notifications operation failed");
     }
   };
 
@@ -111,7 +94,6 @@ const NotificationMenu = () => {
       <button
         className="notification-btn"
         onClick={() => {
-          console.log(" Notification icon clicked");
           setNotifOpen(!notifOpen);
         }}
         aria-label="Notifications"
@@ -144,18 +126,10 @@ const NotificationMenu = () => {
           </div>
           <hr className="m-1" />
 
-          <div
-            className="notifications-list"
-            style={{
-              maxHeight: "400px",
-              overflowY: "auto",
-              scrollbarWidth: "none",
-              msOverflowStyle: "none"
-            }}
-          >
+          <div className="notifications-list">
             {notifications.length === 0 ? (
               <div className="dropdown-item text-center text-muted py-3">
-                <IoMdNotificationsOutline size={48} style={{ opacity: 0.3 }} />
+                <IoMdNotificationsOutline size={48} className="empty-icon" />
                 <p className="mb-0 mt-2">No new notifications</p>
               </div>
             ) : (
@@ -166,10 +140,8 @@ const NotificationMenu = () => {
                     n.isRead ? "notif-read" : "notif-unread"
                   }`}
                   onClick={() => {
-                    console.log(" Notification clicked:", n);
                     !n.isRead && markAsRead(n._id);
                   }}
-                  style={{ cursor: !n.isRead ? "pointer" : "default" }}
                 >
                   <div className="d-flex align-items-start">
                     <div className="flex-grow-1">
@@ -189,8 +161,7 @@ const NotificationMenu = () => {
                     </div>
                     {!n.isRead && (
                       <span
-                        className="badge bg-primary rounded-circle ms-2"
-                        style={{ width: "8px", height: "8px", padding: 0 }}
+                        className="unread-indicator badge bg-primary rounded-circle ms-2"
                         aria-label="Unread"
                       />
                     )}
@@ -201,12 +172,6 @@ const NotificationMenu = () => {
           </div>
         </div>
       )}
-
-      <style>{`
-        .notifications-list::-webkit-scrollbar {
-          display: none;
-        }
-      `}</style>
     </div>
   );
 };

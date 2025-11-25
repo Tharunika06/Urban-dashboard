@@ -1,5 +1,5 @@
 // src/services/propertyService.js
-import api from '../utils/api';
+import api from '../utils/authUtil';
 
 /**
  * Property Service

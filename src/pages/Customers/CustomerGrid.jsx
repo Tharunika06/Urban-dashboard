@@ -6,8 +6,7 @@ import { usePagination } from '../../hooks/usePagination';
 import { getStatusClass } from '../../utils/customerUtils';
 import GradientButton from '../../components/common/GradientButton';
 import '../../styles/Customers.css';
-
-const ITEMS_PER_PAGE = 8;
+import { ITEMS_PER_PAGE } from '../../utils/constants';
 
 export default function CustomerGrid({ customers = [] }) {
   const navigate = useNavigate();

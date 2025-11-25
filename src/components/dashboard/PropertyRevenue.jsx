@@ -1,9 +1,10 @@
 import React from "react";
+import "../../styles/PropertyRevenue.css";
 
 const PropertyRevenueItem = ({ icon, iconBg, title, value, target, progress, progressColor }) => (
   <div className="property-revenue-card">
-    <div className="pr-icon" style={{ backgroundColor: iconBg }}>
-      <img src={icon} alt={`${title} icon`} style={{ width: "20px", height: "25px" }} />
+    <div className="pr-icon" data-bg={iconBg}>
+      <img src={icon} alt={`${title} icon`} className="pr-icon-img" />
     </div>
     <div className="pr-value">{value}</div>
     <div className="pr-target">{target}</div>
@@ -11,10 +12,11 @@ const PropertyRevenueItem = ({ icon, iconBg, title, value, target, progress, pro
       <div
         className="progress-bar"
         role="progressbar"
-        style={{ width: progress, backgroundColor: progressColor }}
+        data-color={progressColor}
         aria-valuenow={parseInt(progress)}
         aria-valuemin="0"
         aria-valuemax="100"
+        data-progress={progress}
       ></div>
     </div>
   </div>
@@ -27,7 +29,7 @@ const PropertyRevenue = ({ stats, loading, error }) => {
         <div className="card-header">
           <h5 className="card-title">Property & Revenue</h5>
         </div>
-        <div style={{padding: '20px', textAlign: 'center'}}>Loading...</div>
+        <div className="pr-loading">Loading...</div>
       </div>
     );
   }
@@ -38,7 +40,7 @@ const PropertyRevenue = ({ stats, loading, error }) => {
         <div className="card-header">
           <h5 className="card-title">Property & Revenue</h5>
         </div>
-        <div style={{padding: '20px', textAlign: 'center', color: 'red'}}>Error: {error}</div>
+        <div className="pr-error">Error: {error}</div>
       </div>
     );
   }
@@ -48,7 +50,6 @@ const PropertyRevenue = ({ stats, loading, error }) => {
       <div className="card-header">
         <h5 className="card-title">Property & Revenue</h5>
       </div>
-
       <div className="row g-3">
         <div className="col-6">
           <PropertyRevenueItem
@@ -73,7 +74,6 @@ const PropertyRevenue = ({ stats, loading, error }) => {
           />
         </div>
       </div>
-
       <a href="#view-more" className="view-more-link">
         View More →
       </a>

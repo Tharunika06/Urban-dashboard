@@ -21,7 +21,21 @@
   gap: 1rem;
   min-width: 0;
 }
+/* Header.css */
 
+/* User profile trigger */
+.user-profile-trigger {
+  cursor: pointer;
+}
+
+/* Profile photo styling */
+.profile-photo {
+  width: 35px;
+  height: 35px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1px solid #ddd;
+}
 .breadcrumbs {
   display: flex;
   align-items: center;

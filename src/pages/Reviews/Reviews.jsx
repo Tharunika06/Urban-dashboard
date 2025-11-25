@@ -18,7 +18,8 @@ import {
   BUTTON_LABELS,
   PLACEHOLDERS,
   STYLES,
-  MONTHS_FULL
+  MONTHS_FULL,
+  ITEMS_PER_PAGE
 } from "../../utils/constants";
 import {
   getSelectedIds,
@@ -29,7 +30,7 @@ import {
 } from "../../utils/reviewHelpers";
 import "../../styles/Reviews.css";
 
-const ITEMS_PER_PAGE = 5;
+
 
 const Reviews = () => {
   const [selectAll, setSelectAll] = useState(false);

@@ -65,10 +65,12 @@
   transition: background 0.3s ease;
 }
 
+/* Hover effect for NON-ACTIVE tabs only */
+.sidebar-nav li:not(.active):hover {
+  background-color: #f5f5f5;
+}
+
 /* Active tab gradient background */
-
-
-/* Active tab text and icon color */
 .sidebar-nav li.active a {
   background: linear-gradient(180deg, #4C9FFF 0%, #0075FF 100%);
   color: #ffffff;
@@ -79,18 +81,29 @@
   filter: brightness(0) invert(1);
 }
 
+/* Prevent hover effects on active tabs */
+.sidebar-nav li.active:hover a {
+  background: linear-gradient(180deg, #4C9FFF 0%, #0075FF 100%);
+  color: #ffffff;
+}
+
 .sidebar-nav a {
   display: flex;
   align-items: center;
   text-decoration: none;
   color: #333;
-  transition: color 0.3s;
   padding: 8px 12px;
   border-radius: 8px;
+  transition: background 0.3s ease, color 0.3s ease;
+}
+
+/* Hover effect for links in NON-ACTIVE tabs */
+.sidebar-nav li:not(.active) a:hover {
+  color: #0075FF;
 }
 
 /* Remove hover background in collapsed mode */
-.sidebar.collapsed .sidebar-nav li:hover {
+.sidebar.collapsed .sidebar-nav li:not(.active):hover {
   background-color: transparent;
 }
 
@@ -114,9 +127,7 @@
 .label-text {
   margin-left: 16px;
   font-size: 14px;
-  /* transition: opacity 0.3s ease; */
   white-space: nowrap;
-  /* opacity: 1; */
   font-family: 'Montserrat', sans-serif;
 }
 

@@ -1,5 +1,5 @@
 // src/services/authService.js
-import api from '../utils/api';
+import api from '../utils/authUtil';
 
 export const storage = {
   saveUser: (userData) => {

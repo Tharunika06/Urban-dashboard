@@ -36,7 +36,7 @@ export const getPropertyPhotoSrc = (photo) => {
  * @param {Event} e - Error event
  * @param {string} fallbackSrc - Fallback image source
  */
-export const handleImageError = (e, fallbackSrc = '/assets/default-avatar.png') => {
+export const handleImageError = (e, fallbackSrc = '/assets/placeholder.png') => {
   e.target.src = fallbackSrc;
   console.warn('Failed to load image, using fallback');
 };

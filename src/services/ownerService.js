@@ -1,5 +1,5 @@
 // src/services/ownerService.js
-import api from '../utils/api';
+import api from '../utils/authUtil';
 
 /**
  * Owner Service

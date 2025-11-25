@@ -15,7 +15,8 @@ import {
   DEFAULTS,
   ASSET_PATHS,
   STYLES,
-  PLACEHOLDERS
+  PLACEHOLDERS,
+  ITEMS_PER_PAGE
 } from '../../utils/constants';
 import { 
   getOwnerPhotoSrc, 
@@ -28,7 +29,7 @@ import { initializeSocket, cleanupSocket } from '../../utils/socketHelpers';
 import '../../styles/Dashboard.css';
 import '../../styles/Owners.css';
 
-const OWNERS_PER_PAGE = 6;
+
 
 const Owners = () => {
   const [owners, setOwners] = useState([]);
@@ -51,7 +52,7 @@ const Owners = () => {
     resetPage,
     hasNextPage,
     hasPrevPage
-  } = usePagination(displayOwners, OWNERS_PER_PAGE);
+  } = usePagination(displayOwners, ITEMS_PER_PAGE);
 
   const tableHeaders = [
     'Owner Photo & Name',

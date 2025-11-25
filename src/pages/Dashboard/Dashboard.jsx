@@ -10,7 +10,7 @@ import SocialSource from "../../components/dashboard/SocialSource";
 import PropertyRevenue from "../../components/dashboard/PropertyRevenue";
 import Transactions from "../../components/dashboard/Transactions";
 import { io as socketIO } from "socket.io-client";
-import api from "../../utils/api";
+import api from "../../utils/authUtil";
 import { SOCKET_CONFIG } from "../../utils/constants";
 import "/src/styles/Dashboard.css";
 import "bootstrap/dist/css/bootstrap.min.css";

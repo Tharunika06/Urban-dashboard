@@ -1,5 +1,5 @@
 // src/utils/constants.js
-
+export const ITEMS_PER_PAGE = 7;
 export const MONTHS_FULL = [
   'January', 'February', 'March', 'April', 'May', 'June',
   'July', 'August', 'September', 'October', 'November', 'December'
@@ -99,53 +99,6 @@ export const formatters = {
 };
 
 /**
- * API Configuration
- */
-export const API_CONFIG = {
-  BASE_URL:'http://localhost:5000',
-  TIMEOUT: 30000, // 30 seconds
-  MAX_CONTENT_LENGTH: Infinity,
-  MAX_BODY_LENGTH: Infinity,
-  AUTO_REFRESH_INTERVAL: 30000, // 30 seconds - auto-refresh interval
-};
-
-/**
- * Socket configuration
- */
-export const SOCKET_CONFIG = {
-  URL: import.meta.env.VITE_SOCKET_URL || API_CONFIG.BASE_URL,
-  OPTIONS: { 
-    withCredentials: true,
-    transports: ['websocket', 'polling']
-  }
-};
-
-/**
- * API endpoints (relative to BASE_URL/api)
- */
-export const API_ENDPOINTS = {
-  STATS: '/api/stats',
-  TRANSACTIONS: '/api/payment/transactions',
-  BUYERS: '/api/payment/buyers',
-  SALES_MONTHLY: '/api/sales/monthly',
-  PROPERTY: '/api/property',
-  OWNERS: '/api/owners',
-  CUSTOMER: '/api/payment/customer',
-  AUTH: '/api',
-  ADMIN_PROFILE: '/api/admin/profile',
-};
-
-/**
- * Socket.io Events
- */
-export const SOCKET_EVENTS = {
-  UPDATE_ANALYTICS: 'update-analytics',
-  TRANSACTION_UPDATED: 'transaction-updated',
-  OWNER_STATS_UPDATED: 'owner-stats-updated',
-  CUSTOMER_UPDATED: 'customer-updated',
-};
-
-/**
  * Default values
  */
 export const DEFAULTS = {
@@ -153,7 +106,7 @@ export const DEFAULTS = {
   PLACEHOLDER_IMAGE: '/assets/placeholder.png',
   TRANSACTION_LIMIT: 3,
   VIEW_MODE: 'list',
-  SELECTED_MONTH: 'all', // Changed from '' to 'all' for consistency
+  SELECTED_MONTH: 'all',
   DEFAULT_PROPERTY_TYPE: 'Apartment',
 };
 
@@ -215,7 +168,6 @@ export const ASSET_PATHS = {
   DELETE_ICON: '/assets/delete-icon.png',
   EDIT_ICON: '/assets/edit-icon.png',
 };
-// Add this to your constants.js file
 
 export const ICONS = {
   SUCCESS: '/assets/success.png',
@@ -223,6 +175,7 @@ export const ICONS = {
   WARNING: '/assets/warning.png',
   INFO: '/assets/info.png',
 };
+
 /**
  * UI Messages
  */
@@ -461,3 +414,7 @@ export const convertToBase64 = (file) => {
     reader.readAsDataURL(file);
   });
 };
+
+// Re-export API config for backward compatibility (temporary)
+// TODO: Update all imports to use apiConfig.js instead
+export { API_CONFIG, SOCKET_CONFIG, API_ENDPOINTS, SOCKET_EVENTS } from '../utils/apiConfig';

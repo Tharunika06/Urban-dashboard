@@ -1,8 +1,9 @@
+// src/components/dashboard/SocialSource.jsx
 import React, { useState, useEffect } from "react";
 import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
-import api from "../../utils/api";
+import { fetchBuyersData } from "../../services/dashboardService";
 import MonthDropdown from "../../components/common/MonthDropdown";
-import { PIE_CHART_COLORS, CHART_COLORS, DEFAULTS, API_ENDPOINTS } from "../../utils/constants";
+import { PIE_CHART_COLORS, CHART_COLORS, DEFAULTS } from "../../utils/constants";
 import "../../styles/SocialSource.css";
 
 const SocialSource = () => {
@@ -11,21 +12,21 @@ const SocialSource = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchBuyersData = async () => {
+    const loadBuyersData = async () => {
       try {
-        const response = await api.get(API_ENDPOINTS.BUYERS);
-        console.log("Buyers data response:", response.data);
-        setBuyersData(response.data);
+        setLoading(true);
+        const data = await fetchBuyersData();
+        console.log("Buyers data loaded:", data);
+        setBuyersData(data);
       } catch (error) {
-        console.error("Error fetching buyers data:", error);
-        // Set empty data on error to prevent crashes
+        console.error("Failed to load buyers data:", error);
         setBuyersData({});
       } finally {
         setLoading(false);
       }
     };
 
-    fetchBuyersData();
+    loadBuyersData();
   }, []);
 
   if (loading) {
@@ -58,6 +59,13 @@ const SocialSource = () => {
       <span className="social-source-subtitle">
         Total traffic in <strong>{selectedMonth === DEFAULTS.MONTH ? "All Months" : selectedMonth}</strong>
       </span>
+      
+      {!hasData && (
+        <div className="alert alert-warning mt-2 mx-3 mb-2">
+          <small>⚠️ No buyers data available</small>
+        </div>
+      )}
+      
       <div className="social-source-chart-wrapper">
         <div className="social-source-chart-inner">
           <ResponsiveContainer width="100%" height="100%">

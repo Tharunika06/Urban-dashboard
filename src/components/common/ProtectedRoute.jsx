@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import authService from '../services/authService';
+import '../styles/ProtectedRoute.css';
 
 /**
  * ProtectedRoute Component
@@ -15,20 +16,19 @@ const ProtectedRoute = ({ children, requireAdmin = false }) => {
   useEffect(() => {
     const verifyAuth = async () => {
       try {
-        
         // Try to get current user (this validates the httpOnly cookie)
         const response = await authService.getCurrentUser();
         
         if (response.ok && response.user) {
-          console.log("User authenticated:", response.user.email, "Role:", response.user.role);
+          console.log("✅ User authenticated:", response.user.email, "Role:", response.user.role);
           setIsAuthenticated(true);
           setUserRole(response.user.role);
         } else {
-          console.log("Authentication failed");
+          console.log("❌ Authentication failed");
           setIsAuthenticated(false);
         }
       } catch (error) {
-        console.error("Auth verification error:", error);
+        console.error("❌ Auth verification error:", error);
         setIsAuthenticated(false);
       }
     };
@@ -39,19 +39,14 @@ const ProtectedRoute = ({ children, requireAdmin = false }) => {
   // Show loading while checking authentication
   if (isAuthenticated === null) {
     return (
-      <div style={{
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        height: '100vh',
-        fontSize: '18px',
-        color: '#666'
-      }}>
-        <div>
-          <div className="spinner-border" role="status" style={{ marginBottom: '10px' }}>
+      <div className="protected-route-loading">
+        <div className="protected-route-loading-content">
+          <div className="protected-route-spinner" role="status">
             <span className="visually-hidden">Loading...</span>
           </div>
-          <div>Verifying authentication...</div>
+          <div className="protected-route-loading-text">
+            Verifying authentication...
+          </div>
         </div>
       </div>
     );
@@ -59,18 +54,18 @@ const ProtectedRoute = ({ children, requireAdmin = false }) => {
 
   // Not authenticated - redirect to login
   if (!isAuthenticated) {
-    console.log("Not authenticated, redirecting to login");
+    console.log("🔒 Not authenticated, redirecting to login");
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
   // Check admin requirement
   if (requireAdmin && userRole !== 'admin') {
-    console.log("Admin access required, user role:", userRole);
+    console.log("⚠️ Admin access required, user role:", userRole);
     return <Navigate to="/unauthorized" replace />;
   }
 
   // Authenticated - render protected content
-  console.log(" Access granted to:", location.pathname);
+  console.log("✅ Access granted to:", location.pathname);
   return children;
 };
 

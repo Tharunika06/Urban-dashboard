@@ -2,14 +2,14 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { usePagination } from '../../hooks/usePagination';
-import { DEFAULTS, ASSET_PATHS, UI_MESSAGES } from '../../utils/constants';
+import { DEFAULTS, ASSET_PATHS, UI_MESSAGES, ITEMS_PER_PAGE } from '../../utils/constants';
 import { 
   formatCurrency, 
   formatTableDate, 
   getNestedValue 
 } from '../../utils/tableUtils';
 
-const ITEMS_PER_PAGE = 5;
+
 
 const OrderList = ({ orders, onDelete }) => {
   // Use pagination hook with all available features

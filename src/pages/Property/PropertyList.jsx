@@ -9,6 +9,7 @@ import {
   ASSET_PATHS,
   UI_MESSAGES,
   BUTTON_LABELS,
+  ITEMS_PER_PAGE
 } from '../../utils/constants';
 import {
   getStatusClass,
@@ -18,7 +19,7 @@ import {
 } from '../../utils/propertyHelpers';
 import '../../styles/Property.css';
 
-const ITEMS_PER_PAGE = 6;
+
 
 const PropertyList = ({ properties, handleDelete, handleBulkDelete }) => {
   const [selectAll, setSelectAll] = useState(false);

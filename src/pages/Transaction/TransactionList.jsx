@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import Checkbox from '../../components/common/Checkbox';
 import { usePagination } from '../../hooks/usePagination';
-import { ASSET_PATHS, DEFAULTS } from '../../utils/constants';
+import { ASSET_PATHS, DEFAULTS,ITEMS_PER_PAGE } from '../../utils/constants';
 import { 
   formatTransactionDate, 
   formatAmount,
@@ -12,7 +12,6 @@ import {
   toggleSingleItem
 } from '../../utils/transactionHelpers';
 
-const ITEMS_PER_PAGE = 6;
 
 const TransactionList = ({ 
   transactions, 

@@ -4,8 +4,8 @@ import { Link, useNavigate } from 'react-router-dom';
 import { usePagination } from '../../hooks/usePagination';
 import { getStatusClass } from '../../utils/customerUtils';
 import '../../styles/Customers.css';
+import { ITEMS_PER_PAGE } from '../../utils/constants';
 
-const ITEMS_PER_PAGE = 6;
 
 const CustomerList = ({ customers, onDelete }) => {
   const navigate = useNavigate();

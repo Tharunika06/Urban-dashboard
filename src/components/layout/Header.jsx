@@ -18,6 +18,7 @@ const Header = ({ title }) => {
 
   // Profile hook handles fetching, caching, and real-time updates
   const { adminName, profilePhoto, loading } = useProfile();
+
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
 
@@ -29,10 +30,8 @@ const Header = ({ title }) => {
   const handleLogout = async () => {
     try {
       setLoggingOut(true);
-
       await authService.logout();
       storage.clearAll();
-
       navigate("/login", { replace: true });
     } catch (error) {
       console.error("Logout error:", error);
@@ -70,9 +69,8 @@ const Header = ({ title }) => {
 
         <div className="user-profile position-relative" ref={profileRef}>
           <div
-            className="d-flex align-items-center"
+            className="user-profile-trigger d-flex align-items-center"
             onClick={() => setDropdownOpen(!dropdownOpen)}
-            style={{ cursor: "pointer" }}
           >
             {loading ? (
               <span className="loading-text">Loading...</span>
@@ -82,13 +80,6 @@ const Header = ({ title }) => {
                   src={profilePhoto}
                   alt="User Avatar"
                   className="profile-photo"
-                  style={{
-                    width: "35px",
-                    height: "35px",
-                    borderRadius: "50%",
-                    objectFit: "cover",
-                    border: "1px solid #ddd",
-                  }}
                 />
                 <span className="d-none d-md-inline ms-2">{adminName}</span>
                 <FiChevronDown className="d-none d-md-inline ms-1" />

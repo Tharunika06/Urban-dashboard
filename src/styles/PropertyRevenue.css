@@ -1,0 +1,46 @@
+/* PropertyRevenue.css */
+
+/* Icon styling */
+.pr-icon-img {
+  width: 20px;
+  height: 25px;
+}
+
+/* Dynamic background colors for icon containers */
+.pr-icon[data-bg="#DFD9FF"] {
+  background-color: #DFD9FF;
+}
+
+.pr-icon[data-bg="#FFE0D2"] {
+  background-color: #FFE0D2;
+}
+
+/* Progress bar styling */
+.progress-bar[data-progress="60%"] {
+  width: 60%;
+}
+
+.progress-bar[data-progress="80%"] {
+  width: 80%;
+}
+
+.progress-bar[data-color="#897AE3"] {
+  background-color: #897AE3;
+}
+
+.progress-bar[data-color="#DE7548"] {
+  background-color: #DE7548;
+}
+
+/* Loading state */
+.pr-loading {
+  padding: 20px;
+  text-align: center;
+}
+
+/* Error state */
+.pr-error {
+  padding: 20px;
+  text-align: center;
+  color: red;
+}

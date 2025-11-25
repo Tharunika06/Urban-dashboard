@@ -1,4 +1,4 @@
-// SalesAnalytic.jsx
+// src/components/dashboard/SalesAnalytic.jsx
 import React, { useEffect, useState } from "react";
 import {
   LineChart,
@@ -8,7 +8,7 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
-import api from "../../utils/api";
+import { fetchMonthlySales } from "../../services/dashboardService";
 import MonthDropdown from "../../components/common/MonthDropdown";
 import { 
   MONTHS_FULL,
@@ -17,7 +17,7 @@ import {
   formatters,
   CHART_COLORS,
   DEFAULTS 
-} from "../../utils/constants"
+} from "../../utils/constants";
 import { 
   getYAxisDomain, 
   createCustomDotRenderer,
@@ -31,14 +31,19 @@ const SalesAnalytic = () => {
   const [data, setData] = useState([]);
   const [total, setTotal] = useState(0);
   const [selectedMonth, setSelectedMonth] = useState(DEFAULTS.MONTH);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    const fetchSales = async () => {
+    const loadSalesData = async () => {
       try {
-        const res = await api.get("/api/sales/monthly");
+        setLoading(true);
+        setError(null);
+        
+        const salesData = await fetchMonthlySales();
         
         // Convert full month names to short names
-        const formattedData = formatSalesData(res.data, toFullMonthName).map(item => {
+        const formattedData = formatSalesData(salesData, toFullMonthName).map(item => {
           const monthIndex = MONTHS_FULL.indexOf(item.name);
           return {
             ...item,
@@ -50,13 +55,16 @@ const SalesAnalytic = () => {
         const totalEarnings = calculateTotal(formattedData, 'earnings');
         setTotal(totalEarnings);
       } catch (err) {
-        console.error("Error fetching sales analytics:", err);
+        console.error("Failed to load sales analytics");
+        setError("Failed to load sales data");
         setData([]);
         setTotal(0);
+      } finally {
+        setLoading(false);
       }
     };
 
-    fetchSales();
+    loadSalesData();
   }, []);
 
   const handleMonthChange = (monthValue) => {
@@ -80,7 +88,6 @@ const SalesAnalytic = () => {
     DEFAULTS.MONTH
   );
 
-  // Custom tooltip to fix the [object Object] issue
   const CustomTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
       return (
@@ -94,6 +101,28 @@ const SalesAnalytic = () => {
     }
     return null;
   };
+
+  if (loading) {
+    return (
+      <div className="card sales-analytic-card">
+        <div className="card-header">
+          <h3 className="card-title">Sales Analytic</h3>
+        </div>
+        <div className="text-center p-4">Loading sales data...</div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="card sales-analytic-card">
+        <div className="card-header">
+          <h3 className="card-title">Sales Analytic</h3>
+        </div>
+        <div className="text-center p-4 text-danger">{error}</div>
+      </div>
+    );
+  }
 
   return (
     <div className="card sales-analytic-card">

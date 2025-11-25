@@ -1,4 +1,4 @@
-// WeeklySales.jsx
+// src/components/dashboard/WeeklySales.jsx
 import React, { useState, useEffect } from "react";
 import {
   BarChart,
@@ -7,7 +7,7 @@ import {
   YAxis,
   ResponsiveContainer,
 } from "recharts";
-import api from "../../utils/api";
+import { fetchWeeklySales } from "../../services/dashboardService";
 import { getPaddedMaxValue, calculateTotal } from "../../utils/chartUtils";
 import { formatWeeklySalesData, getWeeklySalesFallback } from "../../utils/dataUtils";
 import { getWeekLabel } from "../../utils/dateUtils";
@@ -20,19 +20,19 @@ const WeeklySales = () => {
   const [error, setError] = useState(null);
   const [weekOffset, setWeekOffset] = useState(0);
 
-  const fetchSalesData = async (offset = 0) => {
+  const loadSalesData = async (offset = 0) => {
     try {
       setLoading(true);
       setError(null);
 
-      const response = await api.get(`/api/sales/weekly?offset=${offset}`);
-      const formattedData = formatWeeklySalesData(response.data);
+      const data = await fetchWeeklySales(offset);
+      const formattedData = formatWeeklySalesData(data);
 
       setSalesData(formattedData);
       const total = calculateTotal(formattedData, 'sales');
       setTotalSales(total);
     } catch (err) {
-      console.error("Error fetching sales data:", err);
+      console.error("Failed to load weekly sales");
       setError("Failed to load sales data");
 
       const fallback = getWeeklySalesFallback();
@@ -44,7 +44,7 @@ const WeeklySales = () => {
   };
 
   useEffect(() => {
-    fetchSalesData(weekOffset);
+    loadSalesData(weekOffset);
   }, [weekOffset]);
 
   const goToPreviousWeek = () => {

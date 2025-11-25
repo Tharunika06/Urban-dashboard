@@ -212,7 +212,7 @@ const OwnerDetail = () => {
                     <div className="status-card">
                       <div className="status-info">
                         <div className="status-icon-container orange-bg">
-                          <img src="/assets/revenue-bag.png" alt="Property Sold" />
+                          <img src="/assets/revenue-icon.png" alt="Property Sold" />
                         </div>
                         <p className="status-label">Property Sold</p>
                       </div>

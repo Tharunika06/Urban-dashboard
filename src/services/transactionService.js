@@ -1,5 +1,5 @@
 // src/services/transactionService.js
-import api from '../utils/api';
+import api from '../utils/authUtil';
 import { API_ENDPOINTS } from '../utils/constants';
 
 /**

@@ -72,7 +72,6 @@ const SearchBar = ({
   return (
     <div 
       className={`search-bar ${className}`}
-      style={{ width }}
     >
       <img src={ASSET_PATHS.SEARCH_ICON} alt="search" className="search-icon" />
       <input

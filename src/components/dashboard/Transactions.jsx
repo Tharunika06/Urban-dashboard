@@ -1,7 +1,7 @@
-// Transactions.jsx 
+// src/components/dashboard/Transactions.jsx 
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import api from '../../utils/api';
+import { fetchTransactions, deleteTransaction } from '../../services/dashboardService';
 import MonthDropdown from '/src/components/common/MonthDropdown.jsx';
 import GradientButton from '../../components/common/GradientButton';
 import Checkbox from '../../components/common/Checkbox';
@@ -37,20 +37,22 @@ const TransactionsTable = () => {
   ];
 
   useEffect(() => {
-    const fetchTransactions = async () => {
+    const loadTransactions = async () => {
       try {
-        // FIXED: Use /api/payment/transactions (with /api prefix)
-        const response = await api.get('/api/payment/transactions');
-        setAllTransactions(response.data);
+        setIsLoading(true);
+        setError(null);
+        
+        const data = await fetchTransactions();
+        setAllTransactions(data);
       } catch (err) {
         setError(err.message);
-        console.error("Failed to fetch dashboard transactions:", err);
+        console.error("Failed to fetch dashboard transactions");
       } finally {
         setIsLoading(false);
       }
     };
 
-    fetchTransactions();
+    loadTransactions();
   }, []);
 
   useEffect(() => {
@@ -86,13 +88,19 @@ const TransactionsTable = () => {
     );
   };
 
-  const handleDelete = (id) => {
-    const updated = allTransactions.filter(tx => tx.customTransactionId !== id);
-    setAllTransactions(updated);
-    setSelectedRows(prev => prev.filter(rowId => rowId !== id));
+  const handleDelete = async (id) => {
+    try {
+      await deleteTransaction(id);
+      const updated = allTransactions.filter(tx => tx.customTransactionId !== id);
+      setAllTransactions(updated);
+      setSelectedRows(prev => prev.filter(rowId => rowId !== id));
+    } catch (err) {
+      console.error("Failed to delete transaction:", err);
+      alert("Failed to delete transaction. Please try again.");
+    }
   };
 
-  // FIXED: Get customer photo with proper base URL
+  // Get customer photo with proper base URL
   const getCustomerPhoto = (photo) => {
     if (photo && photo.startsWith('data:image/')) return photo;
     if (photo && photo.startsWith('/uploads/')) return `${API_CONFIG.BASE_URL}${photo}`;
@@ -167,11 +175,19 @@ const TransactionsTable = () => {
   };
 
   if (isLoading) {
-    return <div className="card"><div className="loading-state">Loading transactions...</div></div>;
+    return (
+      <div className="card">
+        <div className="loading-state">Loading transactions...</div>
+      </div>
+    );
   }
 
   if (error) {
-    return <div className="card"><div className="error-state">Error: {error}</div></div>;
+    return (
+      <div className="card">
+        <div className="error-state">Error: {error}</div>
+      </div>
+    );
   }
 
   return (
