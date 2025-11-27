@@ -295,7 +295,7 @@ const AddOwnerModal = ({ isOpen, onClose, onSave }) => {
             ) : (
               <>
                 <div className="form-group full-width">
-                  <label htmlFor="about">{FORM_LABELS.ABOUT}</label>
+                  <label htmlFor="about ">About Owner</label>
                   <textarea 
                     id="about" 
                     name="about" 
